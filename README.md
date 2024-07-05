@@ -7,8 +7,11 @@ The project follows a simple tree structure...
 
 ```
 ├── README.md                   <- The top-level README for developers using this project.
-├── data               
-│   ├── plots                   <- Generated plots for data analysis (correlation, frequency, and time series)
-│   ├── interim                 <- Intermediate data that has been transformed.
+├── _data               
 │   ├── processed               <- The final, canonical data sets for modeling.
-│   └── raw                     <- The original, immutable data dump.
+│   ├── forecasting             <- Something about forecasting.
+│   └── raw                     <- The original, immutable data dump (consumption, generation, price, all data needed really).
+│ │ 
+├── _CE_params                 <- Scripts for CE parametrization.
+│ 
+├── _scenarios                 <- Scripts for CE opreration and metrics visualization.
