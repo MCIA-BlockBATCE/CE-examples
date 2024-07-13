@@ -6,8 +6,10 @@ load('..\..\_data\base_data_2023.mat')
 
 %% Selección de columnas y llenado de vacíos con IL
 
-num_participantes = 13;
+num_participantes = 6;
 data = base_data_2023(:,[[2:13] 17]);
+CER_excedentaria = [4 7 8 10 12 13];
+data = data(:,CER_excedentaria);
 
 
 %% Promedio horario consumos
@@ -55,16 +57,16 @@ dia_setmana=7; % año 2023 empieza en domingo
 hora=0; % va de 0 a 23
 mes=1; % va de 1 a 10
 
-suma_mes_valle=zeros(13,12);
-suma_mes_llano=zeros(13,12);
-suma_mes_pico=zeros(13,12);
+suma_mes_valle=zeros(6,12);
+suma_mes_llano=zeros(6,12);
+suma_mes_pico=zeros(6,12);
 
 %% Cálculos
 
 for n=1:num_participantes
     for i=1:length(data_agg_with_time)
-        if (mes~=data_agg_with_time(i,15))
-            numindex=2+(mes-1)*15+(n-1);
+        if (mes~=data_agg_with_time(i,8))
+            numindex=2+(mes-1)*8+(n-1);
             strindex=int2str(numindex);
             indexValle=strcat('B',strindex);
             indexLlano=strcat('C',strindex);
@@ -120,40 +122,3 @@ for n=1:num_participantes
 
 end
 
-%% Función total horario
-
-function agg_table = get_hourly_energy(table_to_agg)
-
-    aux = size(table_to_agg);
-    num_rows_tab_to_agg = aux(1);
-    num_cols_tab_to_agg = aux(2);
-    % Dimensiones de la tabla agregada con promedios horarios
-    agg_table = zeros(num_rows_tab_to_agg/4,num_cols_tab_to_agg);
-    
-    % Para cada columna
-    for k = 1:num_cols_tab_to_agg
-
-        last_i = 1;
-        new_table_index = 1;
-        
-        % Recorriendo cada columna con una ventana de 4 muestras = 1h
-        for i = 4:4:num_rows_tab_to_agg
-
-                acum = 0;
-                % Calculando acumulado en 4h
-                for j = last_i:i
-
-                    acum = acum + table_to_agg(j,k);
-
-                end
-                
-                % Promedio horario
-                agg_table(new_table_index,k) = acum;
-                last_i = last_i + 4;
-                new_table_index = new_table_index + 1;
-
-        end        
-
-    end
-    
-end

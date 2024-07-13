@@ -10,8 +10,8 @@ num_parts=6; % Numero de participantes
 % FRECUENCIA HORARIA A CUARTOHORARIA
 Unidad_t=0.25; % Tiempo entre ejecuciones (1h) HABRÁ QUE CAMBIAR A 0.25
 
-% ruta_fichero = '..\..\..\Calculo de coeficientes\bbce2\bbce2_Coeficients_Tramos.xlsx';
-% CoR_generacion=readmatrix(ruta_fichero); CARGAR COEFICIENTES, TO DO
+ruta_fichero = "..\..\_CE_params\coeficientes_estaticos\bbce2_Coeficients_Tramos.xlsx";
+CoR_generacion=readmatrix(ruta_fichero); 
 
 load("..\..\_data\Pgen_real.mat")
 load("..\..\_data\Pgen_real_3h.mat")
@@ -65,8 +65,8 @@ factor_gen = 1;
 Precio_venta=0.07 * ones(jumps,1);
 
 load("..\..\_data\Precio_compra_1h.mat")
-load("..\..\_data\Precio_compra_2h.mat")
 load("..\..\_data\Precio_compra_3h.mat")
+load("..\..\_data\Precio_compra_6h.mat")
 
 Balance_dinero_pred=zeros(jumps,num_parts);
 

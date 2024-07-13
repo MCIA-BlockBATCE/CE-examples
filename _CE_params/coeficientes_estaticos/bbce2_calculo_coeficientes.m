@@ -8,6 +8,7 @@ coeficientes = zeros(num_participantes,3,num_meses);
 %% Declaración de vectores para sumatorios y tabla para CoR
 filaStart = 1;
 filaEnd = 6;
+dades_factures(dades_factures == 0) = 0.1;
 
 for mes = 1:num_meses
     sumatorio_valle_total = sum(dades_factures(filaStart:filaEnd,1));
