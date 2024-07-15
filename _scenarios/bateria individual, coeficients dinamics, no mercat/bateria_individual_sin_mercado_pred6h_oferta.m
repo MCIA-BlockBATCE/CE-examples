@@ -15,8 +15,11 @@ num_parts=length(CER_excedentaria); % Numero de participantes
 % FRECUENCIA HORARIA A CUARTOHORARIA
 Unidad_t=0.25; % Tiempo entre ejecuciones (1h) HABRÁ QUE CAMBIAR A 0.25
 
-ruta_fichero = "..\..\_CE_params\coeficientes_estaticos\bbce2_Coeficients_Tramos.xlsx";
+ruta_fichero = "..\..\_CE_params\coeficientes_dinamicos\bbce2_Coeficientes_dinamicos.xlsx";
 CoR_generacion=readmatrix(ruta_fichero); 
+
+ruta_fichero = "..\..\_CE_params\coeficientes_estaticos\bbce2_Coeficients_Tramos.xlsx";
+CoR_bateria=readmatrix(ruta_fichero); 
 
 load("..\..\_data\Pgen_real.mat")
 load("..\..\_data\Pgen_real_3h.mat")
@@ -46,8 +49,6 @@ Pcons_pred_3h = 4 * Pcons_pred_3h;
 
 origen_potencia_CasoPerfecto = zeros(num_parts,3); %1 es placas, 2 bateria y 3 comprada
 
-CoR_generacion=CoR_generacion(1:num_parts,1:3);
-CoR_bateria=CoR_generacion(1:num_parts,:);
 CoR_bateria = sum(CoR_bateria.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
 CoR_bateria = CoR_bateria/sum(CoR_bateria); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
 
@@ -96,12 +97,20 @@ cantidad_oferta_2 = 0;
 coste_energia_comprada_mientras_oferta = 0;
 SoC_energy_CER = zeros(length(SoC),1);
 
-
 %% Caso con datos reales
 
 origen_sumatorio_real = zeros(24*4,3);
 Balance_dinero_real=zeros(jumps,num_parts);
 total_origen_porcentual_CasoReal = zeros(num_parts,3);
+
+for n=1:num_parts     
+    Pgen_pred1h_comunidad(:,n) = CoR_generacion(:,n).*Pgen_pred1h*factor_gen;
+    Pgen_pred3h_comunidad(:,n) = CoR_generacion(:,n).*Pgen_pred3h*factor_gen; 
+    
+    Pgen_real_comunidad(:,n) = CoR_generacion(:,n).*Pgen_real*factor_gen;
+    Pgen_real_3h_comunidad(:,n) = CoR_generacion(:,n).*Pgen_real_3h*factor_gen;
+
+end
 
 for t=1:jumps % EMPIEZA EL AÑO
 
@@ -112,15 +121,6 @@ P_discharge_max=CoR_bateria*100;
 origen_potencia_CasoReal = zeros(num_parts,3);
 
 [X] = tramo_coef(dia_setmana,hora);
-
-for n=1:num_parts     
-    Pgen_pred1h_comunidad(:,n) = Pgen_pred1h * CoR_generacion(n,X)*factor_gen;
-    Pgen_pred3h_comunidad(:,n) = Pgen_pred3h * CoR_generacion(n,X)*factor_gen; 
-    
-    Pgen_real_comunidad(:,n) = Pgen_real * CoR_generacion(n,X)*factor_gen;
-    Pgen_real_3h_comunidad(:,n) = Pgen_real_3h * CoR_generacion(n,X)*factor_gen;
-
-end
 
 for n=1:num_parts %EMPIEZA EL ALGORITMO
 
@@ -390,6 +390,9 @@ ch = 1;
 %coste_energia_comprada_mientras_oferta = 0;
 %SoC_energy_CER = zeros(length(SoC),1);
 
+for n=1:num_parts  
+    Pgen_real_comunidad(:,n) = CoR_generacion(:,n).*Pgen_real*factor_gen;
+end
 
 for t=1:jumps
     
@@ -403,13 +406,6 @@ P_discharge_max=CoR_bateria*100;
 
 
 origen_potencia_NoOptimo=zeros(num_parts,3);
-
-
-[X] = tramo_coef(dia_setmana,hora);
-
-for n=1:num_parts  
-    Pgen_real_comunidad(:,n) = Pgen_real * CoR_generacion(n,X) * factor_gen;
-end
 
 
     for n=1:num_parts %EMPIEZA EL ALGORITMO
@@ -430,8 +426,8 @@ end
                end
            else
                Balance_dinero_no_optim(t,n)=Balance_dinero_no_optim(t,n)+Pexd(t,n)*Unidad_t*Precio_venta(t,1);
-               P_sold_noOpt(hora,n) = P_sold_noOpt(hora,n) + Pexd(t,n)*Unidad_t;
                SoC(t+1,n)=SoC(t,n);
+               P_sold_noOpt(hora,n) = P_sold_noOpt(hora,n) + Pexd(t,n)*Unidad_t;
            end
        else
            Pfal(t,n)=Pcons_real(t,n)-Pgen_real_comunidad(t,n);
@@ -454,6 +450,13 @@ end
        end  
     end
 
+    acum = 0;
+    for z = 1:num_parts
+        acum = acum + (capacidad * CoR_bateria(z) * (SoC(t+1,z)/100));
+    end
+
+    SoC_energy_CER_noOpt(t+1) = acum;
+
     origen_por_horas_no_opt(t,:) = sum(origen_potencia_NoOptimo(:,:));
     [ch,hora,dia_setmana] = siguiente_ch(ch,hora,dia_setmana);
 end
@@ -468,11 +471,6 @@ Balance_total_optimizacion = sum(Balance_total_real);
 Balance_total_estatico = sum(Balance_anual_no_optim);
 
 %%
-
-figure(7)
-bar(total_origen_porcentual_CasoReal,'stacked')
-legend('Origen placas','Origen batería','Origen red eléctrica')
-
 
 figure(17)
 bar(Y,[Balance_total_optimizacion Balance_total_estatico])
@@ -501,14 +499,14 @@ t = t';
 % sgtitle("Validación de la regulación del sistema para el cumplimiento de una oferta")
 
 figure(19)
-plot(t(1:672),100*SoC_energy_CER(1:672)/capacidad)
+plot(t(1:672),100*SoC_energy_CER_noOpt(1:672)/capacidad)
 title('Estado de carga (SoC) de la batería')
 ylabel('SoC (%)')
 xlabel('Tiempo')
 ylim([0 100])
 
 figure(20)
-plot(t(1:672),origen_por_horas(1:672,1),t(1:672),origen_por_horas(1:672,2),t(1:672),origen_por_horas(1:672,3))
+plot(t(1:672),origen_por_horas_no_opt(1:672,1),t(1:672),origen_por_horas_no_opt(1:672,2),t(1:672),origen_por_horas_no_opt(1:672,3))
 title('Potencia consumida según origen')
 legend('Origen placas','Origen batería','Origen red eléctrica')
 ylabel('Potencia consumida (kW)')
@@ -517,14 +515,21 @@ xlabel('Tiempo')
 % plot(t(1:672), Pgen_real(1:672))
 
 figure(21)
-plot(t(1:672),Precio_compra(1:672))
-title('Precio de compra de electricidad a la red')
-ylabel('Precio (€/kWh)')
+plot(t(1:672),Pcons_real(1:672,:))
+title('Potencia consumida por participante')
+legend('P1','P2','P3','P4','P5','P6')
+ylabel('Potencia consumida (kW)')
 xlabel('Tiempo')
+
+% figure(21)
+% plot(t(1:672),Precio_compra(1:672))
+% title('Precio de compra de electricidad a la red')
+% ylabel('Precio (€/kWh)')
+% xlabel('Tiempo')
 
 % figure(22)
 % plot(t(1:672), Pgen_real(1:672))
-% 
+
 % consumo_part_segun_origen = zeros(6,3);
 % 
 % for i = 1:num_parts
@@ -544,12 +549,13 @@ xlabel('Tiempo')
 % 
 % X = categorical({'P1','P2','P3','P4','P5','P6'});
 % X = reordercats(X,{'P1','P2','P3','P4','P5','P6'});
+% 
 % figure(23)
 % bar(X,consumo_part_segun_origen*100,'stacked')
 % title('Desglose del consumo por participante (semanal)')
 % legend('Origen placas','Origen batería','Origen red eléctrica')
 % ylabel('%')
-% % ylim([0 100])
+% ylim([0 100])
 
 % SoC_energy_CER_no_oferta = SoC_energy_CER;
 % save("SoC_energy_CER_no_oferta.mat", "SoC_energy_CER_no_oferta");
@@ -579,45 +585,3 @@ xlabel('Tiempo')
 % xlabel('Tiempo')
 % legend('Con oferta', 'Sin oferta')
 % ylim([0 100])
-
-% figure(26)
-% plot(t(1:672),origen_por_horas_por_part(1:672,1,1),t(1:672),origen_por_horas_por_part(1:672,1,2),t(1:672),origen_por_horas_por_part(1:672,1,3))
-% title('Potencia consumida según origen, participante 1')
-% legend('Origen placas','Origen batería','Origen red eléctrica')
-% ylabel('Potencia consumida (kW)')
-% xlabel('Tiempo')
-% 
-% figure(27)
-% plot(t(1:672),origen_por_horas_por_part(1:672,2,1),t(1:672),origen_por_horas_por_part(1:672,2,2),t(1:672),origen_por_horas_por_part(1:672,2,3))
-% title('Potencia consumida según origen, participante 2')
-% legend('Origen placas','Origen batería','Origen red eléctrica')
-% ylabel('Potencia consumida (kW)')
-% xlabel('Tiempo')
-% 
-% figure(28)
-% plot(t(1:672),origen_por_horas_por_part(1:672,3,1),t(1:672),origen_por_horas_por_part(1:672,3,2),t(1:672),origen_por_horas_por_part(1:672,3,3))
-% title('Potencia consumida según origen, participante 3')
-% legend('Origen placas','Origen batería','Origen red eléctrica')
-% ylabel('Potencia consumida (kW)')
-% xlabel('Tiempo')
-% 
-% figure(29)
-% plot(t(1:672),origen_por_horas_por_part(1:672,4,1),t(1:672),origen_por_horas_por_part(1:672,4,2),t(1:672),origen_por_horas_por_part(1:672,4,3))
-% title('Potencia consumida según origen, participante 4')
-% legend('Origen placas','Origen batería','Origen red eléctrica')
-% ylabel('Potencia consumida (kW)')
-% xlabel('Tiempo')
-% 
-% figure(30)
-% plot(t(1:672),origen_por_horas_por_part(1:672,5,1),t(1:672),origen_por_horas_por_part(1:672,5,2),t(1:672),origen_por_horas_por_part(1:672,5,3))
-% title('Potencia consumida según origen, participante 5')
-% legend('Origen placas','Origen batería','Origen red eléctrica')
-% ylabel('Potencia consumida (kW)')
-% xlabel('Tiempo')
-% 
-% figure(31)
-% plot(t(1:672),origen_por_horas_por_part(1:672,6,1),t(1:672),origen_por_horas_por_part(1:672,6,2),t(1:672),origen_por_horas_por_part(1:672,6,3))
-% title('Potencia consumida según origen, participante 6')
-% legend('Origen placas','Origen batería','Origen red eléctrica')
-% ylabel('Potencia consumida (kW)')
-% xlabel('Tiempo')
