@@ -6,9 +6,9 @@ load('..\..\_data\base_data_2023.mat')
 
 %% Selección de columnas y llenado de vacíos con IL
 
-num_participantes = 6;
-data = base_data_2023(:,[[2:13] 17]);
 CER_excedentaria = [4 7 8 10 12 13];
+num_participantes = length(CER_excedentaria);
+data = base_data_2023(:,[[2:13] 17]);
 data = data(:,CER_excedentaria);
 
 
@@ -47,37 +47,23 @@ end
 
 data_agg_with_time = [data_agg time_table];
 
-% Linea comentada para guardar tabla maestra de timestamp desagregado
-% save("..\..\Datos originales Infraestructuras\time_table_2023.mat","time_table");
-
 
 %% Inicialización de variables temporales y acumulados a 0
 % Datos van de domingo 1/1/23 a 1/1/24
-dia_setmana=7; % año 2023 empieza en domingo
-hora=0; % va de 0 a 23
-mes=1; % va de 1 a 10
 
-suma_mes_valle=zeros(6,12);
-suma_mes_llano=zeros(6,12);
-suma_mes_pico=zeros(6,12);
+suma_mes_valle=zeros(num_participantes,12);
+suma_mes_llano=zeros(num_participantes,12);
+suma_mes_pico=zeros(num_participantes,12);
 
 %% Cálculos
 
 for n=1:num_participantes
+    dia_setmana=7; % año 2023 empieza en domingo
+    hora=0; % va de 0 a 23
+    mes=1; % va de 1 a 10
     for i=1:length(data_agg_with_time)
-        if (mes~=data_agg_with_time(i,8))
-            numindex=2+(mes-1)*8+(n-1);
-            strindex=int2str(numindex);
-            indexValle=strcat('B',strindex);
-            indexLlano=strcat('C',strindex);
-            indexPico=strcat('D',strindex);
-            writematrix(suma_mes_valle(n,mes),'bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexValle);
-            writematrix(suma_mes_llano(n,mes),'bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexLlano);
-            writematrix(suma_mes_pico(n,mes),'bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexPico);
+        if (mes~=data_agg_with_time(i,num_participantes+2))
             mes=mes+1;
-            if mes==11
-                mes=1;
-            end
         end
         
         if (dia_setmana>0 && dia_setmana<6)
@@ -104,21 +90,22 @@ for n=1:num_participantes
             end
             hora=0;
         end
-        if (i==168)
-            numindex=2+(mes-1)*15+(n-1);
+    end
+end
+
+for mes=1:12
+    for n=1:num_participantes
+
+            numindex=1+(mes-1)*(num_participantes)+(n-1);
             strindex=int2str(numindex);
-            indexValle=strcat('B',strindex);
-            indexLlano=strcat('C',strindex);
-            indexPico=strcat('D',strindex);
+            indexValle=strcat('A',strindex);
+            indexLlano=strcat('B',strindex);
+            indexPico=strcat('C',strindex);
             writematrix(suma_mes_valle(n,mes),'bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexValle);
             writematrix(suma_mes_llano(n,mes),'bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexLlano);
             writematrix(suma_mes_pico(n,mes),'bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexPico);
-            mes=mes+1;
-            if mes==11
-                mes=1;
-            end
-        end
+   
     end
-
 end
+
 

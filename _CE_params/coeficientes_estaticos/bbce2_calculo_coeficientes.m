@@ -1,13 +1,13 @@
 close all
 clear all
-dades_factures=readmatrix("bbce2_Factures_ficticies.xlsx",'Range','B2:D79');
-num_participantes = 6;
+dades_factures=readmatrix("bbce2_Factures_ficticies.xlsx");
+num_participantes = length(dades_factures)/12;
 num_meses = 10;
 coeficientes = zeros(num_participantes,3,num_meses);
 
 %% Declaración de vectores para sumatorios y tabla para CoR
 filaStart = 1;
-filaEnd = 6;
+filaEnd = num_participantes;
 dades_factures(dades_factures == 0) = 0.1;
 
 for mes = 1:num_meses
@@ -26,37 +26,10 @@ for mes = 1:num_meses
         k = k + 1;
     end
    
-    filaStart = filaStart + 8;
-    filaEnd = filaEnd + 8;
+    filaStart = filaStart + (num_participantes);
+    filaEnd = filaEnd + (num_participantes);
 end
 
-
-% sumatoris_individuals=zeros(num_participantes,3);
-% sumatori_valle_total=sum(dades_factures(:,1));
-% sumatori_llano_total=sum(dades_factures(:,2));
-% sumatori_pico_total=sum(dades_factures(:,3));
-% coeficients=zeros(num_participantes,3);
-% 
-% %%
-% for i=1:num_participantes
-%     for j=1:num_participantes
-%         if i==mod(j,num_participantes)
-%             sumatoris_individuals(i,1)=sumatoris_individuals(i,1)+dades_factures(j,1);
-%             sumatoris_individuals(i,2)=sumatoris_individuals(i,2)+dades_factures(j,2);
-%             sumatoris_individuals(i,3)=sumatoris_individuals(i,3)+dades_factures(j,3);
-%         end
-% 
-%         if (i==num_participantes) && (mod(j,num_participantes)==0)
-%             sumatoris_individuals(num_participantes,1)=sumatoris_individuals(num_participantes,1)+dades_factures(j,1);
-%             sumatoris_individuals(num_participantes,2)=sumatoris_individuals(num_participantes,2)+dades_factures(j,2);
-%             sumatoris_individuals(num_participantes,3)=sumatoris_individuals(num_participantes,3)+dades_factures(j,3);       
-%         end
-%     end
-% 
-%     coeficients(i,1)=sumatoris_individuals(i,1)/sumatori_valle_total;
-%     coeficients(i,2)=sumatoris_individuals(i,2)/sumatori_llano_total;
-%     coeficients(i,3)=sumatoris_individuals(i,3)/sumatori_pico_total;
-% end
 
 tabla_coeficientes_2d = coeficientes(:,:,1);
 for k = 2:num_meses
