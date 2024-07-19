@@ -15,11 +15,11 @@ num_parts=length(CER_excedentaria); % Numero de participantes
 % FRECUENCIA HORARIA A CUARTOHORARIA
 Unidad_t=0.25; % Tiempo entre ejecuciones (1h) HABRÁ QUE CAMBIAR A 0.25
 
-ruta_fichero = "..\..\_CE_params\coeficientes_dinamicos\bbce2_Coeficientes_dinamicos.xlsx";
-CoR_generacion=readmatrix(ruta_fichero); 
+[CoR_generacion] = bbce2_calculo_coeficientes_dinamicos(CER_excedentaria); 
 
-ruta_fichero = "..\..\_CE_params\coeficientes_estaticos\bbce2_Coeficients_Tramos.xlsx";
-CoR_bateria=readmatrix(ruta_fichero); 
+% Se usan CoR estaticos para repartir la bateria
+tramos_mensuales(CER_excedentaria)
+[CoR_bateria] = bbce2_calculo_coeficientes_estaticos();
 
 load("..\..\_data\Pgen_real.mat")
 load("..\..\_data\Pgen_real_3h.mat")
@@ -36,8 +36,8 @@ Pcons_real = energia_cons_CER(:,CER_excedentaria) * 4;
 Pcons_real_3h = energia_cons_CER_3h(:,CER_excedentaria) * 4;
 
 % NOTA: Fórmula Osterwald da como output potencia (kW)
-load("..\..\_data\Pgen_pred1h.mat")
-load("..\..\_data\Pgen_pred3h.mat")
+load("..\..\_data\Pgen_pred_1h.mat")
+load("..\..\_data\Pgen_pred_3h.mat")
 
 % Carguem prediccions ANFIS
 load("..\..\_data\Pcons_pred_1h.mat")
@@ -65,9 +65,7 @@ factor_gen = 1;
 
 Precio_venta=0.07 * ones(jumps,1);
 
-load("..\..\_data\Precio_compra_1h.mat")
-load("..\..\_data\Precio_compra_3h.mat")
-load("..\..\_data\Precio_compra_6h.mat")
+load("..\..\_data\buying_prices.mat")
 
 Balance_dinero_pred=zeros(jumps,num_parts);
 
