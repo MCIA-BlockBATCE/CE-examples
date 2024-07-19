@@ -1,3 +1,4 @@
+% Passar a funció
 clear all
 close all
 
