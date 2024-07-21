@@ -45,8 +45,8 @@ load("..\..\_data\Pcons_pred_1h.mat")
 load("..\..\_data\Pcons_pred_3h.mat")
 
 % Passem a potencia
-Pcons_pred_1h = 4 * Pcons_pred_1h;
-Pcons_pred_3h = 4 * Pcons_pred_3h;
+Pcons_pred_1h = 4 * Pcons_pred_1h(:,CER_excedentaria);
+Pcons_pred_3h = 4 * Pcons_pred_3h(:,CER_excedentaria);
 
 storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
 storage_allocation = storage_allocation/sum(storage_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes

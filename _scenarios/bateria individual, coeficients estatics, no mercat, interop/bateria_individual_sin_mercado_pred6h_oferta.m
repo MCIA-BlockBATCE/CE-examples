@@ -42,8 +42,8 @@ load("..\..\_data\Pcons_pred_1h.mat")
 load("..\..\_data\Pcons_pred_3h.mat")
 
 % Passem a potencia
-Pcons_pred_1h = 4 * Pcons_pred_1h;
-Pcons_pred_3h = 4 * Pcons_pred_3h;
+Pcons_pred_1h = 4 * Pcons_pred_1h(:,CER_excedentaria);
+Pcons_pred_3h = 4 * Pcons_pred_3h(:,CER_excedentaria);
 
 generation_allocation=generation_allocation(1:members,1:3);
 storage_allocation=generation_allocation(1:members,:);

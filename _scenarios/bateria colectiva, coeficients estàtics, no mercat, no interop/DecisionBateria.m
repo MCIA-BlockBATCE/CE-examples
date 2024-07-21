@@ -6,11 +6,15 @@ function FCoste3 = DecisionBateria(ConsPred3h,ConsPred1h,GenPred3h, ...
 % LAS 3 PRÓXIMAS HORAS, y aplcando el coste de la luz ahora y el medio
 % durante las próximas 3 horas.
 
+FCoste3 = 1; % Por defecto
+
+members = length(ConsPred1h(1,:));
+
 votos_consumirBat=0;
 votos_noconsumirBat=0;
 votos_almacenarBat=0;
 
-for n=1:8
+for n=1:members
 
     if ConsPred1h(1,n) > GenPred1h(1,n) * 1.20 %aplicamos un umbral para considerar que lo consumido es mayor que lo generado
 
