@@ -97,8 +97,8 @@ energy_origin_instant=zeros(steps,3);
 energy_origin_instant_individual=zeros(steps,members,3);
 
 for n=1:members     
-    Pgen_pred1h_allocated(:,n) = generation_allocation(:,n).*Pgen_pred_1h*factor_gen;
-    Pgen_pred3h_allocated(:,n) = generation_allocation(:,n).*Pgen_pred_3h*factor_gen; 
+    Pgen_pred_1h_allocated(:,n) = generation_allocation(:,n).*Pgen_pred_1h*factor_gen;
+    Pgen_pred_3h_allocated(:,n) = generation_allocation(:,n).*Pgen_pred_3h*factor_gen; 
     
     Pgen_real_allocated(:,n) = generation_allocation(:,n).*Pgen_real*factor_gen;
 
@@ -112,21 +112,19 @@ P_discharge_max=storage_allocation*100;
 
 step_energy_origin_individual = zeros(members,3);
 
-[X] = tramo_coef(week_day,hour);
-
 for n=1:members %EMPIEZA EL ALGORITMO
 
    if ( (t >= instante_oferta - 20) && t < instante_oferta + 4 )
-       [Dec1, P_discharge_max_oferta] = AlmacenarVenderConsumirAlternatiu_oferta(SoC_energy_CER(t),cantidad_oferta,t,instante_oferta,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred3h_allocated(t,n), ...
-                     Pgen_pred1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),P_discharge_max(1,n));
+       [Dec1, P_discharge_max_oferta] = AlmacenarVenderConsumirAlternatiu_oferta(SoC_energy_CER(t),cantidad_oferta,t,instante_oferta,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),P_discharge_max(1,n));
        Decision1(t,n) = Dec1;
        caso_oferta = 1;
        % La salida de la función sería un entero entre 0 i 2?
        % 0 vender, 1 consumir y 2 almacenar
 
    elseif ( (t >= instante_oferta_2 - 20) && (t < instante_oferta_2 + 4) )
-       [Dec1, P_discharge_max_oferta] = AlmacenarVenderConsumirAlternatiu_oferta(SoC_energy_CER(t),cantidad_oferta_2,t,instante_oferta_2,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred3h_allocated(t,n), ...
-                     Pgen_pred1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),P_discharge_max(1,n));
+       [Dec1, P_discharge_max_oferta] = AlmacenarVenderConsumirAlternatiu_oferta(SoC_energy_CER(t),cantidad_oferta_2,t,instante_oferta_2,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),P_discharge_max(1,n));
        Decision1(t,n) = Dec1;
        caso_oferta = 2;
        % La salida de la función sería un entero entre 0 i 2?
@@ -134,8 +132,8 @@ for n=1:members %EMPIEZA EL ALGORITMO
 
    else
        
-       Decision1(t,n) = AlmacenarVenderConsumirAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred3h_allocated(t,n), ...
-                     Pgen_pred1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),E_st_max(1,n));
+       Decision1(t,n) = AlmacenarVenderConsumirAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),E_st_max(1,n));
        caso_oferta = 0;
        % La salida de la función sería un entero entre 0 i 2?
        % 0 vender, 1 consumir y 2 almacenar
@@ -154,8 +152,8 @@ for n=1:members %EMPIEZA EL ALGORITMO
   
        if E_st_max(1,n)>0 && SoC(t,n)>0
            if Pcons_real(t,n)<P_discharge_max(1,n)
-               Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred3h_allocated(t,n), ...
-                    Pgen_pred1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+               Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                if Decision2(t,n)==1
                    SoC(t+1,n)=SoC(t,n)-(((Pcons_real(t,n)*time_unit)/Ef_discharge)/E_st_max(1,n))*100;
@@ -166,8 +164,8 @@ for n=1:members %EMPIEZA EL ALGORITMO
                    SoC(t+1,n)=SoC(t,n);
                end
            else
-               Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred3h_allocated(t,n), ...
-                    Pgen_pred1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+               Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                if Decision2(t,n)==1
                    SoC(t+1,n)=SoC(t,n)-((P_discharge_max(1,n)*time_unit)/E_st_max(1,n))*100;
@@ -184,7 +182,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
            step_profit(t,n)=step_profit(t,n)-Pcons_real(t,n)*time_unit*price_next_1h(t,1);
            step_energy_origin_individual(n,3)=step_energy_origin_individual(n,3)+Pcons_real(t,n);%*Unidad_t;
        end
-      step_profit(t,n)=step_profit(t,n)+Pgen_pred1h_allocated(t,n)*time_unit*selling_price(t,1);
+      step_profit(t,n)=step_profit(t,n)+Pgen_pred_1h_allocated(t,n)*time_unit*selling_price(t,1);
 
 % Se decide consumir la energía consumida. En caso de déficit se evalua si
 % usar la batería y se compra la energía que falte. En caso de superávit se
@@ -197,7 +195,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
        P_discharge_max(1,n)=min(P_discharge_max(1,n)*Ef_discharge,(SoC(t,n)/100)*E_st_max(1,n)*(1/time_unit));
 
        if Pgen_real_allocated(t,n)>Pcons_real(t,n)
-           P_surplus(t,n)=Pgen_pred1h_allocated(t,n)-Pcons_real(t,n);
+           P_surplus(t,n)=Pgen_pred_1h_allocated(t,n)-Pcons_real(t,n);
            step_energy_origin_individual(n,1)=step_energy_origin_individual(n,1)+Pcons_real(t,n);%*Unidad_t;
            if E_st_max(1,n)>0 && SoC(t,n)<100
                if P_surplus(t,n)<P_charge_max(1,n)
@@ -215,8 +213,8 @@ for n=1:members %EMPIEZA EL ALGORITMO
            step_energy_origin_individual(n,1)=step_energy_origin_individual(n,1)+Pgen_real_allocated(t,n);
            if E_st_max(1,n)>0 && SoC(t,n)>0
                if P_shortage(t,n)<P_discharge_max(1,n)
-                   Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred3h_allocated(t,n), ...
-                    Pgen_pred1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                   Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                
                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                    if Decision2(t,n) == 1
@@ -228,8 +226,8 @@ for n=1:members %EMPIEZA EL ALGORITMO
                        SoC(t+1,n)=SoC(t,n);
                    end
                else
-                   Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred3h_allocated(t,n), ...
-                    Pgen_pred1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                   Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                    if Decision2(t,n) == 1
                         SoC(t+1,n)=SoC(t,n)-((P_discharge_max(1,n)*time_unit)/E_st_max(1,n))*100;
@@ -253,7 +251,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
    else % Decision1=2
        P_charge_max(1,n)=min(P_charge_max(1,n)*Ef_charge,((100-SoC(t,n))/100)*E_st_max(1,n)*(1/time_unit));
        if Pgen_real_allocated(t,n)<P_charge_max(1,n)
-           SoC(t+1,n)=SoC(t,n)+((Pgen_pred1h_allocated(t,n)*time_unit*Ef_charge)/E_st_max(1,n))*100;
+           SoC(t+1,n)=SoC(t,n)+((Pgen_pred_1h_allocated(t,n)*time_unit*Ef_charge)/E_st_max(1,n))*100;
        else
            SoC(t+1,n)=SoC(t,n)+(P_charge_max(1,n)*time_unit)/E_st_max(1,n)*100;
            step_profit(t,n)=step_profit(t,n)+(Pgen_real_allocated(t,n)-P_charge_max(1,n)/Ef_charge)*time_unit*selling_price(t,1);
