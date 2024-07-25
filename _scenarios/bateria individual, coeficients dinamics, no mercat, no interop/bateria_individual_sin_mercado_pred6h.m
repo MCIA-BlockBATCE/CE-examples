@@ -73,21 +73,6 @@ steps = 24*4*days;
 week_day = 1; % Mayo 2023 empieza lunes
 quarter_h = 1;
 
-% OFERTA 1 (TARDE VIERNES)
-% FristFriSample = 385 (slot de 0:00 a 0:15)
-% LastFriSample = 481 (slot de 23:45 a 0:00)
-instante_oferta = 470; %(22:00 a 22:15 del viernes)
-% instante_oferta = 385 + 4*10; % 7:00
-% cantidad_oferta = 180;
-cantidad_oferta = 60;
-
-% OFERTA 2 (MAÑANA MARTES)
-instante_oferta_2 = 226-88; % (slot 9:15 a 9:30 del martes)
-% cantidad_oferta_2 = 200*0.97;
-cantidad_oferta_2 = 0;
-coste_energia_comprada_mientras_oferta = 0;
-SoC_energy_CER = zeros(length(SoC),1);
-
 %% Caso con datos reales
 
 daily_energy_origin = zeros(24*4,3);
@@ -113,31 +98,9 @@ P_discharge_max=storage_allocation*100;
 step_energy_origin_individual = zeros(members,3);
 
 for n=1:members %EMPIEZA EL ALGORITMO
-
-   if ( (t >= instante_oferta - 20) && t < instante_oferta + 4 )
-       [Dec1, P_discharge_max_oferta] = AlmacenarVenderConsumirAlternatiu_oferta(SoC_energy_CER(t),cantidad_oferta,t,instante_oferta,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),P_discharge_max(1,n));
-       Decision1(t,n) = Dec1;
-       caso_oferta = 1;
-       % La salida de la función sería un entero entre 0 i 2?
-       % 0 vender, 1 consumir y 2 almacenar
-
-   elseif ( (t >= instante_oferta_2 - 20) && (t < instante_oferta_2 + 4) )
-       [Dec1, P_discharge_max_oferta] = AlmacenarVenderConsumirAlternatiu_oferta(SoC_energy_CER(t),cantidad_oferta_2,t,instante_oferta_2,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),P_discharge_max(1,n));
-       Decision1(t,n) = Dec1;
-       caso_oferta = 2;
-       % La salida de la función sería un entero entre 0 i 2?
-       % 0 vender, 1 consumir y 2 almacenar
-
-   else
-       
-       Decision1(t,n) = AlmacenarVenderConsumirAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+      
+   Decision1(t,n) = AlmacenarVenderConsumirAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                      Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),E_st_max(1,n));
-       caso_oferta = 0;
-       % La salida de la función sería un entero entre 0 i 2?
-       % 0 vender, 1 consumir y 2 almacenar
-   end
 
 
 % Se decide vender la energía generada y a continuación se evalúa para los
@@ -146,14 +109,13 @@ for n=1:members %EMPIEZA EL ALGORITMO
 % a consumir (batería individual, sabemos las necesidades de cada uno). En
 % cualquier caso se compra la energía que nos falte de la red. 
    if Decision1(t,n)==0
-       if (caso_oferta == 1) P_discharge_max(1,n) = P_discharge_max_oferta; end
-       
+    
        P_discharge_max(1,n)=min(P_discharge_max(1,n)*Ef_discharge,(SoC(t,n)/100)*E_st_max(1,n)*(1/time_unit));
   
        if E_st_max(1,n)>0 && SoC(t,n)>0
            if Pcons_real(t,n)<P_discharge_max(1,n)
                Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC(t));
                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                if Decision2(t,n)==1
                    SoC(t+1,n)=SoC(t,n)-(((Pcons_real(t,n)*time_unit)/Ef_discharge)/E_st_max(1,n))*100;
@@ -165,7 +127,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                end
            else
                Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC(t));
                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                if Decision2(t,n)==1
                    SoC(t+1,n)=SoC(t,n)-((P_discharge_max(1,n)*time_unit)/E_st_max(1,n))*100;
@@ -189,7 +151,6 @@ for n=1:members %EMPIEZA EL ALGORITMO
 % almacena toda la posible y se vende el resto.
 
    elseif Decision1(t,n)==1
-       if (caso_oferta == 1) P_discharge_max(1,n) = P_discharge_max_oferta; end
        
        P_charge_max(1,n)=min(P_charge_max(1,n)*Ef_charge,((100-SoC(t,n))/100)*E_st_max(1,n)*(1/time_unit));
        P_discharge_max(1,n)=min(P_discharge_max(1,n)*Ef_discharge,(SoC(t,n)/100)*E_st_max(1,n)*(1/time_unit));
@@ -214,7 +175,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
            if E_st_max(1,n)>0 && SoC(t,n)>0
                if P_shortage(t,n)<P_discharge_max(1,n)
                    Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC(t));
                
                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                    if Decision2(t,n) == 1
@@ -227,7 +188,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                    end
                else
                    Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC(t));
                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                    if Decision2(t,n) == 1
                         SoC(t+1,n)=SoC(t,n)-((P_discharge_max(1,n)*time_unit)/E_st_max(1,n))*100;
@@ -260,32 +221,9 @@ for n=1:members %EMPIEZA EL ALGORITMO
        step_energy_origin_individual(n,3)=step_energy_origin_individual(n,3)+Pcons_real(t,n);%*Unidad_t;
    end
 
-   % Descargo en 4 instantes de tiempo los 120 kW, a 30kWh equivalentes
-   % cada cuarto de hora
-    if(t==instante_oferta || t==instante_oferta+1 || t==instante_oferta+2 || t==instante_oferta+3)
-        energia_a_vender_de_bat = storage_allocation * cantidad_oferta/4;
-        energia_SoC_anterior = max_capacity * storage_allocation(n) * (SoC(t,n)/100);
-        energia_SoC_actual = energia_SoC_anterior - energia_a_vender_de_bat(n);
-        SoC(t+1,n) = 100* energia_SoC_actual/(storage_allocation(n)*max_capacity);
-
-        
-    end
-
-    if(t==instante_oferta_2 || t==instante_oferta_2+1 || t==instante_oferta_2+2 || t==instante_oferta_2+3)
-        energia_a_vender_de_bat = storage_allocation * cantidad_oferta_2/4;
-        energia_SoC_anterior = max_capacity * storage_allocation(n) * (SoC(t,n)/100);
-        energia_SoC_actual = energia_SoC_anterior - energia_a_vender_de_bat(n);
-        SoC(t+1,n) = 100* energia_SoC_actual/(storage_allocation(n)*max_capacity);
-    end
-
     energy_origin_instant_individual(t,n,:) = step_energy_origin_individual(n,:);
 
 end % AQUÍ ACABA LOOP POR PARTICIPANTE
-
-for i=1:3
-    energy_origin_instant(t,i) = sum(energy_origin_instant_individual(t,:,i));
-end
-
 
 acum = 0;
 for z = 1:members
@@ -294,13 +232,14 @@ end
 
 SoC_energy_CER(t+1) = acum; 
 
+for i=1:3
+    energy_origin_instant(t,i) = sum(energy_origin_instant_individual(t,:,i));
+end
+
 daily_energy_origin(quarter_h,:) = daily_energy_origin(quarter_h,:) + sum(step_energy_origin_individual(:,:));
 
 step_energy_origin = sum(step_energy_origin_individual(:,:));
 
-if(t==instante_oferta || t==instante_oferta+1 || t==instante_oferta+2 || t==instante_oferta+3)
-    coste_energia_comprada_mientras_oferta = coste_energia_comprada_mientras_oferta + (step_energy_origin(1,3) * price_next_1h(t));
-end
 
 total_energy_origin_individual(:,:)=total_energy_origin_individual(:,:) + step_energy_origin_individual(:,:);
 
@@ -354,7 +293,7 @@ quarter_h = 1;
 %instante_oferta = 481 - (16*4); %(quarter_h = 88, 22:00 del viernes)
 %cantidad_oferta = 0;
 %coste_energia_comprada_mientras_oferta = 0;
-%SoC_energy_CER = zeros(length(SoC),1);
+%SoC = zeros(length(SoC),1);
 
 for n=1:members  
     Pgen_real_allocated(:,n) = generation_allocation(:,n).*Pgen_real*factor_gen;
@@ -410,13 +349,6 @@ P_discharge_max=storage_allocation*100;
        end  
     end
 
-    acum = 0;
-    for z = 1:members
-        acum = acum + (max_capacity * storage_allocation(z) * (SoC(t+1,z)/100));
-    end
-
-    SoC_energy_CER_noOpt(t+1) = acum;
-
     step_energy_origin_unoptimised(t,:) = sum(step_energy_origin_individual_unoptimised(:,:));
 
     [quarter_h,hour,week_day] = siguiente_ch(quarter_h,hour,week_day);
@@ -455,17 +387,10 @@ t = t';
 % hold off
 
 % subplot(2,1,2)
-% plot(t(1:672),100*SoC_energy_CER(1:672)/max_capacity)
+% plot(t(1:672),100*SoC(1:672)/max_capacity)
 % ylabel('SoC de la batería (%)')
 % ylim([0 100])
 % sgtitle("Validación de la regulación del sistema para el cumplimiento de una oferta")
-
-figure(19)
-plot(t(1:672),100*SoC_energy_CER_noOpt(1:672)/max_capacity)
-title('Estado de carga (SoC) de la batería')
-ylabel('SoC (%)')
-xlabel('Tiempo')
-ylim([0 100])
 
 figure(20)
 plot(t(1:672),energy_origin_instant(1:672,1),t(1:672),energy_origin_instant(1:672,2),t(1:672),energy_origin_instant(1:672,3))
@@ -482,6 +407,13 @@ title('Potencia consumida por participante')
 legend('P1','P2','P3','P4','P5','P6')
 ylabel('Potencia consumida (kW)')
 xlabel('Tiempo')
+
+figure(19)
+plot(t(1:672),100*SoC_energy_CER(1:672)/max_capacity)
+title('Estado de carga (SoC) de la batería')
+ylabel('SoC (%)')
+xlabel('Tiempo')
+ylim([0 100])
 
 % figure(21)
 % plot(t(1:672),price_next_1h(1:672))
@@ -519,13 +451,13 @@ xlabel('Tiempo')
 % ylabel('%')
 % ylim([0 100])
 
-% SoC_energy_CER_no_oferta = SoC_energy_CER;
-% save("SoC_energy_CER_no_oferta.mat", "SoC_energy_CER_no_oferta");
+% SoC_no_oferta = SoC;
+% save("SoC_no_oferta.mat", "SoC_no_oferta");
 % 
-% SoC_energy_CER_ofertas = SoC_energy_CER;
-% load SoC_energy_CER_no_oferta.mat
+% SoC_ofertas = SoC;
+% load SoC_no_oferta.mat
 
-% plot(t(96*1:96*2),SoC_energy_CER_ofertas(96*1:96*2),t(96*1:96*2),SoC_energy_CER_no_oferta(96*1:96*2));
+% plot(t(96*1:96*2),SoC_ofertas(96*1:96*2),t(96*1:96*2),SoC_no_oferta(96*1:96*2));
 % title('Comparación de la gestión de la batería al considerar la prestación de servicios')
 % legend('Con oferta','Sin oferta')
 % ylabel('SoC (%)')
@@ -533,7 +465,7 @@ xlabel('Tiempo')
 % ylim([0 100])
 % 
 % figure(24)
-% plot(t(96+1:96*2+1),100*SoC_energy_CER(96+1:96*2+1)/max_capacity,t(96+1:96*2+1),100*SoC_energy_CER_no_oferta(96+1:96*2+1)/max_capacity)
+% plot(t(96+1:96*2+1),100*SoC(96+1:96*2+1)/max_capacity,t(96+1:96*2+1),100*SoC_no_oferta(96+1:96*2+1)/max_capacity)
 % title('Comparación de la gestión de la batería al considerar el cumplimiento de una oferta')
 % ylabel('SoC (%)')
 % xlabel('Tiempo')
@@ -541,7 +473,7 @@ xlabel('Tiempo')
 % ylim([0 100])
 % 
 % figure(25)
-% plot(t(4*96+1:96*5+1),100*SoC_energy_CER(4*96+1:96*5+1)/max_capacity,t(4*96+1:96*5+1),100*SoC_energy_CER_no_oferta(4*96+1:96*5+1)/max_capacity)
+% plot(t(4*96+1:96*5+1),100*SoC(4*96+1:96*5+1)/max_capacity,t(4*96+1:96*5+1),100*SoC_no_oferta(4*96+1:96*5+1)/max_capacity)
 % title('Comparación de la gestión de la batería al considerar el cumplimiento de una oferta')
 % ylabel('SoC (%)')
 % xlabel('Tiempo')

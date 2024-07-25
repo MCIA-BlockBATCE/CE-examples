@@ -76,15 +76,15 @@ quarter_h = 1;
 % OFERTA 1 (TARDE VIERNES)
 % FristFriSample = 385 (slot de 0:00 a 0:15)
 % LastFriSample = 481 (slot de 23:45 a 0:00)
-instante_oferta = 470; %(22:00 a 22:15 del viernes)
+% instante_oferta = 470; %(22:00 a 22:15 del viernes)
 % instante_oferta = 385 + 4*10; % 7:00
 % cantidad_oferta = 180;
-cantidad_oferta = 60;
+% cantidad_oferta = 0;
 
 % OFERTA 2 (MAÑANA MARTES)
 instante_oferta_2 = 226-88; % (slot 9:15 a 9:30 del martes)
 % cantidad_oferta_2 = 200*0.97;
-cantidad_oferta_2 = 0;
+cantidad_oferta_2 = 150;
 coste_energia_comprada_mientras_oferta = 0;
 SoC_energy_CER = zeros(length(SoC),1);
 
