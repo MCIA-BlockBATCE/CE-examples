@@ -9,10 +9,18 @@ close all
 % showing OR for each pair of consumption profiles
 
 % Variable initialization
-xCE = 1:1:10;
-y1CE = [2,3,4,5,6,5,4,3,4,3];
+xCE = 1:1:100;
+%y1CE = [1,3,4,5,6,5,4,3,4,3];
 %y2CE = [2,3,4,5,6,7,6,5,4,3];
-y2CE = [1,2,3,4,5,6,5,4,3,2];
+%y2CE = [2,2.5,3,4,5,6,5,4,3,2];
+rng('default');
+pd = makedist('Normal');
+y1CE = random(pd, [1,100]);
+y2CE = random(pd, [1,100]);
+
+y1CE = abs(y1CE);
+y2CE = abs(y2CE);
+
 y1_is_bigger = false;
 start_pos = 1;
 
@@ -74,11 +82,11 @@ if isempty(intersect_indexes)
 elseif (length(intersect_indexes) == 1)
 
     % Find which function is smaller in the first triangle
-    y1_is_bigger_first_triangle = 0;
-    y1_is_bigger_second_triangle = 0;
+    y1_is_bigger_first_triangle = false;
+    y1_is_bigger_second_triangle = false;
     
     if(y1CE(intersect_indexes-1) > y2CE(intersect_indexes-1))
-        y1_is_bigger_first_triangle = 1;
+        y1_is_bigger_first_triangle = true;
     end
     
     if (y1_is_bigger_first_triangle)
@@ -99,20 +107,20 @@ elseif (length(intersect_indexes) == 2)
     N2 = intersect_indexes(2);
 
     % Find which function is in each of the 3 segments
-    y1_is_bigger_before_N1 = 0;
-    y1_is_bigger_between = 0;
-    y1_is_bigger_after_N2 = 0;
+    y1_is_bigger_before_N1 = false;
+    y1_is_bigger_between = false;
+    y1_is_bigger_after_N2 = false;
 
     if (y1CE(N1-1) > y2CE(N1-1))
-        y1_is_bigger_before_N1 = 1;
+        y1_is_bigger_before_N1 = true;
     end
 
     if (y1CE(N1+1) > y2CE(N1+1)) 
-        y1_is_bigger_between = 1;
+        y1_is_bigger_between = true;
     end
 
     if (y1CE(N2+1) > y2CE(N2+1)) 
-        y1_is_bigger_after_N2 = 1;
+        y1_is_bigger_after_N2 = true;
     end
 
     % Area before N1
@@ -123,7 +131,7 @@ elseif (length(intersect_indexes) == 2)
     end
 
     % Area between N1 and N2
-    if (y1_is_bigger)
+    if (y1_is_bigger_between)
         area_segment_2 = trapz(y2CE(N1:N2));
     else
         area_segment_2 = trapz(y1CE(N1:N2));
@@ -131,45 +139,79 @@ elseif (length(intersect_indexes) == 2)
 
     % Area after N2
     if (y1_is_bigger_before_N1)
-        area_segment_2 = trapz(y2CE(1:N1));
+        area_segment_3 = trapz(y2CE(N2:end));
+    else
+        area_segment_3 = trapz(y1CE(N2:end));
+    end
+
+    total_intersect_area = area_segment_1 + area_segment_2 + area_segment_3;
+% Case for N > 2 can be tackled as N = 2, if intersections are treated in
+% pairs, so area between Nk and Nk+1 can be performed N-1 times. E.G, for
+% N = 3, there are 4 areas to compute, and there are N-1 (2) intermediate
+% areas.
+else
+    % Compute area for the first segment
+    N1 = intersect_indexes(1);
+
+    y1_is_bigger_before_N1 = false;
+    if (y1CE(N1-1) > y2CE(N1-1))
+        y1_is_bigger_before_N1 = true;
+    end
+
+    if (y1_is_bigger_before_N1)
+        area_segment_1 = trapz(y2CE(1:N1));
     else
         area_segment_1 = trapz(y1CE(1:N1));
     end
 
-% Case for N > 2 can be tackled as N = 2, if intersections are treated in
-% pairs.
-else
+    intermediate_area = 0;
     % Take intersection indexes in pairs
     i = 2;
-    while (i ~= length(intersect_indexes))
+    while (i <= length(intersect_indexes))
         
         % Take two indexes
-        N1 = intersect_indexes(i-1);
-        N2 = intersect_indexes(i);
+        NK = intersect_indexes(i-1); % Here is Nk
+        NKK = intersect_indexes(i); % Here is Nk+1
 
-        % Find which function is bigger from N1 to N2
-        y1_is_bigger = 0;
-        if (y1CE(intersect_indexes(1)+1) > y2CE(intersect_indexes(1)+1)) 
-            y1_is_bigger = 1;
+        % Find which function is bigger from Nk to Nk+1
+        y1_is_bigger_between = false;
+        if (y1CE(NK+1) > y2CE(NKK+1)) 
+            y1_is_bigger_between = true;
         end
     
-        if (y1_is_bigger)
-            total_intersect_area = total_intersect_area + trapz(y2CE(N1:N2));
+        if (y1_is_bigger_between)
+            intermediate_area = intermediate_area + trapz(y2CE(NK:NKK));
         else
-            total_intersect_area = total_intersect_area + trapz(y1CE(N1:N2));
+            intermediate_area = intermediate_area + trapz(y1CE(NK:NKK));
         end
-
+        i = i + 1;
     end
+
+    % Compute area for the last segment
+    NZ = intersect_indexes(end);
+    y1_is_bigger_after_NZ = false;
+
+    if (y1CE(NZ+1) > y2CE(NZ+1)) 
+        y1_is_bigger_after_NZ = true;
+    end
+
+    if (y1_is_bigger_after_NZ)
+        area_segment_Z = trapz(y2CE(NZ:end));
+    else
+        area_segment_Z = trapz(y1CE(NZ:end));
+    end
+
+    total_intersect_area = area_segment_1 + intermediate_area + area_segment_Z;
 end
 
 % Run through all vectors and find biggest for each sample
 
 biggest_signal = [];
-for i = 1:length(y1CE)
-    if y1CE(i) > y2CE(i)
-        biggest_signal(i) = y1CE(i);
+for j = 1:length(y1CE)
+    if y1CE(j) > y2CE(j)
+        biggest_signal(j) = y1CE(j);
     else
-        biggest_signal(i) = y2CE(i);
+        biggest_signal(j) = y2CE(j);
     end
 end
 
