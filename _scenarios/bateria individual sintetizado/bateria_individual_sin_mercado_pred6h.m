@@ -1,26 +1,72 @@
 clear all
 close all
 
-% Declaracion de variables y ejecución de funciones (Lecturas y predicciones)
-% MES DE MAYO TIENE 2976 muestras = 4 cuartos * 24 horas * 31 días
-days = 7;
-steps = 24*4*days;
+% This script models an energy community (EC) where each of its members
+% can use a fix allocation of the EC energy storage system (battery). The
+% script is organized in the following sections:
+% 
+%   1. PARAMETER DEFINITION
+%       This section allows for user interaction as EC consumption profiles
+%       can be selected, as well as PV power allocation coefficients.
+%       However, default values are preset for out of the box running.
+% 
+%   2. EC TESTED MODEL
+%       This section runs the EC model that is being compared to rule-based
+%       reference model.
+%
+%   3. EC RULE-BASED REFERENCE MODEL
+%       This section runs the EC rule-based reference model.
+%
+%   4. RESULTS: PLOTS AND KPIs
+%       This section displays plots which illustrate the usage of PV power
+%       generation, battery and market interaction (if allowed). KPIs are
+%       computed to 
+% 
 
+
+%% 1. PARAMETER DEFINITION
+
+% --- EC consumption profiles ---
 % aquí se acotaria la comunidad por ejemplo
 CER_excedentaria = [4 7 8 10 12 13];
 % CER_deficitaria = [x x x x x x]:
 % CER_balanceada = [x x x x x x]:
 
+% --- PV power allocation coefficients ---
 % aquí elegimos tipo de CoR
 CoR_type = 0; % fixed allocation
 % CoR_type = 1; % allocation based on the moment of the week (variable)
 % CoR_type = 2; % allocation based on consumption of previous step (dynamic variable)
 
+% --- Battery parameters ---
+% Parámetros batería
+Ef_charge=0.97;
+Ef_discharge=0.97;
+max_capacity=200;
+factor_gen = 1;
+
+% --- Internal parameters ---
+% Declaracion de variables y ejecución de funciones (Lecturas y predicciones)
+% MES DE MAYO TIENE 2976 muestras = 4 cuartos * 24 horas * 31 días
+days = 7;
+steps = 24*4*days;
 members=length(CER_excedentaria); % Numero de participantes
 
 % FRECUENCIA HORARIA A CUARTOHORARIA
 time_unit=0.25; % Tiempo entre ejecuciones (1h) HABRÁ QUE CAMBIAR A 0.25
 
+P_surplus=zeros(steps,members);
+P_shortage=zeros(steps,members);
+SoC=ones(steps+1,members)*0; % SoC inicial
+selling_price=0.07 * ones(steps,1);
+
+% TESTING PURPOSES ONLY
+hour = 1;
+week_day = 1; % Mayo 2023 empieza lunes
+quarter_h = 1;
+
+
+% --- Input data ---
 load("..\..\_data\Pgen_real.mat")
 load("..\..\_data\Pgen_real_3h.mat")
 
@@ -46,6 +92,8 @@ load("..\..\_data\Pcons_pred_3h.mat")
 % Passem a potencia
 Pcons_pred_1h = 4 * Pcons_pred_1h(:,CER_excedentaria);
 Pcons_pred_3h = 4 * Pcons_pred_3h(:,CER_excedentaria);
+
+load("..\..\_data\buying_prices.mat");
 
 if CoR_type == 0
    
@@ -76,29 +124,7 @@ else
 
 end
 
-
-P_surplus=zeros(steps,members);
-P_shortage=zeros(steps,members);
-
-SoC=ones(steps+1,members)*0; % SoC inicial
-
-% Parámetros batería
-Ef_charge=0.97;
-Ef_discharge=0.97;
-max_capacity=200;
-factor_gen = 1;
-
-selling_price=0.07 * ones(steps,1);
-
-load("..\..\_data\buying_prices.mat");
-
-% TESTING PURPOSES ONLY
-hour = 1;
-week_day = 1; % Mayo 2023 empieza lunes
-quarter_h = 1;
-
-
-%% Caso con datos reales
+%% SECOND SECTION
 
 daily_energy_origin = zeros(24*4,3);
 total_energy_origin_individual = zeros(members,3);
