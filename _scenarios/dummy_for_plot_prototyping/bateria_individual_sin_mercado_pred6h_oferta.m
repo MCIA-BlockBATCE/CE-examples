@@ -90,6 +90,15 @@ SoC_energy_CER = zeros(length(SoC),1);
 
 daily_energy_origin = zeros(24*4,3);
 total_energy_origin_individual = zeros(members,3);
+
+% USO DE ENERGÍA DE GENERACIÓN
+total_energy_decision_individual = zeros(members, 5);
+% col 1 = vender red
+% col 2 = consumir placas
+% col 3 = consumir bat
+% col 4 = vender p2p
+% col 5 = vender mercado (interop)
+
 step_profit=zeros(steps,members);
 energy_origin_instant=zeros(steps,3);
 energy_origin_instant_individual=zeros(steps,members,3);
@@ -101,6 +110,7 @@ P_charge_max=storage_allocation*100;
 P_discharge_max=storage_allocation*100;
 
 step_energy_origin_individual = zeros(members,3);
+step_energy_decision_individual = zeros(members,5);
 
 [X] = tramo_coef(week_day,hour);
 
@@ -158,6 +168,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                if Decision2(t,n)==1
                    SoC(t+1,n)=SoC(t,n)-(((Pcons_real(t,n)*time_unit)/Ef_discharge)/E_st_max(1,n))*100;
                    step_energy_origin_individual(n,2)=step_energy_origin_individual(n,2)+Pcons_real(t,n);%*Unidad_t;
+                   step_energy_decision_individual(n,3) = Pcons_real(t,n); % consumida batería
                else
                    step_profit(t,n)=step_profit(t,n)-Pcons_real(t,n)*time_unit*price_next_1h(t,1);
                    step_energy_origin_individual(n,3)=step_energy_origin_individual(n,3)+Pcons_real(t,n);%*Unidad_t;
@@ -172,6 +183,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                    step_energy_origin_individual(n,2)=step_energy_origin_individual(n,2)+P_discharge_max(1,n)*Ef_discharge;%*Unidad_t;
                    step_profit(t,n)=step_profit(t,n)-(Pcons_real(t,n)-P_discharge_max(1,n)*Ef_discharge)*time_unit*price_next_1h(t,1);
                    step_energy_origin_individual(n,3)=step_energy_origin_individual(n,3)+(Pcons_real(t,n)-P_discharge_max(1,n)*Ef_discharge);%*Unidad_t;
+                   step_energy_decision_individual(n,3) = Pcons_real(t,n)-P_discharge_max(1,n)*Ef_discharge; % consumida batería
                else
                   step_profit(t,n)=step_profit(t,n)-Pcons_real(t,n)*time_unit*price_next_1h(t,1);
                   step_energy_origin_individual(n,3)=step_energy_origin_individual(n,3)+Pcons_real(t,n);%*Unidad_t;
@@ -183,6 +195,8 @@ for n=1:members %EMPIEZA EL ALGORITMO
            step_energy_origin_individual(n,3)=step_energy_origin_individual(n,3)+Pcons_real(t,n);%*Unidad_t;
        end
       step_profit(t,n)=step_profit(t,n)+Pgen_pred_1h_allocated(t,n)*time_unit*selling_price(t,1);
+      
+      step_energy_decision_individual(n,1) = Pgen_real_allocated(t,n); % vendida red 
 
 % Se decide consumir la energía consumida. En caso de déficit se evalua si
 % usar la batería y se compra la energía que falte. En caso de superávit se
@@ -193,6 +207,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
        
        P_charge_max(1,n)=min(P_charge_max(1,n)*Ef_charge,((100-SoC(t,n))/100)*E_st_max(1,n)*(1/time_unit));
        P_discharge_max(1,n)=min(P_discharge_max(1,n)*Ef_discharge,(SoC(t,n)/100)*E_st_max(1,n)*(1/time_unit));
+       step_energy_decision_individual(n,2) = Pgen_real_allocated(t,n);
 
        if Pgen_real_allocated(t,n)>Pcons_real(t,n)
            P_surplus(t,n)=Pgen_pred_1h_allocated(t,n)-Pcons_real(t,n);
@@ -220,6 +235,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                    if Decision2(t,n) == 1
                        SoC(t+1,n)=SoC(t,n)-(((P_shortage(t,n)*time_unit)/Ef_discharge)/E_st_max(1,n))*100;
                        step_energy_origin_individual(n,2)=step_energy_origin_individual(n,2)+P_shortage(t,n);%*Unidad_t;
+                       step_energy_decision_individual(n,3) = P_shortage(t,n);
                    else
                        step_profit(t,n)=step_profit(t,n)-P_shortage(t,n)*time_unit*price_next_1h(t,1);
                        step_energy_origin_individual(n,3)=step_energy_origin_individual(n,3)+P_shortage(t,n);%*Unidad_t;
@@ -234,6 +250,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                         step_energy_origin_individual(n,2)=step_energy_origin_individual(n,2)+P_discharge_max(1,n);%*Unidad_t; %*Ef_discharge
                         step_profit(t,n)= step_profit(t,n)-(P_shortage(t,n)-P_discharge_max(1,n))*time_unit*price_next_1h(t,1); %*Ef_discharge
                         step_energy_origin_individual(n,3)=step_energy_origin_individual(n,3)+(P_shortage(t,n)-P_discharge_max(1,n));%*Unidad_t; %*Ef_discharge
+                        step_energy_decision_individual(n,3) = P_shortage(t,n)-P_discharge_max(1,n);
                    else
                         step_profit(t,n)=step_profit(t,n)-P_shortage(t,n)*time_unit*price_next_1h(t,1);
                         step_energy_origin_individual(n,3)=step_energy_origin_individual(n,3)+P_shortage(t,n);%*Unidad_t;
@@ -264,6 +281,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
    % cada cuarto de hora
     if(t==instante_oferta || t==instante_oferta+1 || t==instante_oferta+2 || t==instante_oferta+3)
         energia_a_vender_de_bat = storage_allocation * cantidad_oferta/4;
+        step_energy_decision_individual(n,5) = storage_allocation(n) * cantidad_oferta/4;
         energia_SoC_anterior = max_capacity * storage_allocation(n) * (SoC(t,n)/100);
         energia_SoC_actual = energia_SoC_anterior - energia_a_vender_de_bat(n);
         SoC(t+1,n) = 100* energia_SoC_actual/(storage_allocation(n)*max_capacity);
@@ -273,6 +291,8 @@ for n=1:members %EMPIEZA EL ALGORITMO
 
     if(t==instante_oferta_2 || t==instante_oferta_2+1 || t==instante_oferta_2+2 || t==instante_oferta_2+3)
         energia_a_vender_de_bat = storage_allocation * cantidad_oferta_2/4;
+        step_energy_decision_individual(n,5) = storage_allocation(n) * cantidad_oferta_2/4; % vendida mercado (interop) 
+        step_energy_decision_individual(n,4) = 2; % fake mercado p2p
         energia_SoC_anterior = max_capacity * storage_allocation(n) * (SoC(t,n)/100);
         energia_SoC_actual = energia_SoC_anterior - energia_a_vender_de_bat(n);
         SoC(t+1,n) = 100* energia_SoC_actual/(storage_allocation(n)*max_capacity);
@@ -304,6 +324,8 @@ if(t==instante_oferta || t==instante_oferta+1 || t==instante_oferta+2 || t==inst
 end
 
 total_energy_origin_individual(:,:)=total_energy_origin_individual(:,:) + step_energy_origin_individual(:,:);
+total_energy_decision_individual(:,:)=total_energy_decision_individual(:,:) + step_energy_decision_individual(:,:);
+
 
 % ch
 [quarter_h,hour,week_day] = siguiente_ch(quarter_h,hour,week_day);
@@ -314,6 +336,8 @@ end
 final_bill = -sum(step_profit);
 SoC_pred=SoC;
 total_energy_consumption_individual = sum(total_energy_origin_individual.');
+total_energy_generation_invidual = sum(total_energy_decision_individual.');
+
 total_energy_origin = sum(total_energy_origin_individual);
 total_energy_consumption = sum(total_energy_origin);
 for i=1:3
@@ -322,6 +346,12 @@ end
 for i=1:3
     for n=1:members
         total_energy_origin_individual(n,i) = total_energy_origin_individual(n,i)/total_energy_consumption_individual(1,n);
+    end
+end
+
+for i=1:5
+    for n=1:members
+        total_energy_decision_individual(n,i) = total_energy_decision_individual(n,i)/total_energy_generation_invidual(1,n);
     end
 end
 
@@ -433,20 +463,18 @@ total_final_bill_unoptimised = sum(final_bill_unoptimised);
 
 %%
 
-figure(7)
-bar(total_energy_origin_individual,'stacked')
-legend('Origen placas','Origen batería','Origen red eléctrica')
+
+% col 1 = vender red
+% col 2 = consumir
+% col 3 = vender p2p
+% col 4 = vender mercado (interop)
+
+% figure(17)
+% bar(Y,[total_final_bill total_final_bill_unoptimised])
+% title("Facturación agregada de la comunidad (semanal)")
+% ylabel('Euros (€)')
 
 
-figure(17)
-bar(Y,[total_final_bill total_final_bill_unoptimised])
-title("Facturación agregada de la comunidad (semanal)")
-ylabel('Euros (€)')
-
-t1 = datetime(2023,5,1,0,0,0);
-t2 = datetime(2023,5,31,0,0,0);
-t = t1:minutes(15):t2;
-t = t';
 
 % figure(18)
 % subplot(2,1,1)
@@ -464,27 +492,20 @@ t = t';
 % ylim([0 100])
 % sgtitle("Validación de la regulación del sistema para el cumplimiento de una oferta")
 
-figure(19)
-plot(t(1:672),100*SoC_energy_CER(1:672)/max_capacity)
-title('Estado de carga (SoC) de la batería')
-ylabel('SoC (%)')
-xlabel('Tiempo')
-ylim([0 100])
-
-figure(20)
-plot(t(1:672),energy_origin_instant(1:672,1),t(1:672),energy_origin_instant(1:672,2),t(1:672),energy_origin_instant(1:672,3))
-title('Potencia consumida según origen')
-legend('Origen placas','Origen batería','Origen red eléctrica')
-ylabel('Potencia consumida (kW)')
-xlabel('Tiempo')
+% figure(20)
+% plot(t(1:672),energy_origin_instant(1:672,1),t(1:672),energy_origin_instant(1:672,2),t(1:672),energy_origin_instant(1:672,3))
+% title('Potencia consumida según origen')
+% legend('Origen placas','Origen batería','Origen red eléctrica')
+% ylabel('Potencia consumida (kW)')
+% xlabel('Tiempo')
 % yyaxis right
 % plot(t(1:672), Pgen_real(1:672))
 
-figure(21)
-plot(t(1:672),price_next_1h(1:672))
-title('Precio de compra de electricidad a la red')
-ylabel('Precio (€/kWh)')
-xlabel('Tiempo')
+% figure(21)
+% plot(t(1:672),price_next_1h(1:672))
+% title('Precio de compra de electricidad a la red')
+% ylabel('Precio (€/kWh)')
+% xlabel('Tiempo')
 
 % figure(22)
 % plot(t(1:672), Pgen_real(1:672))
@@ -585,3 +606,165 @@ xlabel('Tiempo')
 % legend('Origen placas','Origen batería','Origen red eléctrica')
 % ylabel('Potencia consumida (kW)')
 % xlabel('Tiempo')
+
+
+%% METRICAS DISPERSIÓN
+
+% Cálculo de día promedio
+avg_days = zeros(96,members);
+
+% Primeras 672 muestras de mayo
+day = 1;
+for j = 1:members
+    
+    q = 1;
+    for i=1:672
+        avg_days(q,j) = avg_days(q,j) + Pcons_real(i,j); 
+        q = q + 1;
+        if q == 97
+            q = 1;
+        end
+    end
+end
+
+% Cálculo de métrica de proximidad de máximos y tasa de consumo basal
+for j = 1:members
+
+    aux = max(avg_days(:,j));
+    [x,y] = find(avg_days(:,j)==aux);
+    max_part(1,j) = x;
+    mean_part(1,j) = mean(avg_days(:,j));
+    %mean_newcons(1,j) = mean(new_CER_Day(:,j));
+
+end
+
+max_part = sort(max_part);
+mean_part = sort(mean_part);
+POR = 0;
+ADR = 0;
+
+for j = 1:members-1
+    POR = POR + (max_part(j+1)-max_part(j));
+    ADR = ADR + (mean_part(j+1)-mean_part(j));
+end
+
+maxD = 95;
+
+POR = 100*(1-(POR/maxD));
+
+% TODO: Cálculo de méctricas SoC (ciclos acumulados, promedio de ciclos por día,
+% usabilidad)
+
+CE_SoC_signal = 100*SoC_energy_CER(1:672)/max_capacity;
+AUR_low = zeros(days,1);
+AUR_high = zeros(days,1); 
+grad_zero_counts = 0;
+CBC = 0;
+
+q = 1;
+day = 1;
+for j = 1:steps
+    %
+    if j>1
+        CBC = CBC + abs((CE_SoC_signal(j) - CE_SoC_signal(j-1))); 
+    end
+
+    if j>1 && j<steps
+        if (CE_SoC_signal(j-1) > CE_SoC_signal(j)) && (CE_SoC_signal(j+1) > CE_SoC_signal(j))
+            % it's a min
+            grad_zero_counts = grad_zero_counts + 1; 
+        elseif (CE_SoC_signal(j-1) < CE_SoC_signal(j)) && (CE_SoC_signal(j+1) < CE_SoC_signal(j))
+            % it's a max
+            grad_zero_counts = grad_zero_counts + 1; 
+        end
+    end
+
+    q = q + 1;
+    if q == 97
+        firstIndex = ((day-1)*96)+1;
+        lastIndex = day*96;
+        AUR_low(day) = min(CE_SoC_signal(firstIndex:lastIndex));
+        AUR_high(day) = max(CE_SoC_signal(firstIndex:lastIndex));
+        q = 1;
+        day = day + 1;
+    end
+end
+
+CBU = CBC/100;
+AUR = zeros(2,1);
+AUR(1) = mean(AUR_low);
+AUR(2) = mean(AUR_high);
+%BCPD = grad_zero_counts/days;
+BCPD = (CBU/2)/days;
+
+% TODO: Crear datos sintéticos?
+
+%% GRÁFICOS
+t1 = datetime(2023,5,1,0,0,0);
+t2 = datetime(2023,5,31,0,0,0);
+t = t1:minutes(15):t2;
+t = t';
+
+Pcons_agg = zeros(steps,1);
+
+for i = 1:steps
+    Pcons_agg(i) = sum(Pcons_real(i,:));
+end
+
+figure(101)
+plot(t(1:672), Pcons_agg(1:672), t(1:672), Pgen_real(1:672))
+title('Aggregated power consumption vs aggregated power generation')
+ylabel('Power [kW]')
+xlabel('Time')
+legend('Aggregated power consumption','Aggregated power generation')
+
+figure(102)
+bar(total_energy_origin_individual*100,'stacked')
+title('Power consumption by origin')
+ylabel('Power consumption [%]')
+xlabel('Participant')
+legend('FV','Battery','Grid')
+
+figure(103)
+% total_energy_decision_invidual: 6 filas (members) x 5 cols (acciones)
+% Valores en % para el total de cada fila
+aux_fig102 = [0.2, 0.1, 0.25, 0.15, 0.3;
+    0.1, 0.25, 0.2, 0.15, 0.3;
+    0.2, 0.1, 0.15, 0.15, 0.4;
+    0.25, 0.15, 0.2, 0.10, 0.3;
+    0.2, 0.1, 0.2, 0.25, 0.25];
+aux_fig102 = 100*aux_fig102;
+bar(aux_fig102,'stacked')
+title('Power usage of RE')
+ylim([0 100])
+ylabel('Renewable power [%]')
+xlabel('Participant')
+legend('Sold to grid','Consumed from PV', 'Consumed from Battery','Sold P2P', 'Sold to Market')
+
+% Pendiente añadir en este gráfico anotaciones con métricas de BAT
+figure(104)
+plot(t(1:672),CE_SoC_signal)
+title("Battery State of Charge (SoC), AUR: [" + num2str(AUR(1), '%05.2f') + ", " ...
+    + num2str(AUR(2), '%05.2f') + "] [%], CBC: " + num2str(CBU, '%05.2f') + ", BCPD: " ...
+    + num2str(BCPD, '%05.2f'))
+ylabel('SoC [%]')
+xlabel('Time')
+ylim([0 100])
+% dim = [0.15 0.5 0.5 0.4];
+% str = {'AUR' [AUR(1),AUR(2)], 'CBC' CBC, 'BCPD' BCPD};
+% annotation('textbox',dim,'String',str,'FitBoxToText','on');
+
+
+% Pendiente añadir en este gráfico anotaciones con métricas perfiles de
+% consumo
+figure(105)
+qs = 1:1:96;
+plot(qs, avg_days(:,1), qs, avg_days(:,2), qs, avg_days(:,3), qs, avg_days(:,4), qs, avg_days(:,5), qs, avg_days(:,6))
+title("Average-day power consumption for each CE member, POR: " + num2str(POR, '%05.2f') ...
+    + "[%], ADR: " + num2str(ADR, '%05.2f') + "[kW]")
+xlim([1 96])
+ylabel('Power [kW]')
+xlabel('Time, in quarters')
+% dim = [0.15 0.5 0.5 0.4];
+% str = {'POR' POR, 'ADR' ADR};
+% annotation('textbox',dim,'String',str,'FitBoxToText','on');
