@@ -107,8 +107,36 @@ Pcons_pred_3h = 4 * Pcons_pred_3h(:,CER_excedentaria);
 
 load("..\..\_data\buying_prices.mat");
 
-[generation_allocation, storage_allocation] = allocation_coefficients(CoR_type);
+% TODO: Encapsular en función la gestión de los CoR, para que se obtenga
+% como salida de la misma el generation_allocation y storage_allocation
+if CoR_type == 0
+   
+    tramos_mensuales(CER_excedentaria)
+    [generation_allocation] = bbce2_calculo_coeficientes_estaticos();
+    generation_allocation = sum(generation_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
+    generation_allocation = generation_allocation/sum(generation_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
+    storage_allocation=generation_allocation;
 
+elseif CoR_type == 1
+
+    tramos_mensuales(CER_excedentaria)
+    [generation_allocation] = bbce2_calculo_coeficientes_estaticos();
+    generation_allocation=generation_allocation(1:members,1:3);
+    storage_allocation=generation_allocation(1:members,:);
+    storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
+    storage_allocation = storage_allocation/sum(storage_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
+
+else 
+
+    [generation_allocation] = bbce2_calculo_coeficientes_dinamicos(CER_excedentaria); 
+
+    % Se usan CoR estaticos para repartir la bateria
+    tramos_mensuales(CER_excedentaria)
+    [storage_allocation] = bbce2_calculo_coeficientes_estaticos();
+    storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
+    storage_allocation = storage_allocation/sum(storage_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
+
+end
 
 %% 2. EC TESTED MODEL
 
@@ -466,21 +494,112 @@ total_final_bill_unoptimised = sum(final_bill_unoptimised);
 
 %% 4. RESULTS: KPIs AND PLOTS
 
-[ADR,POR,avg_days] = consumption_profile_metrics(Pcons_real);
-[CBU, ADC, BCPD] = battery_metrics(SoC_energy_CER, max_capacity, days, steps);
+% TODO: Function for ADR and OR
+% Input: Pconsreal (matrix)
+% Output: ADR and OR values
 
-% --- Plots ---
+% Cálculo de día promedio
+avg_days = zeros(96,members);
+
+% Primeras 672 muestras de mayo
+day = 1;
+for j = 1:members
+    
+    q = 1;
+    for i=1:672
+        avg_days(q,j) = avg_days(q,j) + Pcons_real(i,j); 
+        q = q + 1;
+        if q == 97
+            q = 1;
+        end
+    end
+end
+
+% Cálculo de métrica de proximidad de máximos y tasa de consumo basal
+for j = 1:members
+
+    aux = max(avg_days(:,j));
+    [x,y] = find(avg_days(:,j)==aux);
+    max_part(1,j) = x;
+    mean_part(1,j) = mean(avg_days(:,j));
+    %mean_newcons(1,j) = mean(new_CER_Day(:,j));
+
+end
+
+max_part = sort(max_part);
+mean_part = sort(mean_part);
+POR = 0;
+ADR = 0;
+
+for j = 1:members-1
+    POR = POR + (max_part(j+1)-max_part(j));
+    ADR = ADR + (mean_part(j+1)-mean_part(j));
+end
+
+maxD = 95;
+
+POR = 100*(1-(POR/maxD));
+
+% TODO: Cálculo de méctricas SoC (ciclos acumulados, promedio de ciclos por día,
+% usabilidad)
+% TODO: Function for CBC, AUR, BCPD
+% Inputs: SoC_energy_CER, max_capacity
+% Outputs: CBC, AUR and BCPD values
+
+CE_SoC_signal = 100*SoC_energy_CER(1:672)/max_capacity;
+AUR_low = zeros(days,1);
+AUR_high = zeros(days,1); 
+grad_zero_counts = 0;
+CBC = 0;
+
+q = 1;
+day = 1;
+for j = 1:steps
+    %
+    if j>1
+        CBC = CBC + abs((CE_SoC_signal(j) - CE_SoC_signal(j-1))); 
+    end
+
+    if j>1 && j<steps
+        if (CE_SoC_signal(j-1) > CE_SoC_signal(j)) && (CE_SoC_signal(j+1) > CE_SoC_signal(j))
+            % it's a min
+            grad_zero_counts = grad_zero_counts + 1; 
+        elseif (CE_SoC_signal(j-1) < CE_SoC_signal(j)) && (CE_SoC_signal(j+1) < CE_SoC_signal(j))
+            % it's a max
+            grad_zero_counts = grad_zero_counts + 1; 
+        end
+    end
+
+    q = q + 1;
+    if q == 97
+        firstIndex = ((day-1)*96)+1;
+        lastIndex = day*96;
+        AUR_low(day) = min(CE_SoC_signal(firstIndex:lastIndex));
+        AUR_high(day) = max(CE_SoC_signal(firstIndex:lastIndex));
+        q = 1;
+        day = day + 1;
+    end
+end
+
+CBU = CBC/100;
+AUR = zeros(2,1);
+AUR(1) = mean(AUR_low);
+AUR(2) = mean(AUR_high);
+%BCPD = grad_zero_counts/days;
+BCPD = (CBU/2)/days;
+
 t1 = datetime(2023,5,1,0,0,0);
 t2 = datetime(2023,5,31,0,0,0);
 t = t1:minutes(15):t2;
 t = t';
 
-CE_SoC_signal = 100*SoC_energy_CER(1:672)/max_capacity;
-
 Pcons_agg = zeros(steps,1);
+
 for i = 1:steps
     Pcons_agg(i) = sum(Pcons_real(i,:));
 end
+
+% --- Plots ---
 
 figure(101)
 plot(t(1:672), Pcons_agg(1:672), t(1:672), Pgen_real(1:672))
@@ -516,8 +635,8 @@ legend('Sold to grid','Consumed from PV', 'Consumed from Battery','Sold P2P', 'S
 % Pendiente añadir en este gráfico anotaciones con métricas de BAT
 figure(104)
 plot(t(1:672),CE_SoC_signal)
-title("Battery State of Charge (SoC), AUR: [" + num2str(ADC(1), '%05.2f') + ", " ...
-    + num2str(ADC(2), '%05.2f') + "] [%], CBC: " + num2str(CBU, '%05.2f') + ", BCPD: " ...
+title("Battery State of Charge (SoC), AUR: [" + num2str(AUR(1), '%05.2f') + ", " ...
+    + num2str(AUR(2), '%05.2f') + "] [%], CBC: " + num2str(CBU, '%05.2f') + ", BCPD: " ...
     + num2str(BCPD, '%05.2f'))
 ylabel('SoC [%]')
 xlabel('Time')
@@ -532,14 +651,16 @@ ylim([0 100])
 figure(105)
 qs = 1:1:96;
 plot(qs, avg_days(:,1), qs, avg_days(:,2), qs, avg_days(:,3), qs, avg_days(:,4), qs, avg_days(:,5), qs, avg_days(:,6))
-title("Average-day power consumption for each CE member, POR: [" + num2str(POR(1), '%05.2f') ...
-    + ", " + num2str(POR(2), '%05.2f') + ", " + num2str(POR(3), '%05.2f') + "] [%], ADR: " + num2str(ADR, '%05.2f') + "[kW]")
+title("Average-day power consumption for each CE member, POR: " + num2str(POR, '%05.2f') ...
+    + "[%], ADR: " + num2str(ADR, '%05.2f') + "[kW]")
 xlim([1 96])
 ylabel('Power [kW]')
 xlabel('Time, in quarters')
 % dim = [0.15 0.5 0.5 0.4];
 % str = {'POR' POR, 'ADR' ADR};
 % annotation('textbox',dim,'String',str,'FitBoxToText','on');
+
+
 
 
 %% 5. LEGACY
