@@ -4,14 +4,14 @@ function [CBU, AUR, ADC] = battery_metrics(SoC_energy_CER, max_capacity, days, s
 %       - Average Used Range (AUR), as the average range of capacity (in
 %       terms of State of Charge, SoC), which consists of the average
 %       minimum SoC value (for each day) and the average maximum SoC value. 
-%       - Cummulative Battery Usage (CBU), as the cummulative value of the
+%       - Cumulative Battery Usage (CBU), as the cumulative value of the
 %       State of Charge (SoC) (i.e. as the odometer of a car). In this
 %       case, a charge from 0% to 50% and then a discharge back to 0%, is
 %       equivalent to a full charge from 0% to 100%, in the same period of
 %       time. CBU would be 100% in both cases, where divided for the full
-%       capacity (100) equals 1 cummulative cycle.
+%       capacity (100) equals 1 cumulative cycle.
 %       - Average Daily Cycles (ADC), as the average daily battery cycles,
-%       where a cycle is the equivalent SoC cummulative value of a 
+%       where a cycle is the equivalent SoC cumulative value of a 
 %       full charge and discharge.
 
 

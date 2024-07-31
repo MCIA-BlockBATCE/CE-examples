@@ -1,7 +1,7 @@
 function [ADR,POR_CE,avg_days] = consumption_profile_metrics(Pcons_real)
 % CONSUMPTION_PROFILE_METRICS
 %   Consumption profile metrics are:
-%       - Average Difference Rate (ADR) [kW], as the cummulative increment of
+%       - Average Difference Rate (ADR) [kW], as the cumulative increment of
 %       average power consumption of all CE members. A small value
 %       indicates that all consumption profiles are close in terms of
 %       amplitude, whereas a large value indicates that some of

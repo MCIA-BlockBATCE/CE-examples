@@ -1,6 +1,8 @@
-function [generation_allocation, storage_allocation] = allocation_coefficients(CoR_type)
-% ALLOCATION_COEFFICIENTS Summary of this function goes here
-%   Detailed explanation goes here
+function [generation_allocation, storage_allocation] = allocation_coefficients(CoR_type, CER_excedentaria)
+% ALLOCATION_COEFFICIENTS
+%   This function computes allocation coeficients for the selected method
+%   (fixed, variable or dynamic) for PV power generation and storage
+%   capacity.
 
     if CoR_type == 0
        

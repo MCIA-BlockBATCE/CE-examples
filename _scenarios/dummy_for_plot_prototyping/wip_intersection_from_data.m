@@ -217,7 +217,7 @@ end
 
 max_area = trapz(biggest_signal);
 
-OR = total_intersect_area/max_area;
+OR = 100*(total_intersect_area/max_area);
 
 plot(xCE, y1CE, 'b.-', 'LineWidth', 2, 'MarkerSize', 20);
 grid on;
@@ -226,7 +226,8 @@ plot(xCE, y2CE, 'r.-', 'LineWidth', 2, 'MarkerSize', 20);
 grid on;
 hold on;
 plot(xCE, biggest_signal, 'g.-', 'LineWidth', 2, 'MarkerSize', 20)
-legend('P1', 'P2', 'MAX', 'location', 'southwest');	
+title("Two noise signals, POR: " + num2str(OR, '%05.2f') + " [%]", 'FontSize', 20)
+legend('P1', 'P2', 'MAX', 'location', 'southwest');
 xlabel('Time', 'FontSize', 20);
 ylabel('Power consumption', 'FontSize', 20);
 

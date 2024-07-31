@@ -107,7 +107,8 @@ Pcons_pred_3h = 4 * Pcons_pred_3h(:,CER_excedentaria);
 
 load("..\..\_data\buying_prices.mat");
 
-[generation_allocation, storage_allocation] = allocation_coefficients(CoR_type);
+CER = CER_excedentaria;
+[generation_allocation, storage_allocation] = allocation_coefficients(CoR_type, CER);
 
 
 %% 2. EC TESTED MODEL
@@ -121,6 +122,10 @@ energy_origin_instant_individual=zeros(steps,members,3);
 
 % TODO: Considerar si este código también puede estar integrado en la
 % función mencionada anteriormente.
+% Input: Pgen_real, Pgen_pred_1h, Pgen_pred_3h, generation_allocation,
+% factor_gen, CoR_type, members
+% Output: Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated 
+
 if CoR_type == 0
 
     for n=1:members     
@@ -366,6 +371,9 @@ quarter_h = 1;
 
 % TODO: Considerar si este código también puede estar integrado en la
 % función mencionada anteriormente.
+% Input: Pgen_real, generation_allocation, factor_gen, CoR_type, members
+% Output: Pgen_real_allocated
+
 if CoR_type == 0
 
     for n=1:members     
@@ -517,8 +525,8 @@ legend('Sold to grid','Consumed from PV', 'Consumed from Battery','Sold P2P', 'S
 figure(104)
 plot(t(1:672),CE_SoC_signal)
 title("Battery State of Charge (SoC), AUR: [" + num2str(ADC(1), '%05.2f') + ", " ...
-    + num2str(ADC(2), '%05.2f') + "] [%], CBC: " + num2str(CBU, '%05.2f') + ", BCPD: " ...
-    + num2str(BCPD, '%05.2f'))
+    + num2str(ADC(2), '%05.2f') + "] [%], CBU: " + num2str(CBU, '%05.2f') + ", ADC: " ...
+    + num2str(BCPD, '%05.2f'), FontSize=14)
 ylabel('SoC [%]')
 xlabel('Time')
 ylim([0 100])
@@ -533,7 +541,8 @@ figure(105)
 qs = 1:1:96;
 plot(qs, avg_days(:,1), qs, avg_days(:,2), qs, avg_days(:,3), qs, avg_days(:,4), qs, avg_days(:,5), qs, avg_days(:,6))
 title("Average-day power consumption for each CE member, POR: [" + num2str(POR(1), '%05.2f') ...
-    + ", " + num2str(POR(2), '%05.2f') + ", " + num2str(POR(3), '%05.2f') + "] [%], ADR: " + num2str(ADR, '%05.2f') + "[kW]")
+    + ", " + num2str(POR(2), '%05.2f') + ", " + num2str(POR(3), '%05.2f') + "] [%], ADR: " + num2str(ADR, '%05.2f') + " [kW]", FontSize=14)
+legend('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
 xlim([1 96])
 ylabel('Power [kW]')
 xlabel('Time, in quarters')
