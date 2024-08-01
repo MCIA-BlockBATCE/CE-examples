@@ -35,7 +35,7 @@ Pcons_real = energia_cons_CER(:,CER_excedentaria) * 4;
 
 if CoR_type == 0
    
-    tramos_mensuales(CER_excedentaria)
+    time_band_bill(CER_excedentaria)
     [generation_allocation] = bbce2_calculo_coeficientes_estaticos();
     generation_allocation = sum(generation_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
     generation_allocation = generation_allocation/sum(generation_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
@@ -43,7 +43,7 @@ if CoR_type == 0
 
 elseif CoR_type == 1
 
-    tramos_mensuales(CER_excedentaria)
+    time_band_bill(CER_excedentaria)
     [generation_allocation] = bbce2_calculo_coeficientes_estaticos();
     generation_allocation=generation_allocation(1:members,1:3);
     storage_allocation=generation_allocation(1:members,:);
@@ -55,7 +55,7 @@ else
     [generation_allocation] = bbce2_calculo_coeficientes_dinamicos(CER_excedentaria); 
 
     % Se usan CoR estaticos para repartir la bateria
-    tramos_mensuales(CER_excedentaria)
+    time_band_bill(CER_excedentaria)
     [storage_allocation] = bbce2_calculo_coeficientes_estaticos();
     storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
     storage_allocation = storage_allocation/sum(storage_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
@@ -136,7 +136,7 @@ P_discharge_max=storage_allocation*100;
 
 if CoR_type == 1
 
-    [X] = tramo_coef(week_day,hour);
+    [X] = time_band(week_day,hour);
     
     for n=1:members     
 

@@ -1,4 +1,4 @@
-function [coeficients] = bbce2_calculo_coeficientes_dinamicos(CER)
+function [coeficients] = previous_sample_coefficients(CER)
     load("..\..\_data\energia_cons_CER.mat")
     num_participantes = length(CER);
     consum = energia_cons_CER(:,CER);

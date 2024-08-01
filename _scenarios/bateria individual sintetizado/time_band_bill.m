@@ -1,4 +1,4 @@
-function [] = tramos_mensuales(CER)
+function [] = time_band_bill(CER)
 
     load('..\..\_data\base_data_2023.mat') 
     

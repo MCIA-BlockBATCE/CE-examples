@@ -17,7 +17,7 @@ function [Pgen_real_allocated] = PV_power_allocation(Pgen_real, generation_alloc
         if CoR_type == 1
 
             for t=1:steps % EMPIEZA EL AÑO
-                [X] = tramo_coef(week_day,hour);
+                [X] = time_band(week_day,hour);
     
                     for n=1:members     
         

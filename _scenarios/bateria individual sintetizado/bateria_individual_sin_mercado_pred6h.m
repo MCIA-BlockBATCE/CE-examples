@@ -28,21 +28,19 @@ close all
 
 
 % --- EC consumption profiles ---
-% aquí se acotaria la comunidad por ejemplo
-CER_excedentaria = [4 7 8 10 12 13];
-% CER_deficitaria = [x x x x x x]:
-% CER_balanceada = [x x x x x x]:
+surplus_community = [4 7 8 10 12 13];
+%deficit_community = [x x x x x x];
+%balanced_community = [x x x x x x];
 
+CER = surplus_community;
 
 % --- PV power allocation coefficients ---
-% aquí elegimos tipo de CoR
 CoR_type = 0; % fixed allocation
 % CoR_type = 1; % allocation based on the moment of the week (variable)
 % CoR_type = 2; % allocation based on consumption of previous step (dynamic variable)
 
 
 % --- Battery parameters ---
-% Parámetros batería
 Ef_charge=0.97;
 Ef_discharge=0.97;
 max_capacity=200;
@@ -50,23 +48,17 @@ factor_gen = 1;
 
 
 % --- Internal parameters ---
-% Declaracion de variables y ejecución de funciones (Lecturas y predicciones)
-% MES DE MAYO TIENE 2976 muestras = 4 cuartos * 24 horas * 31 días
 days = 7;
 steps = 24*4*days;
-members=length(CER_excedentaria); % Numero de participantes
-
-% FRECUENCIA HORARIA A CUARTOHORARIA
-time_unit=0.25; % Tiempo entre ejecuciones (1h) HABRÁ QUE CAMBIAR A 0.25
-
-P_surplus=zeros(steps,members);
+members=length(CER);
+time_unit=0.25; % Time between steps in seconds
+P_surplus=zeros(steps,members); 
 P_shortage=zeros(steps,members);
-SoC=ones(steps+1,members)*0; % SoC inicial
-selling_price=0.07 * ones(steps,1);
+SoC=ones(steps+1,members)*0; % Initial SoC
+selling_price=0.07 * ones(steps,1); % Selling price in €/kWh
 
-% TESTING PURPOSES ONLY
 hour = 1;
-week_day = 1; % Mayo 2023 empieza lunes
+week_day = 1; % May 2023 started on Monday
 quarter_h = 1;
 
 % USO DE ENERGÍA DE GENERACIÓN
@@ -74,7 +66,8 @@ total_energy_decision_individual = zeros(members, 5);
 % col 1 = vender red
 % col 2 = consumir placas
 % col 3 = consumir bat
-% col 4 = vender p2p
+% col 4 = vender p2p ----> En principi aquí no hi ha p2p, no? per tant
+                         % serien 4 columnes?
 % col 5 = vender mercado (interop)
 
 
@@ -90,8 +83,8 @@ load("..\..\_data\Pgen_real_3h.mat")
 load("..\..\_data\energia_cons_CER.mat")
 load("..\..\_data\energia_cons_CER_3h.mat")
 
-Pcons_real = energia_cons_CER(:,CER_excedentaria) * 4;
-Pcons_real_3h = energia_cons_CER_3h(:,CER_excedentaria) * 4;
+Pcons_real = energia_cons_CER(:,CER) * 4;
+Pcons_real_3h = energia_cons_CER_3h(:,CER) * 4;
 
 % NOTA: Fórmula Osterwald da como output potencia (kW)
 load("..\..\_data\Pgen_pred_1h.mat")
@@ -102,12 +95,11 @@ load("..\..\_data\Pcons_pred_1h.mat")
 load("..\..\_data\Pcons_pred_3h.mat")
 
 % Passem a potencia
-Pcons_pred_1h = 4 * Pcons_pred_1h(:,CER_excedentaria);
-Pcons_pred_3h = 4 * Pcons_pred_3h(:,CER_excedentaria);
+Pcons_pred_1h = 4 * Pcons_pred_1h(:,CER);
+Pcons_pred_3h = 4 * Pcons_pred_3h(:,CER);
 
 load("..\..\_data\buying_prices.mat");
 
-CER = CER_excedentaria;
 [generation_allocation, storage_allocation] = allocation_coefficients(CoR_type, CER);
 
 
@@ -140,8 +132,8 @@ step_energy_origin_individual = zeros(members,3);
 
 for n=1:members %EMPIEZA EL ALGORITMO
        
-   Decision1(t,n) = AlmacenarVenderConsumirAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),E_st_max(1,n));
+   Decision1(t,n) = PV_energy_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1));
    caso_oferta = 0;
    % La salida de la función sería un entero entre 0 i 2?
    % 0 vender, 1 consumir y 2 almacenar
@@ -158,7 +150,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
   
        if E_st_max(1,n)>0 && SoC(t,n)>0
            if Pcons_real(t,n)<P_discharge_max(1,n)
-               Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+               Decision2(t,n) = battery_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                if Decision2(t,n)==1
@@ -170,7 +162,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                    SoC(t+1,n)=SoC(t,n);
                end
            else
-               Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+               Decision2(t,n) = battery_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                if Decision2(t,n)==1
@@ -219,7 +211,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
            step_energy_origin_individual(n,1)=step_energy_origin_individual(n,1)+Pgen_real_allocated(t,n);
            if E_st_max(1,n)>0 && SoC(t,n)>0
                if P_shortage(t,n)<P_discharge_max(1,n)
-                   Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                   Decision2(t,n) = battery_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                
                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
@@ -232,7 +224,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                        SoC(t+1,n)=SoC(t,n);
                    end
                else
-                   Decision2(t,n) = ConsumirBatAlternatiu(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                   Decision2(t,n) = battery_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                    if Decision2(t,n) == 1

@@ -1,5 +1,5 @@
-function FCoste2 = ConsumirBatAlternatiu(ConsPred3h,ConsPred1h,GenPred3h, ...
-                    GenPred1h,Precio_compra,Precio_compra_3h,Precio_compra_6h,SoC)
+function FCoste2 = battery_management(ConsPred3h,ConsPred1h,GenPred3h, ...
+                    GenPred1h,Energy_price,Energy_price3h,Energy_price6h,SoC)
 %% 
 % Esta funcion de coste trata de comparar si AHORA vamos a necesitar más la
 % batería que DESPUÉS, calcularemos el deficit AHORA y el deficit de media DURANTE
@@ -7,15 +7,15 @@ function FCoste2 = ConsumirBatAlternatiu(ConsPred3h,ConsPred1h,GenPred3h, ...
 % durante las próximas 3 horas. Le aplicamos un umbral a la comparacion
 % (Aunque luego nos haga más falta no tenemos porqué privarnos ahora).
 
-coste_ahora = (ConsPred1h - GenPred1h) * Precio_compra;
+current_cost = (ConsPred1h - GenPred1h) * Energy_price;
  
-coste_proximas3h = (ConsPred3h/3 - GenPred3h/3) * Precio_compra_3h;
+cost_next3h = (ConsPred3h/3 - GenPred3h/3) * Energy_price3h;
 
 % coste_ahora =  Precio_compra;
 % 
 % coste_proximas3h =  Precio_compra_3h;
 
-if ((coste_proximas3h>coste_ahora*4.5) || SoC < 1)
+if ((cost_next3h>current_cost*4.5) || (SoC < 1) || (Energy_price6h>Energy_price*1.25))
     % no usar batería
     FCoste2 = 0;
 else

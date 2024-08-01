@@ -26,7 +26,7 @@ function [Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated] =
     elseif CoR_type == 1
 
         for t=1:steps % EMPIEZA EL AÑO
-            [X] = tramo_coef(week_day,hour);
+            [X] = time_band(week_day,hour);
     
             for n=1:members     
                 Pgen_pred_1h_allocated(:,n) = Pgen_pred_1h * generation_allocation(n,X)*factor_gen;

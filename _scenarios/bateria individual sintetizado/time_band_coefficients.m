@@ -1,4 +1,4 @@
-function [tabla_coeficientes_2d_promedios] = bbce2_calculo_coeficientes_estaticos()
+function [tabla_coeficientes_2d_promedios] = time_band_coefficients()
 
     dades_factures=readmatrix("..\..\_data\bbce2_Factures_ficticies.xlsx");
     num_participantes = length(dades_factures)/12;
