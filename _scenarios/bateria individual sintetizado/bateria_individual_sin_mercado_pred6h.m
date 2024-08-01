@@ -123,31 +123,12 @@ energy_origin_instant_individual=zeros(steps,members,3);
 % TODO: Considerar si este código también puede estar integrado en la
 % función mencionada anteriormente.
 % Input: Pgen_real, Pgen_pred_1h, Pgen_pred_3h, generation_allocation,
-% factor_gen, CoR_type, members
+% factor_gen, CoR_type, members, week_day, hour
 % Output: Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated 
+[Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated] = PV_power_allocation_forecasting(Pgen_real, Pgen_pred_1h, ...
+    Pgen_pred_3h, generation_allocation, factor_gen, CoR_type, members, week_day, hour);
 
-if CoR_type == 0
 
-    for n=1:members     
-        Pgen_pred_1h_allocated(:,n) = Pgen_pred_1h * generation_allocation(1,n).'*factor_gen;
-        Pgen_pred_3h_allocated(:,n) = Pgen_pred_3h * generation_allocation(1,n).'*factor_gen; 
-        
-        Pgen_real_allocated(:,n) = Pgen_real * generation_allocation(1,n).'*factor_gen;
-
-    end
-
-end
-
-if CoR_type == 2
-
-    for n=1:members     
-        Pgen_pred_1h_allocated(:,n) = generation_allocation(:,n).*Pgen_pred_1h*factor_gen;
-        Pgen_pred_3h_allocated(:,n) = generation_allocation(:,n).*Pgen_pred_3h*factor_gen; 
-        
-        Pgen_real_allocated(:,n) = generation_allocation(:,n).*Pgen_real*factor_gen;
-
-    end
-end
 
 for t=1:steps % EMPIEZA EL AÑO
 
@@ -156,19 +137,6 @@ P_charge_max=storage_allocation*100;
 P_discharge_max=storage_allocation*100;
 
 step_energy_origin_individual = zeros(members,3);
-
-if CoR_type == 1
-
-    [X] = tramo_coef(week_day,hour);
-    
-    for n=1:members     
-        Pgen_pred_1h_allocated(:,n) = Pgen_pred_1h * generation_allocation(n,X)*factor_gen;
-        Pgen_pred_3h_allocated(:,n) = Pgen_pred_3h * generation_allocation(n,X)*factor_gen; 
-        
-        Pgen_real_allocated(:,n) = Pgen_real * generation_allocation(n,X)*factor_gen;
-    
-    end
-end
 
 for n=1:members %EMPIEZA EL ALGORITMO
        
@@ -373,25 +341,7 @@ quarter_h = 1;
 % función mencionada anteriormente.
 % Input: Pgen_real, generation_allocation, factor_gen, CoR_type, members
 % Output: Pgen_real_allocated
-
-if CoR_type == 0
-
-    for n=1:members     
-    
-        Pgen_real_allocated(:,n) = Pgen_real * generation_allocation(1,n).'*factor_gen;
-
-    end
-
-end
-
-if CoR_type == 2
-
-    for n=1:members     
-  
-        Pgen_real_allocated(:,n) = generation_allocation(:,n).*Pgen_real*factor_gen;
-
-    end
-end
+[Pgen_real_allocated] = PV_power_allocation(Pgen_real, generation_allocation, factor_gen, CoR_type, members, week_day, hour); 
 
 for t=1:steps
    
@@ -400,18 +350,6 @@ step_energy_origin_individual_unoptimised = zeros(members,3);
 E_st_max=storage_allocation*max_capacity;
 P_charge_max=storage_allocation*100;
 P_discharge_max=storage_allocation*100;
-
-
-if CoR_type == 1
-
-    [X] = tramo_coef(week_day,hour);
-    
-    for n=1:members     
-
-        Pgen_real_allocated(:,n) = Pgen_real * generation_allocation(n,X)*factor_gen;
-    
-    end
-end
 
 
     for n=1:members %EMPIEZA EL ALGORITMO
