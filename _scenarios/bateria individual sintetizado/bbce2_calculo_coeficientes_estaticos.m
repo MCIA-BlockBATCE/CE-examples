@@ -1,6 +1,6 @@
 function [tabla_coeficientes_2d_promedios] = bbce2_calculo_coeficientes_estaticos()
 
-    dades_factures=readmatrix("bbce2_Factures_ficticies.xlsx");
+    dades_factures=readmatrix("..\..\_data\bbce2_Factures_ficticies.xlsx");
     num_participantes = length(dades_factures)/12;
     num_meses = 10;
     coeficientes = zeros(num_participantes,3,num_meses);

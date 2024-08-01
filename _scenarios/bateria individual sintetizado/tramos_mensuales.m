@@ -98,9 +98,9 @@ function [] = tramos_mensuales(CER)
                 indexValle=strcat('A',strindex);
                 indexLlano=strcat('B',strindex);
                 indexPico=strcat('C',strindex);
-                writematrix(suma_mes_valle(n,mes),'bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexValle);
-                writematrix(suma_mes_llano(n,mes),'bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexLlano);
-                writematrix(suma_mes_pico(n,mes),'bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexPico);
+                writematrix(suma_mes_valle(n,mes),'..\..\_data\bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexValle);
+                writematrix(suma_mes_llano(n,mes),'..\..\_data\bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexLlano);
+                writematrix(suma_mes_pico(n,mes),'..\..\_data\bbce2_Factures_ficticies.xlsx','Sheet','Hoja1','Range',indexPico);
        
         end
     end
