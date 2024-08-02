@@ -49,16 +49,16 @@ Pcons_pred_3h = 4 * Pcons_pred_3h(:,CER_excedentaria);
 
 if CoR_type == 0
    
-    tramos_mensuales(CER_excedentaria)
-    [generation_allocation] = bbce2_calculo_coeficientes_estaticos();
+    time_band_bill(CER_excedentaria)
+    [generation_allocation] = time_band_coefficients();
     generation_allocation = sum(generation_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
     generation_allocation = generation_allocation/sum(generation_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
     storage_allocation=generation_allocation;
 
 elseif CoR_type == 1
 
-    tramos_mensuales(CER_excedentaria)
-    [generation_allocation] = bbce2_calculo_coeficientes_estaticos();
+    time_band_bill(CER_excedentaria)
+    [generation_allocation] = time_band_coefficients();
     generation_allocation=generation_allocation(1:members,1:3);
     storage_allocation=generation_allocation(1:members,:);
     storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
@@ -66,11 +66,11 @@ elseif CoR_type == 1
 
 else 
 
-    [generation_allocation] = bbce2_calculo_coeficientes_dinamicos(CER_excedentaria); 
+    [generation_allocation] = previous_sample_coefficients(CER_excedentaria); 
 
     % Se usan CoR estaticos para repartir la bateria
-    tramos_mensuales(CER_excedentaria)
-    [storage_allocation] = bbce2_calculo_coeficientes_estaticos();
+    time_band_bill(CER_excedentaria)
+    [storage_allocation] = time_band_coefficients();
     storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
     storage_allocation = storage_allocation/sum(storage_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
 
@@ -89,6 +89,7 @@ max_capacity=200;
 factor_gen = 1;
 
 selling_price=0.07 * ones(steps,1);
+bid_price = 0.11; % Chosen arbitrarily
 
 load("..\..\_data\buying_prices.mat");
 
@@ -96,21 +97,6 @@ load("..\..\_data\buying_prices.mat");
 hour = 1;
 week_day = 1; % Mayo 2023 empieza lunes
 quarter_h = 1;
-
-% OFERTA 1 (TARDE VIERNES)
-% FristFriSample = 385 (slot de 0:00 a 0:15)
-% LastFriSample = 481 (slot de 23:45 a 0:00)
-bid_step = 470; %(22:00 a 22:15 del viernes)
-% bid_step = 385 + 4*10; % 7:00
-% bid_amount = 180;
-bid_amount = 0;
-
-% OFERTA 2 (MAÑANA MARTES)
-bid_step_2 = 226-88; % (slot 9:15 a 9:30 del martes)
-% bid_amount_2 = 200*0.97;
-bid_amount_2 = 0;
-energy_cost_bought_while_bid = 0;
-SoC_energy_CER = zeros(length(SoC),1);
 
 
 %% Caso con datos reales
@@ -120,6 +106,8 @@ total_energy_origin_individual = zeros(members,3);
 step_profit=zeros(steps,members);
 energy_origin_instant=zeros(steps,3);
 energy_origin_instant_individual=zeros(steps,members,3);
+energy_cost_bought_while_bid = 0;
+bid_profit = zeros(steps,1);
 
 if CoR_type == 0
 
@@ -144,7 +132,50 @@ if CoR_type == 2
     end
 end
 
+time_margin_bid = 6; % Time horizon from which we start to limit battery
+                     % discharge in order to satisfy the bid
+                   
+
 for t=1:steps % EMPIEZA EL AÑO
+
+%% Instante y cantidad oferta
+
+EnergyDiff_acum = zeros(1,96);
+
+%PRIMER FER-HO AQUÍ, DESPRÉS PASSAR A FUNCIÓ
+
+if quarter_h == 1 
+    
+    EnergyDiff_acum(1,1) = Pgen_pred_1h(t+1,1)/4 - sum(Pcons_pred_1h(t+1,:)/4);
+
+    for j=2:96
+
+        EnergyDiff_acum(1,j) = EnergyDiff_acum(1,j-1) + Pgen_pred_1h(t+j,1)/4 - sum(Pcons_pred_1h(t+j,:)/4);
+   
+    end
+
+    CostDiff_acum = EnergyDiff_acum' .* price_next_1h(t:t+95,1);
+
+    [cost,bid_quarter_h] = max(CostDiff_acum);
+
+    bid_amount = EnergyDiff_acum(bid_quarter_h);
+
+    bid_step = t + bid_quarter_h;
+
+    if bid_amount < 25
+        bid_amount = 0;
+        bid_step = -5;
+    end
+
+    if bid_amount > max_capacity
+        bid_amount = max_capacity;
+    end
+
+    bid_amount = bid_amount*0.4; % Safety margin to ensure we 
+                                  % satisfy the bid
+
+end
+
 
 E_st_max=storage_allocation*max_capacity;
 P_charge_max=storage_allocation*100;
@@ -154,7 +185,7 @@ step_energy_origin_individual = zeros(members,3);
 
 if CoR_type == 1
 
-    [X] = tramo_coef(week_day,hour);
+    [X] = time_band(week_day,hour);
     
     for n=1:members     
         Pgen_pred_1h_allocated(:,n) = Pgen_pred_1h * generation_allocation(n,X)*factor_gen;
@@ -167,7 +198,7 @@ end
 
 for n=1:members %EMPIEZA EL ALGORITMO
 
-   if ( (t >= bid_step - 20) && t < bid_step + 4 )
+   if ( (t >= bid_step - time_margin_bid*4) && t < bid_step + 4 )
        [Dec1, P_discharge_max_oferta] = PV_energy_management_Interoperability(SoC_energy_CER(t),bid_amount,t,bid_step,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                      Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),P_discharge_max(1,n));
        Decision1(t,n) = Dec1;
@@ -175,18 +206,11 @@ for n=1:members %EMPIEZA EL ALGORITMO
        % La salida de la función sería un entero entre 0 i 2?
        % 0 vender, 1 consumir y 2 almacenar
 
-   elseif ( (t >= bid_step_2 - 20) && (t < bid_step_2 + 4) )
-       [Dec1, P_discharge_max_oferta] = PV_energy_management_Interoperability(SoC_energy_CER(t),bid_amount_2,t,bid_step_2,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),P_discharge_max(1,n));
-       Decision1(t,n) = Dec1;
-       bid_case = 2;
-       % La salida de la función sería un entero entre 0 i 2?
-       % 0 vender, 1 consumir y 2 almacenar
 
    else
        
        Decision1(t,n) = PV_energy_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),E_st_max(1,n));
+                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1));
        bid_case = 0;
        % La salida de la función sería un entero entre 0 i 2?
        % 0 vender, 1 consumir y 2 almacenar
@@ -315,21 +339,20 @@ for n=1:members %EMPIEZA EL ALGORITMO
 
    % Descargo en 4 instantes de tiempo los 120 kW, a 30kWh equivalentes
    % cada cuarto de hora
+   
     if(t==bid_step || t==bid_step+1 || t==bid_step+2 || t==bid_step+3)
         storage_energy_for_bid = storage_allocation * bid_amount/4;
         previous_SoC_energy = max_capacity * storage_allocation(n) * (SoC(t,n)/100);
         current_SoC_energy = previous_SoC_energy - storage_energy_for_bid(n);
         SoC(t+1,n) = 100* current_SoC_energy/(storage_allocation(n)*max_capacity);
 
-        
+        if t == bid_step+3
+            bid_profit(t,1) = bid_amount * bid_price;
+            step_profit(t,n) = step_profit(t,n) + bid_profit(t,1) * generation_allocation(n);
+        end
+
     end
 
-    if(t==bid_step_2 || t==bid_step_2+1 || t==bid_step_2+2 || t==bid_step_2+3)
-        storage_energy_for_bid = storage_allocation * bid_amount_2/4;
-        previous_SoC_energy = max_capacity * storage_allocation(n) * (SoC(t,n)/100);
-        current_SoC_energy = previous_SoC_energy - storage_energy_for_bid(n);
-        SoC(t+1,n) = 100* current_SoC_energy/(storage_allocation(n)*max_capacity);
-    end
 
   energy_origin_instant_individual(t,n,:) = step_energy_origin_individual(n,:);
 
@@ -432,7 +455,7 @@ P_discharge_max=storage_allocation*100;
 
 if CoR_type == 1
 
-    [X] = tramo_coef(week_day,hour);
+    [X] = time_band(week_day,hour);
     
     for n=1:members     
 
