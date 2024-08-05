@@ -1,6 +1,12 @@
 function FCoste2 = CF2(ConsPred3h,ConsPred1h,GenPred3h, ...
                     GenPred1h,Energy_price,Energy_price3h,Energy_price6h,SoC)
-%% 
+% CF2
+%   Explanation of how CF1 works
+%   asd
+%   asd
+%   asd
+%
+
 % Esta funcion de coste trata de comparar si AHORA vamos a necesitar más la
 % batería que DESPUÉS, calcularemos el deficit AHORA y el deficit de media DURANTE
 % LAS 3 PRÓXIMAS HORAS, y aplcando el coste de la luz ahora y el medio

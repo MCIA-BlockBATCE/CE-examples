@@ -1,5 +1,12 @@
 function FCoste1 = CF1(ConsPred3h,ConsPred1h,GenPred3h, ...
                     GenPred1h,Energy_price,Selling_price,Energy_price3h,SoC,Energy_price6h)
+% CF1
+%   Explanation of how CF1 works
+%   asd
+%   asd
+%   asd
+%
+
 FCoste1 = 1;
 
 current_cost = (ConsPred1h-GenPred1h) * Energy_price;
