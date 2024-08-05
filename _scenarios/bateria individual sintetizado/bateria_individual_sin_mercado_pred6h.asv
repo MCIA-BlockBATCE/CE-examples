@@ -27,13 +27,20 @@ close all
 %% 1. PARAMETER DEFINITION
 
 
-% --- EC consumption profiles --
-% Assign one of the following values
-% Surplus community, CommunitySelection  = 0
-% Deficit community, CommunitySelection  = 1
-% Balanced, CommunitySelection  = 2
-CommunitySelection = 0;
-EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
+% --- EC consumption profiles ---
+surplus_community = [4 7 8 10 12 13];
+%deficit_community = [x x x x x x];
+%balanced_community = [x x x x x x];
+
+A = exist("surplus_community","var")
+
+if ( exist("surplus_community","var") == 1)
+    CER = surplus_community;
+elseif 
+
+end
+
+CER = surplus_community;
 
 % --- PV power allocation coefficients ---
 CoR_type = 0; % fixed allocation
@@ -51,7 +58,7 @@ PVPowerGenerationFactor = 1;
 % --- Internal parameters ---
 days = 7;
 steps = 24*4*days;
-members=length(EnergyCommunityConsumptionProfiles);
+members=length(CER);
 time_unit=0.25; % Time between steps in seconds
 P_surplus=zeros(steps,members); 
 P_shortage=zeros(steps,members);
@@ -84,8 +91,8 @@ load("..\..\_data\Pgen_real_3h.mat")
 load("..\..\_data\energia_cons_CER.mat")
 load("..\..\_data\energia_cons_CER_3h.mat")
 
-Pcons_real = energia_cons_CER(:,EnergyCommunityConsumptionProfiles) * 4;
-Pcons_real_3h = energia_cons_CER_3h(:,EnergyCommunityConsumptionProfiles) * 4;
+Pcons_real = energia_cons_CER(:,CER) * 4;
+Pcons_real_3h = energia_cons_CER_3h(:,CER) * 4;
 
 % NOTA: Fórmula Osterwald da como output potencia (kW)
 load("..\..\_data\Pgen_pred_1h.mat")
@@ -96,12 +103,12 @@ load("..\..\_data\Pcons_pred_1h.mat")
 load("..\..\_data\Pcons_pred_3h.mat")
 
 % Passem a potencia
-Pcons_pred_1h = 4 * Pcons_pred_1h(:,EnergyCommunityConsumptionProfiles);
-Pcons_pred_3h = 4 * Pcons_pred_3h(:,EnergyCommunityConsumptionProfiles);
+Pcons_pred_1h = 4 * Pcons_pred_1h(:,CER);
+Pcons_pred_3h = 4 * Pcons_pred_3h(:,CER);
 
 load("..\..\_data\buying_prices.mat");
 
-[GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
+[GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, CER);
 
 
 %% 2. EC TESTED MODEL
