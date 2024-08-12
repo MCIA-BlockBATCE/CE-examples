@@ -141,16 +141,12 @@ for t=1:SimulationSteps
     % Loop for each EC member
     for n=1:members 
     
-    % TODO: Descripció de funció i output. Referencia al cas output
-    % vendre, tenint en compte que si es ven a la grid s'haurà de cobrir
-    % la demanda amb la bat o amb la grid (la segona es un
-    % contrasentit que caldria evitar), potser fent tuning de la FC?
+    % This function controlls the use of PV power. The CF has 3 possible
+    % outputs: Sell, consume and store. The outcome depends on future consumption,
+    % production and price predictions.
     PVPowerManagementDecision(t,n) = CF1(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),ElectricitySellingPrice(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1));
-    
-    % La salida de la función sería un entero entre 0 i 2?
-    % 0 vender, 1 consumir y 2 almacenar
-    
+    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),ElectricitySellingPrice(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1)); 
+    % Sell: 0, Consume: 1, Store: 2
     
     % If the participant decides on selling the PV generated power to
     % the grid.
@@ -169,10 +165,12 @@ for t=1:SimulationSteps
         % available discharging power for the current participant
         if PconsMeasured(t,n)<MaxDischargingPowerForParticipant(1,n)
         
-            % TODO: Descripció de funció i output
+            % This function controlls the use of stored energy. The CF has 2 possible
+            % outputs: Using energy from the battery or saving it for later.
+            % The outcome depends on future consumption, production and price predictions.
             BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
             Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-            % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
+            % Do not use stored energy: 0, Use stored energy: 1
             
             % The participant uses the energy stored in its battery
             % allocation in order to supply its demand
@@ -193,10 +191,12 @@ for t=1:SimulationSteps
         % available discharging power for the current participant
         else
             
-            % TODO: Descripció de funció i output
+            % This function controlls the use of stored energy. The CF has 2 possible
+            % outputs: Using energy from the battery or saving it for later.
+            % The outcome depends on future consumption, production and price predictions.
             BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
             Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-            % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
+            % Do not use stored energy: 0, Use stored energy: 1
             
             % The participant uses the energy stored in its battery
             % allocation to partially supply the participant's
@@ -295,10 +295,12 @@ for t=1:SimulationSteps
                 % allocation
                 if PowerShortage(t,n)<MaxDischargingPowerForParticipant(1,n)
                     
-                    % TODO: Descripció de funció i output
+                    % This function controlls the use of stored energy. The CF has 2 possible
+                    % outputs: Using energy from the battery or saving it for later.
+                    % The outcome depends on future consumption, production and price predictions.
                     BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
+                    % Do not use stored energy: 0, Use stored energy: 1
                     
                     % The battery is used to supply the remaining 
                     % participant's demand
