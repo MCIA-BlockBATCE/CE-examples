@@ -144,7 +144,7 @@ EnergyDiff_acum = zeros(1,96);
 
 %PRIMER FER-HO AQUÍ, DESPRÉS PASSAR A FUNCIÓ
 
-if quarter_h == 1 
+if quarter_h == 1 % Posar a les 11
     
     EnergyDiff_acum(1,1) = Pgen_pred_1h(t+1,1)/4 - sum(Pcons_pred_1h(t+1,:)/4);
 
@@ -154,7 +154,7 @@ if quarter_h == 1
    
     end
 
-    CostDiff_acum = EnergyDiff_acum' .* price_next_1h(t:t+95,1);
+    CostDiff_acum = EnergyDiff_acum' .* price_next_1h(t:t+95,1); % Potser fer servir un altre vector de preus
 
     [cost,bid_quarter_h] = max(CostDiff_acum);
 
@@ -162,7 +162,7 @@ if quarter_h == 1
 
     bid_step = t + bid_quarter_h;
 
-    if bid_amount < 25
+    if bid_amount < max_capacity * 0.1
         bid_amount = 0;
         bid_step = -5;
     end
@@ -199,7 +199,7 @@ end
 for n=1:members %EMPIEZA EL ALGORITMO
 
    if ( (t >= bid_step - time_margin_bid*4) && t < bid_step + 4 )
-       [Dec1, P_discharge_max_oferta] = PV_energy_management_Interoperability(SoC_energy_CER(t),bid_amount,t,bid_step,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+       [Dec1, P_discharge_max_oferta] = CF1_Interoperability(SoC_energy_CER(t),bid_amount,t,bid_step,Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                      Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1),P_discharge_max(1,n));
        Decision1(t,n) = Dec1;
        bid_case = 1;
@@ -209,7 +209,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
 
    else
        
-       Decision1(t,n) = PV_energy_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+       Decision1(t,n) = CF1(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                      Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),selling_price(t,1),price_next_3h(t,1),SoC(t,n),price_next_6h(t,1));
        bid_case = 0;
        % La salida de la función sería un entero entre 0 i 2?
@@ -229,7 +229,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
   
        if E_st_max(1,n)>0 && SoC(t,n)>0
            if Pcons_real(t,n)<P_discharge_max(1,n)
-               Decision2(t,n) = battery_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+               Decision2(t,n) = CF2(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                if Decision2(t,n)==1
@@ -241,7 +241,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                    SoC(t+1,n)=SoC(t,n);
                end
            else
-               Decision2(t,n) = battery_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+               Decision2(t,n) = CF2(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                if Decision2(t,n)==1
@@ -290,7 +290,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
            step_energy_origin_individual(n,1)=step_energy_origin_individual(n,1)+Pgen_real_allocated(t,n);
            if E_st_max(1,n)>0 && SoC(t,n)>0
                if P_shortage(t,n)<P_discharge_max(1,n)
-                   Decision2(t,n) = battery_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                   Decision2(t,n) = CF2(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                
                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
@@ -303,7 +303,7 @@ for n=1:members %EMPIEZA EL ALGORITMO
                        SoC(t+1,n)=SoC(t,n);
                    end
                else
-                   Decision2(t,n) = battery_management(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                   Decision2(t,n) = CF2(Pcons_pred_3h(t,n),Pcons_pred_1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
                    if Decision2(t,n) == 1
