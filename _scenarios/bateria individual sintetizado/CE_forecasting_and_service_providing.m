@@ -181,129 +181,130 @@ for t=1:SimulationSteps
     % a consumir (batería individual, sabemos las necesidades de cada uno). En
     % cualquier caso se compra la energía que nos falte de la red. 
     if PVPowerManagementDecision(t,n)==0
-    if (BidAccepted == 1) MaxDischargingPowerForParticipant(1,n) = MaxDischargingPowerForParticipantIfBid; end
-    
-    MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
-    
-    if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)>0
-    if PconsMeasured(t,n)<MaxDischargingPowerForParticipant(1,n)
-    BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
-    if BatteryManagementDecision(t,n)==1
-    SoC(t+1,n)=SoC(t,n)-(((PconsMeasured(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
-    StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+PconsMeasured(t,n);%*Unidad_t;
-    else
-    StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
-    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n);%*Unidad_t;
-    SoC(t+1,n)=SoC(t,n);
-    end
-    else
-    BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
-    if BatteryManagementDecision(t,n)==1
-    SoC(t+1,n)=SoC(t,n)-((MaxDischargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
-    StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency;%*Unidad_t;
-    StepProfit(t,n)=StepProfit(t,n)-(PconsMeasured(t,n)-MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency)*TimeStep*price_next_1h(t,1);
-    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+(PconsMeasured(t,n)-MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency);%*Unidad_t;
-    else
-    StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
-    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n);%*Unidad_t;
-    SoC(t+1,n)=SoC(t,n);
-    end
-    end 
-    else
-    StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
-    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n);%*Unidad_t;
-    end
-    StepProfit(t,n)=StepProfit(t,n)+Pgen_pred_1h_allocated(t,n)*TimeStep*ElectricitySellingPrice(t,1);
-    
-    % Se decide consumir la energía consumida. En caso de déficit se evalua si
-    % usar la batería y se compra la energía que falte. En caso de superávit se
-    % almacena toda la posible y se vende el resto.
+
+        if (BidAccepted == 1) MaxDischargingPowerForParticipant(1,n) = MaxDischargingPowerForParticipantIfBid; end
+        
+        MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
+        
+        if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)>0
+
+            if PconsMeasured(t,n)<MaxDischargingPowerForParticipant(1,n)
+                BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
+                if BatteryManagementDecision(t,n)==1
+                    SoC(t+1,n)=SoC(t,n)-(((PconsMeasured(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+                    StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+PconsMeasured(t,n);%*Unidad_t;
+                else
+                    StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
+                    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n);%*Unidad_t;
+                    SoC(t+1,n)=SoC(t,n);
+                end
+            else
+                BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
+                if BatteryManagementDecision(t,n)==1
+                    SoC(t+1,n)=SoC(t,n)-((MaxDischargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
+                    StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency;%*Unidad_t;
+                    StepProfit(t,n)=StepProfit(t,n)-(PconsMeasured(t,n)-MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency)*TimeStep*price_next_1h(t,1);
+                    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+(PconsMeasured(t,n)-MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency);%*Unidad_t;
+                else
+                    StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
+                    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n);%*Unidad_t;
+                    SoC(t+1,n)=SoC(t,n);
+                end
+            end 
+        else
+            StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
+            StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n);%*Unidad_t;
+        end
+        StepProfit(t,n)=StepProfit(t,n)+Pgen_pred_1h_allocated(t,n)*TimeStep*ElectricitySellingPrice(t,1);
+        
+        % Se decide consumir la energía consumida. En caso de déficit se evalua si
+        % usar la batería y se compra la energía que falte. En caso de superávit se
+        % almacena toda la posible y se vende el resto.
     
     elseif PVPowerManagementDecision(t,n)==1
-    if (BidAccepted == 1) MaxDischargingPowerForParticipant(1,n) = MaxDischargingPowerForParticipantIfBid; end
-    
-    MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
-    MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
-    
-    if Pgen_real_allocated(t,n)>PconsMeasured(t,n)
-    P_surplus(t,n)=Pgen_pred_1h_allocated(t,n)-PconsMeasured(t,n);
-    StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+PconsMeasured(t,n);%*Unidad_t;
-    if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)<100
-    if P_surplus(t,n)<MaxChargingPowerForParticipant(1,n)
-    SoC(t+1,n)=SoC(t,n)+((P_surplus(t,n)*TimeStep*ChargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
-    else
-    SoC(t+1,n)=SoC(t,n)+((MaxChargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
-    StepProfit(t,n)=StepProfit(t,n)+(P_surplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep*ElectricitySellingPrice(t,1);
-    end
-    else
-    StepProfit(t,n)=StepProfit(t,n)+P_surplus(t,n)*TimeStep*ElectricitySellingPrice(t,1);
-    SoC(t+1,n)=SoC(t,n);
-    end
-    else
-    P_shortage(t,n)=PconsMeasured(t,n)-Pgen_real_allocated(t,n);
-    StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+Pgen_real_allocated(t,n);
-    if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)>0
-    if P_shortage(t,n)<MaxDischargingPowerForParticipant(1,n)
-    BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-    
-    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
-    if BatteryManagementDecision(t,n) == 1
-    SoC(t+1,n)=SoC(t,n)-(((P_shortage(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
-    StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+P_shortage(t,n);%*Unidad_t;
-    else
-    StepProfit(t,n)=StepProfit(t,n)-P_shortage(t,n)*TimeStep*price_next_1h(t,1);
-    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+P_shortage(t,n);%*Unidad_t;
-    SoC(t+1,n)=SoC(t,n);
-    end
-    else
-    BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
-    if BatteryManagementDecision(t,n) == 1
-    SoC(t+1,n)=SoC(t,n)-((MaxDischargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
-    StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+MaxDischargingPowerForParticipant(1,n);%*Unidad_t; %*DischargeEfficiency
-    StepProfit(t,n)= StepProfit(t,n)-(P_shortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1); %*DischargeEfficiency
-    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+(P_shortage(t,n)-MaxDischargingPowerForParticipant(1,n));%*Unidad_t; %*DischargeEfficiency
-    else
-    StepProfit(t,n)=StepProfit(t,n)-P_shortage(t,n)*TimeStep*price_next_1h(t,1);
-    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+P_shortage(t,n);%*Unidad_t;
-    SoC(t+1,n)=SoC(t,n);
-    end
-    end
-    else
-    StepProfit(t,n)=StepProfit(t,n)-P_shortage(t,n)*TimeStep*price_next_1h(t,1);
-    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+P_shortage(t,n);%*Unidad_t;
-    SoC(t+1,n)=SoC(t,n);
-    end
-    end
+        if (BidAccepted == 1) MaxDischargingPowerForParticipant(1,n) = MaxDischargingPowerForParticipantIfBid; end
+        
+        MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
+        MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
+        
+        if Pgen_real_allocated(t,n)>PconsMeasured(t,n)
+            P_surplus(t,n)=Pgen_pred_1h_allocated(t,n)-PconsMeasured(t,n);
+            StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+PconsMeasured(t,n);%*Unidad_t;
+            
+            if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)<100
+                if P_surplus(t,n)<MaxChargingPowerForParticipant(1,n)
+                    SoC(t+1,n)=SoC(t,n)+((P_surplus(t,n)*TimeStep*ChargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+                else
+                    SoC(t+1,n)=SoC(t,n)+((MaxChargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
+                    StepProfit(t,n)=StepProfit(t,n)+(P_surplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep*ElectricitySellingPrice(t,1);
+                end
+            else
+                StepProfit(t,n)=StepProfit(t,n)+P_surplus(t,n)*TimeStep*ElectricitySellingPrice(t,1);
+                SoC(t+1,n)=SoC(t,n);
+            end
+        else
+            P_shortage(t,n)=PconsMeasured(t,n)-Pgen_real_allocated(t,n);
+            StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+Pgen_real_allocated(t,n);
+            if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)>0
+
+                if P_shortage(t,n)<MaxDischargingPowerForParticipant(1,n)
+                    BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                    
+                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
+                    if BatteryManagementDecision(t,n) == 1
+                        SoC(t+1,n)=SoC(t,n)-(((P_shortage(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+                        StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+P_shortage(t,n);%*Unidad_t;
+                    else
+                        StepProfit(t,n)=StepProfit(t,n)-P_shortage(t,n)*TimeStep*price_next_1h(t,1);
+                        StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+P_shortage(t,n);%*Unidad_t;
+                        SoC(t+1,n)=SoC(t,n);
+                    end
+                else
+                    BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                    Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                    % Salida es 0 o 1, donde 1 es usar la bateria y 0 no usarla
+                    if BatteryManagementDecision(t,n) == 1
+                        SoC(t+1,n)=SoC(t,n)-((MaxDischargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
+                        StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+MaxDischargingPowerForParticipant(1,n);%*Unidad_t; %*DischargeEfficiency
+                        StepProfit(t,n)= StepProfit(t,n)-(P_shortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1); %*DischargeEfficiency
+                        StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+(P_shortage(t,n)-MaxDischargingPowerForParticipant(1,n));%*Unidad_t; %*DischargeEfficiency
+                    else
+                        StepProfit(t,n)=StepProfit(t,n)-P_shortage(t,n)*TimeStep*price_next_1h(t,1);
+                        StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+P_shortage(t,n);%*Unidad_t;
+                        SoC(t+1,n)=SoC(t,n);
+                    end
+                end
+            else
+                StepProfit(t,n)=StepProfit(t,n)-P_shortage(t,n)*TimeStep*price_next_1h(t,1);
+                StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+P_shortage(t,n);%*Unidad_t;
+                SoC(t+1,n)=SoC(t,n);
+            end
+        end
     % Se almacena toda la energía generada o hasta llenar el SoC. En caso de
     % llenar el SoC se vende el resto.
-    else % PVPowerManagementDecision=2
-    MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
-    if Pgen_real_allocated(t,n)<MaxChargingPowerForParticipant(1,n)
-    SoC(t+1,n)=SoC(t,n)+((Pgen_pred_1h_allocated(t,n)*TimeStep*ChargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
-    else
-    SoC(t+1,n)=SoC(t,n)+(MaxChargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n)*100;
-    StepProfit(t,n)=StepProfit(t,n)+(Pgen_real_allocated(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep*ElectricitySellingPrice(t,1);
-    end
-    StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
-    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n);%*Unidad_t;
+    elseif PVPowerManagementDecision(t,n) == 2 % PVPowerManagementDecision=2
+        MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
+        if Pgen_real_allocated(t,n)<MaxChargingPowerForParticipant(1,n)
+            SoC(t+1,n)=SoC(t,n)+((Pgen_pred_1h_allocated(t,n)*TimeStep*ChargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+        else
+            SoC(t+1,n)=SoC(t,n)+(MaxChargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n)*100;
+            StepProfit(t,n)=StepProfit(t,n)+(Pgen_real_allocated(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep*ElectricitySellingPrice(t,1);
+        end
+        StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
+        StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n);%*Unidad_t;
     end
     
-    %StorageAllocation = storage_allocation;
-    %GenerationPowerAllocation = generation_allocation;
     ServiceProviding = checkForServiceProviding(t, BidStep);
-    %StepProfit = step_profit;
     if (ServiceProviding == true)
-    bid_counter = bid_counter + 1;
-    [SoC, bid_profit, StepProfit] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
-    MaximumStorageCapacity, StepProfit, GenerationPowerAllocation, BidPrice, ...
-    energy_cost_bought_while_bid, step_energy_origin, price_next_1h);
+        bid_counter = bid_counter + 1;
+        [SoC, bid_profit, StepProfit] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
+        MaximumStorageCapacity, StepProfit, GenerationPowerAllocation, BidPrice, ...
+        energy_cost_bought_while_bid, step_energy_origin, price_next_1h);
     end
     
     
@@ -328,11 +329,7 @@ for t=1:SimulationSteps
     
     step_energy_origin = sum(StepEnergyOriginIndividual(:,:));
     
-    % bid_step = BidStep;
-    % if(t==bid_step || t==bid_step+1 || t==bid_step+2 || t==bid_step+3)
-    %     energy_cost_bought_while_bid = energy_cost_bought_while_bid + (step_energy_origin(1,3) * price_next_1h(t));
-    % end
-    
+   
     TotalEnergyOriginIndividual(:,:)=TotalEnergyOriginIndividual(:,:) + StepEnergyOriginIndividual(:,:);
     
     % ch

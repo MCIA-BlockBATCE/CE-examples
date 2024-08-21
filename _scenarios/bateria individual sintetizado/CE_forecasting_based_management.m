@@ -174,62 +174,62 @@ for t=1:SimulationSteps
         % will be supplied by the battery or by the grid
         if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)>0
         
-        % If the participant's demand is lower than the maximum
-        % available discharging power for the current participant
-        if PconsMeasured(t,n)<MaxDischargingPowerForParticipant(1,n)
-        
-            % This function controlls the use of stored energy. The CF has 2 possible
-            % outputs: Using energy from the battery or saving it for later.
-            % The outcome depends on future consumption, production and price predictions.
-            BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-            Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-            % Do not use stored energy: 0, Use stored energy: 1
+            % If the participant's demand is lower than the maximum
+            % available discharging power for the current participant
+            if PconsMeasured(t,n)<MaxDischargingPowerForParticipant(1,n)
             
-            % The participant uses the energy stored in its battery
-            % allocation in order to supply its demand
-            if BatteryManagementDecision(t,n)==1
-                SoC(t+1,n)=SoC(t,n)-(((PconsMeasured(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
-                StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+PconsMeasured(t,n)*TimeStep;
-                TotalEnergyDecisionIndividual(n,3)=TotalEnergyDecisionIndividual(n,3)+(PconsMeasured(t,n)*TimeStep)/DischargeEfficiency;
+                % This function controlls the use of stored energy. The CF has 2 possible
+                % outputs: Using energy from the battery or saving it for later.
+                % The outcome depends on future consumption, production and price predictions.
+                BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                % Do not use stored energy: 0, Use stored energy: 1
                 
+                % The participant uses the energy stored in its battery
+                % allocation in order to supply its demand
+                if BatteryManagementDecision(t,n)==1
+                    SoC(t+1,n)=SoC(t,n)-(((PconsMeasured(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+                    StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+PconsMeasured(t,n)*TimeStep;
+                    TotalEnergyDecisionIndividual(n,3)=TotalEnergyDecisionIndividual(n,3)+(PconsMeasured(t,n)*TimeStep)/DischargeEfficiency;
+                    
+                    % The participant purchases energy from the grid to
+                    % supply its demand
+                else
+                    StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
+                    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n)*TimeStep;
+                    SoC(t+1,n)=SoC(t,n);
+                end
+            
+            % If the participant's demand is higher than maximum
+            % available discharging power for the current participant
+            else
+                
+                % This function controlls the use of stored energy. The CF has 2 possible
+                % outputs: Using energy from the battery or saving it for later.
+                % The outcome depends on future consumption, production and price predictions.
+                BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
+                Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
+                % Do not use stored energy: 0, Use stored energy: 1
+                
+                % The participant uses the energy stored in its battery
+                % allocation to partially supply the participant's
+                % demand
+                if BatteryManagementDecision(t,n)==1
+                    SoC(t+1,n)=SoC(t,n)-((MaxDischargingPowerForParticipant(1,n)*TimeStep)/(EnergyStorageMaximumForParticipant(1,n)*DischargeEfficiency))*100;
+                    StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+MaxDischargingPowerForParticipant(1,n)*TimeStep;
+                    StepProfit(t,n)=StepProfit(t,n)-(PconsMeasured(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1);
+                    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+(PconsMeasured(t,n)-MaxDischargingPowerForParticipant(1,n)*TimeStep);
+                    TotalEnergyDecisionIndividual(n,3)=TotalEnergyDecisionIndividual(n,3)+MaxDischargingPowerForParticipant(1,n)*TimeStep;
+    
+    
                 % The participant purchases energy from the grid to
                 % supply its demand
-            else
-                StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
-                StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n)*TimeStep;
-                SoC(t+1,n)=SoC(t,n);
-            end
-        
-        % If the participant's demand is higher than maximum
-        % available discharging power for the current participant
-        else
-            
-            % This function controlls the use of stored energy. The CF has 2 possible
-            % outputs: Using energy from the battery or saving it for later.
-            % The outcome depends on future consumption, production and price predictions.
-            BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
-            Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-            % Do not use stored energy: 0, Use stored energy: 1
-            
-            % The participant uses the energy stored in its battery
-            % allocation to partially supply the participant's
-            % demand
-            if BatteryManagementDecision(t,n)==1
-                SoC(t+1,n)=SoC(t,n)-((MaxDischargingPowerForParticipant(1,n)*TimeStep)/(EnergyStorageMaximumForParticipant(1,n)*DischargeEfficiency))*100;
-                StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+MaxDischargingPowerForParticipant(1,n)*TimeStep;
-                StepProfit(t,n)=StepProfit(t,n)-(PconsMeasured(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1);
-                StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+(PconsMeasured(t,n)-MaxDischargingPowerForParticipant(1,n)*TimeStep);
-                TotalEnergyDecisionIndividual(n,3)=TotalEnergyDecisionIndividual(n,3)+MaxDischargingPowerForParticipant(1,n)*TimeStep;
-
-
-            % The participant purchases energy from the grid to
-            % supply its demand
-            else
-                StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
-                StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n)*TimeStep;
-                SoC(t+1,n)=SoC(t,n);
-            end
-        end 
+                else
+                    StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
+                    StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PconsMeasured(t,n)*TimeStep;
+                    SoC(t+1,n)=SoC(t,n);
+                end
+            end 
         
         % If battery is empty, the participant's demand must be supplied
         % by the grid
