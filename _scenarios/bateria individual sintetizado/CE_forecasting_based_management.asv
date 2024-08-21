@@ -336,8 +336,7 @@ for t=1:SimulationSteps
                 else
                     BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-                    % Do not use stored energy: 0, Use stored energy: 1
-
+    
                     
                     % A combination of power from the battery and grid
                     % is used to supply the remaining demand
