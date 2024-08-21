@@ -1,4 +1,4 @@
-function [ch,hora,dia_setmana] = siguiente_ch(ch,hora,dia_setmana)
+function [ch,hora,dia_setmana] = goToNextTimeStep(ch,hora,dia_setmana)
 
 ch = ch + 1;
 hora = ceil(ch/4);

@@ -506,7 +506,7 @@ end
 total_energy_origin_individual(:,:)=total_energy_origin_individual(:,:) + step_energy_origin_individual(:,:);
 
 % ch
-[quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
+[quarter_h,hour,weekDay] = siguiente_ch(quarter_h,hour,weekDay);
 
 
 end
@@ -526,7 +526,6 @@ for i=1:3
 end
 
 %% Calculo balance economico sin optimizar
-% TODO: sustituir con código pretty
 
 P_surplus=zeros(steps,members);
 P_shortage=zeros(steps,members);
@@ -633,7 +632,7 @@ P_discharge_max=storage_allocation*100;
     
     step_energy_origin_unoptimised(t,:) = sum(step_energy_origin_individual_unoptimised(:,:));
 
-    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
+    [quarter_h,hour,weekDay] = siguiente_ch(quarter_h,hour,weekDay);
 end
 
 % Comparació balance optimitzant/sense optimitzar

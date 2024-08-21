@@ -51,7 +51,7 @@ for i = 1:members-1
     for j = i+1:members
         y1CE = Pcons_real(:,i);
         y2CE = Pcons_real(:,j);
-        POR = POR_calculation(y1CE, y2CE);
+        POR = calculatePOR(y1CE, y2CE);
         POR_vector(end+1) = POR;
     end
 

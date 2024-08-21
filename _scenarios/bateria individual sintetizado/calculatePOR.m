@@ -1,4 +1,4 @@
-function [POR] = POR_calculation(y1CE,y2CE)
+function [POR] = calculatePOR(y1CE,y2CE)
 % POR_CALCULATION 
 %   Profile Overlapping Rate (POR) is computed as the intersection of the
 %   areas below two consumption profile curves. A high POR indicates similar

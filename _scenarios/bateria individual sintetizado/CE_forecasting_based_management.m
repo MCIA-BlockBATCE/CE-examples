@@ -393,7 +393,7 @@ for t=1:SimulationSteps
     SoC_energy_CER(t+1) = getSoCEnergyEC(members, MaximumStorageCapacity, StorageAllocation, SoC, t);
     
     % Advance to next quarter
-    [quarter_h,hour,weekDay] = siguiente_ch(quarter_h,hour,weekDay);
+    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
 
 end % Simulation loop
 
@@ -488,7 +488,7 @@ for t=1:SimulationSteps
             StepEnergyOriginIndividualBasicRules(n,1) = StepEnergyOriginIndividualBasicRules(n,1) + Pgen_real_allocated(t,n)*TimeStep;
             
             % If there is energy in the battery allocation of the
-            % participant, demand can be supplied partially or fully by the
+            % participant, demand can be supplied partiatime_margin_bidlly or fully by the
             % battery
             if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)>0
                 
@@ -522,7 +522,7 @@ for t=1:SimulationSteps
     StepEnergyOriginBasicRules(t,:) = sum(StepEnergyOriginIndividualBasicRules(:,:));
     
     % Advance to next quarter
-    [quarter_h,hour,weekDay] = siguiente_ch(quarter_h,hour,weekDay);
+    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
 end
 
 
