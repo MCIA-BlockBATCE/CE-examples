@@ -75,19 +75,18 @@ PowerShortage=zeros(SimulationSteps,members);
 SoC=zeros(SimulationSteps+1,members); % Initial SoC
 ElectricitySellingPrice=0.07 * ones(SimulationSteps,1); % Selling price in €/kWh
 
+
+% --- Starting simulation time ---
 hour = 1; % Starting hour
 weekDay = 1; % May 2023 started on Monday (thus Monday=1, ..., Sunday=7)
 quarter_h = 1; % Starting quarter
 
-TotalEnergyDecisionIndividual = zeros(members, 3);
-% col 1 = PV energy sold to grid
-% col 2 = PV energy directly consumed 
-% col 3 = PV energy consumed from battery
 
 % --- Input data ---
 % Load data from .mat files which contain PV generated power
 load("..\..\_data\Pgen_real.mat")
 load("..\..\_data\Pgen_real_3h.mat")
+
 
 % Load data from.mat files which contain measured power consumption
 load("..\..\_data\energia_cons_CER.mat")
@@ -95,11 +94,13 @@ load("..\..\_data\energia_cons_CER_3h.mat")
 PconsMeasured = energia_cons_CER(:,EnergyCommunityConsumptionProfiles)/TimeStep;
 PconsMeasured3h = energia_cons_CER_3h(:,EnergyCommunityConsumptionProfiles)/TimeStep;
 
+
 % Load data from .mat files which contain forecasted PV generation
 % following Osterwald equation to estimate the nominal power for generic
 % PV equipment.
 load("..\..\_data\Pgen_pred_1h.mat")
 load("..\..\_data\Pgen_pred_3h.mat")
+
 
 % Load data which contain forecasted power consumption, obtained offline
 % using Adaptive Neuro-Fuzzy Inference System (ANFIS) in MATLAB.
@@ -108,6 +109,7 @@ load("..\..\_data\Pcons_pred_3h.mat")
 PconsForecast1h = Pcons_pred_1h(:,EnergyCommunityConsumptionProfiles)/TimeStep;
 PconsForecast3h = Pcons_pred_3h(:,EnergyCommunityConsumptionProfiles)/TimeStep;
 
+
 % Load data which contains electricity buying price according to
 % OMIE (iberian markets).
 load("..\..\_data\buying_prices.mat");
@@ -115,11 +117,22 @@ load("..\..\_data\buying_prices.mat");
 %% 2. EC TESTED MODEL
 
 % Initalization of tracking vectors and counters
-DailyEnergyOrigin = zeros(24*4,3); % Hauria de ser energia, em faltava multiplicar pel timestep (Fet)
-TotalEnergyOriginIndividual = zeros(members,3);
 StepProfit=zeros(SimulationSteps,members);
+SoC_energy_CER = zeros(SimulationSteps,1);
+
+
+% Tracking of energy by origin
 EnergyOriginInstant=zeros(SimulationSteps,3); % Hauria de ser energia, em faltava multiplicar pel timestep (Fet)
 EnergyOriginInstantIndividual=zeros(SimulationSteps,members,3); % Hauria de ser energia, em faltava multiplicar pel timestep (Fet)
+DailyEnergyOrigin = zeros(24*4,3); % Hauria de ser energia, em faltava multiplicar pel timestep (Fet)
+TotalEnergyOriginIndividual = zeros(members,3);
+
+
+% Tracking of energy by use
+TotalEnergyDecisionIndividual = zeros(members, 3);
+% col 1 = PV energy sold to grid
+% col 2 = PV energy directly consumed 
+% col 3 = PV energy consumed from battery
 
 
 % According to the selected sharing coefficient method and the available
