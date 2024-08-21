@@ -48,7 +48,7 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 %   - Variable allocation considering only information that is available to the
 %   customer in invoices, which are aggregated power consumption in each of
 %   the 3 tariff section (low price, mid price, high price). For reference,
-%   weekends are all-day low price, and working days forllow: 0h-8h (low),
+%   weekends are all-day low price, and working days follow: 0h-8h (low),
 %   8h-10h (mid), 10h-14h (high), 14h-18h (mid), 18h-22h(high), 22h-0h (mid).
 %   CoR_type = 1.
 %
