@@ -2,29 +2,36 @@ clear all
 close all
 
 % This script models an energy community (EC) where each of its members
-% can use a fix allocation of the EC energy storage system (battery). The
-% script is organized in the following sections:
+% can use a fix allocation of the EC energy storage system (battery). PV
+% power allocation method can be chosen by the user, as well as scenarios
+% for consumption profiles (see Section 1).
 % 
-%   1. PARAMETER DEFINITION
+% In this particular case, forecasted data is used as an input for the
+% decision functions for each member.
+% 
+% The script is organized in the following sections:
+% 
+%   Section 1. PARAMETER DEFINITION
 %       This section allows for user interaction as EC consumption profiles
 %       can be selected, as well as PV power allocation coefficients.
 %       However, default values are preset for out of the box running.
 % 
-%   2. EC TESTED MODEL
+%   Section 2. EC TESTED MODEL
 %       This section runs the EC model that is being compared to rule-based
 %       reference model.
 %
-%   3. EC RULE-BASED REFERENCE MODEL
+%   Section 3. EC RULE-BASED REFERENCE MODEL
 %       This section runs the EC rule-based reference model.
 %
-%   4. RESULTS: KPIs AND PLOTS
+%   Section 4. RESULTS: KPIs AND PLOTS
 %       This section displays plots which illustrate the usage of PV power
 %       generation, battery and market interaction (if allowed). KPIs are
-%       computed to 
+%       computed to compare the specific management method vs a rule-based
+%       reference model.
 % 
 
 
-%% 1. PARAMETER DEFINITION
+%% Section 1. PARAMETER DEFINITION
 
 
 % --- EC consumption profiles --
@@ -287,9 +294,9 @@ for t=1:SimulationSteps
             % If the battery allocation of the participant is full, then
             % all surplus has to be sold to the grid
             else
+                SoC(t+1,n)=SoC(t,n);
                 StepProfit(t,n)=StepProfit(t,n)+PowerSurplus(t,n)*TimeStep*ElectricitySellingPrice(t,1);
                 TotalEnergyDecisionIndividual(n,1)=TotalEnergyDecisionIndividual(n,1)+PowerSurplus(t,n)*TimeStep;
-                SoC(t+1,n)=SoC(t,n);
             end
         
         % If PV power allocated to the participant does not exceed
@@ -353,7 +360,7 @@ for t=1:SimulationSteps
                     % demand
                     else
                         StepProfit(t,n)=StepProfit(t,n)-PowerShortage(t,n)*TimeStep*price_next_1h(t,1);
-                        StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PowerShortage(t,n);%*Unidad_t;
+                        StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PowerShortage(t,n)*TimeStep;
                         SoC(t+1,n)=SoC(t,n);
                     end
                 end
@@ -362,7 +369,7 @@ for t=1:SimulationSteps
             % can only be supplied by power purchased from grid
             else
                 StepProfit(t,n)=StepProfit(t,n)-PowerShortage(t,n)*TimeStep*price_next_1h(t,1);
-                StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PowerShortage(t,n);%*Unidad_t;
+                StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PowerShortage(t,n)*TimeStep;
                 SoC(t+1,n)=SoC(t,n);
             end
         end
@@ -370,6 +377,7 @@ for t=1:SimulationSteps
     
     % If the participant decides on storing all PV generated power
     elseif PVPowerManagementDecision(t,n) == 2
+        
         MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
         
         % If the PV generated power does not exceed the maximum charging
@@ -400,7 +408,7 @@ for t=1:SimulationSteps
     
     % --- Update of tracking vectors and counters
     for i=1:3
-    EnergyOriginInstant(t,i) = sum(EnergyOriginInstantIndividual(t,:,i));
+        EnergyOriginInstant(t,i) = sum(EnergyOriginInstantIndividual(t,:,i));
     end
     DailyEnergyOrigin(quarter_h,:) = DailyEnergyOrigin(quarter_h,:) + sum(StepEnergyOriginIndividual(:,:));
     TotalEnergyOriginIndividual(:,:)=TotalEnergyOriginIndividual(:,:) + StepEnergyOriginIndividual(:,:);
@@ -526,7 +534,7 @@ for t=1:SimulationSteps
             % demand must be supplied using power from the grid
             else
                 StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)-PowerShortage(t,n)*TimeStep*price_next_1h(t,1);
-                StepEnergyOriginIndividualBasicRules(n,3) = StepEnergyOriginIndividualBasicRules(n,3) + PowerShortage(t,n);%Unidad_t
+                StepEnergyOriginIndividualBasicRules(n,3) = StepEnergyOriginIndividualBasicRules(n,3) + PowerShortage(t,n)*TimeStep;
                 SoC(t+1,n)=SoC(t,n);
             end
         end  

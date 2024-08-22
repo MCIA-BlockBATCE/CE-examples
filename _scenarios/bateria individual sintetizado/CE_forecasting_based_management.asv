@@ -2,29 +2,36 @@ clear all
 close all
 
 % This script models an energy community (EC) where each of its members
-% can use a fix allocation of the EC energy storage system (battery). The
-% script is organized in the following sections:
+% can use a fix allocation of the EC energy storage system (battery). PV
+% power allocation method can be chosen by the user, as well as scenarios
+% for consumption profiles (see Section 1).
 % 
-%   1. PARAMETER DEFINITION
+% In this particular case, forecasted data is used as an input for the
+% decision functions for each member.
+% 
+% The script is organized in the following sections:
+% 
+%   Section 1. PARAMETER DEFINITION
 %       This section allows for user interaction as EC consumption profiles
 %       can be selected, as well as PV power allocation coefficients.
 %       However, default values are preset for out of the box running.
 % 
-%   2. EC TESTED MODEL
+%   Section 2. EC TESTED MODEL
 %       This section runs the EC model that is being compared to rule-based
 %       reference model.
 %
-%   3. EC RULE-BASED REFERENCE MODEL
+%   Section 3. EC RULE-BASED REFERENCE MODEL
 %       This section runs the EC rule-based reference model.
 %
-%   4. RESULTS: KPIs AND PLOTS
+%   Section 4. RESULTS: KPIs AND PLOTS
 %       This section displays plots which illustrate the usage of PV power
 %       generation, battery and market interaction (if allowed). KPIs are
-%       computed to 
+%       computed to compare the specific management method vs a rule-based
+%       reference model.
 % 
 
 
-%% 1. PARAMETER DEFINITION
+%% Section 1. PARAMETER DEFINITION
 
 
 % --- EC consumption profiles --
@@ -48,7 +55,7 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 %   - Variable allocation considering only information that is available to the
 %   customer in invoices, which are aggregated power consumption in each of
 %   the 3 tariff section (low price, mid price, high price). For reference,
-%   weekends are all-day low price, and working days forllow: 0h-8h (low),
+%   weekends are all-day low price, and working days follow: 0h-8h (low),
 %   8h-10h (mid), 10h-14h (high), 14h-18h (mid), 18h-22h(high), 22h-0h (mid).
 %   CoR_type = 1.
 %
@@ -287,9 +294,9 @@ for t=1:SimulationSteps
             % If the battery allocation of the participant is full, then
             % all surplus has to be sold to the grid
             else
+                SoC(t+1,n)=SoC(t,n);
                 StepProfit(t,n)=StepProfit(t,n)+PowerSurplus(t,n)*TimeStep*ElectricitySellingPrice(t,1);
                 TotalEnergyDecisionIndividual(n,1)=TotalEnergyDecisionIndividual(n,1)+PowerSurplus(t,n)*TimeStep;
-                SoC(t+1,n)=SoC(t,n);
             end
         
         % If PV power allocated to the participant does not exceed
@@ -336,7 +343,8 @@ for t=1:SimulationSteps
                 else
                     BatteryManagementDecision(t,n) = CF2(PconsForecast3h(t,n),PconsForecast1h(t,n),Pgen_pred_3h_allocated(t,n), ...
                     Pgen_pred_1h_allocated(t,n),price_next_1h(t,1),price_next_3h(t,1),price_next_6h(t,1),SoC_energy_CER(t));
-    
+                    % Do not use stored energy: 0, Use stored energy: 1
+
                     
                     % A combination of power from the battery and grid
                     % is used to supply the remaining demand
@@ -352,7 +360,7 @@ for t=1:SimulationSteps
                     % demand
                     else
                         StepProfit(t,n)=StepProfit(t,n)-PowerShortage(t,n)*TimeStep*price_next_1h(t,1);
-                        StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PowerShortage(t,n);%*Unidad_t;
+                        StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+PowerShortage(t,n)*TimeStep;
                         SoC(t+1,n)=SoC(t,n);
                     end
                 end
@@ -369,6 +377,7 @@ for t=1:SimulationSteps
     
     % If the participant decides on storing all PV generated power
     elseif PVPowerManagementDecision(t,n) == 2
+        
         MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
         
         % If the PV generated power does not exceed the maximum charging
@@ -399,7 +408,7 @@ for t=1:SimulationSteps
     
     % --- Update of tracking vectors and counters
     for i=1:3
-    EnergyOriginInstant(t,i) = sum(EnergyOriginInstantIndividual(t,:,i));
+        EnergyOriginInstant(t,i) = sum(EnergyOriginInstantIndividual(t,:,i));
     end
     DailyEnergyOrigin(quarter_h,:) = DailyEnergyOrigin(quarter_h,:) + sum(StepEnergyOriginIndividual(:,:));
     TotalEnergyOriginIndividual(:,:)=TotalEnergyOriginIndividual(:,:) + StepEnergyOriginIndividual(:,:);
