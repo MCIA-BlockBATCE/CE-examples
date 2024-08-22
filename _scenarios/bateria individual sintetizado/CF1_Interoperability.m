@@ -1,5 +1,5 @@
 function [FCoste1, P_discharge_max_bid] = CF1_Interoperability(stored_energy,bid_amount,current_step,bid_step,ConsPred3h,ConsPred1h,GenPred3h, ...
-                    GenPred1h,Energy_price,Selling_price,Energy_price3h,SoC,Energy_price6h,P_discharge_max,DischargeEfficiency)
+                    GenPred1h,Energy_price,Selling_price,Energy_price3h,SoC,Energy_price6h,P_discharge_max,DischargeEfficiency,TimeStep)
 FCoste1 = 1;
 
 P_discharge_max_bid = P_discharge_max;
@@ -28,9 +28,9 @@ if((current_step >= bid_step)  && (current_step <= bid_step + 3))
 % Se cubre el caso en el que en las horas anteriores a la oferta se tiene suficiente energía almacenada, y
 % y se gestiona la descarga progresiva (limitando la potencia de descarga máxima) asegurando la capacidad de
 % satisfacer la oferta.
-elseif((bid_amount/DischargeEfficiency) <= stored_energy)
+elseif((bid_amount/DischargeEfficiency)*1.25 <= stored_energy)
 
-       P_discharge_max_bid = P_discharge_max * (diff_bat/(bid_amount/DischargeEfficiency));
+       P_discharge_max_bid = diff_bat/TimeStep;
        
        % decision = "Corrijo según SoC"
        % instante_actual
@@ -43,6 +43,7 @@ elseif((bid_amount/DischargeEfficiency) <= stored_energy)
 % cargar la batería.
 else
        FCoste1 = 2;
+       P_discharge_max_bid = 0;
 end
 
 if Energy_price < Selling_price
