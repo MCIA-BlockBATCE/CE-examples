@@ -1,6 +1,7 @@
 function [] = time_band_bill(CER)
 
     load('..\..\_data\base_data_2023.mat') 
+    delete('..\..\_data\bbce2_Factures_ficticies.xlsx')
     
     %% Selección de columnas y llenado de vacíos con IL
     

@@ -53,6 +53,8 @@ close all
 CommunitySelection = 0;
 EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 
+% Test, getting rid of EV
+EnergyCommunityConsumptionProfiles = EnergyCommunityConsumptionProfiles(1,1:5);
 
 % --- PV power allocation coefficients ---
 % Assign one of the following values: 
@@ -192,7 +194,7 @@ for t=1:SimulationSteps
     [PVPowerManagementDecision(t,n), BidAccepted, MaxDischargingPowerForParticipantIfBid] = chooseCF1(TimeHorizonToBid, ...
             SoC_energy_CER, BidAmount, t, BidStep, PconsForecast3h, PconsForecast1h, Pgen_pred_3h_allocated, ...
             Pgen_pred_1h_allocated, TimeStep, price_next_1h, ElectricitySellingPrice, price_next_3h, ...
-            SoC, price_next_6h, MaxDischargingPowerForParticipant, n);
+            SoC, price_next_6h, MaxDischargingPowerForParticipant, n, DischargeEfficiency);
         
    
     % If the participant decides on selling the PV generated power to
@@ -207,7 +209,7 @@ for t=1:SimulationSteps
         
         % Discharging power is limited by the allocation for each
         % participant
-        MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
+        MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep)*DischargeEfficiency);
         
         % If there is still energy stored in the battery for the current
         % participant, it has to be decided if the participant's demand
@@ -294,10 +296,10 @@ for t=1:SimulationSteps
         end
         
         % Charging power allocation for each participant
-        MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
+        MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep)*ChargeEfficiency);
         % Discharging power is limited by the allocation for each
         % participant
-        MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
+        MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep)*DischargeEfficiency);
         
         % If PV power allocated to the participant exceeds its power
         % demand 
@@ -391,7 +393,7 @@ for t=1:SimulationSteps
                     if BatteryManagementDecision(t,n) == 1
                         SoC(t+1,n)=SoC(t,n)-((MaxDischargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n)*DischargeEfficiency)*100;
                         StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+MaxDischargingPowerForParticipant(1,n)*TimeStep;
-                        StepProfit(t,n)= StepProfit(t,n)-(PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1)*DischargeEfficiency;
+                        StepProfit(t,n)= StepProfit(t,n)-(PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1);
                         StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+(PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep;
                         TotalEnergyDecisionIndividual(n,3)=TotalEnergyDecisionIndividual(n,3)+MaxDischargingPowerForParticipant(1,n)*TimeStep;
                     
@@ -417,7 +419,7 @@ for t=1:SimulationSteps
     % If the participant decides on storing all PV generated power
     elseif PVPowerManagementDecision(t,n) == 2
 
-        MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
+        MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep)*ChargeEfficiency);
         
         % If the PV generated power does not exceed the maximum charging
         % power for the participant's battery allocation, all power is used
@@ -445,7 +447,7 @@ for t=1:SimulationSteps
     ServiceProviding = checkForServiceProviding(t, BidStep);
     if (ServiceProviding == true)
         bid_counter = bid_counter + 1;
-        [SoC, bid_profit, StepProfit, TotalEnergyDecisionIndividual] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
+        [SoC, bid_profit, StepProfit, energy_cost_bought_while_bid, TotalEnergyDecisionIndividual] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
             MaximumStorageCapacity, StepProfit, GenerationPowerAllocation, BidPrice, ...
             energy_cost_bought_while_bid, step_energy_origin, price_next_1h, TotalEnergyDecisionIndividual);
     end
@@ -463,7 +465,6 @@ for t=1:SimulationSteps
     step_energy_origin = sum(StepEnergyOriginIndividual(:,:));
     DailyEnergyOrigin(quarter_h,:) = DailyEnergyOrigin(quarter_h,:) + sum(StepEnergyOriginIndividual(:,:));
     TotalEnergyOriginIndividual(:,:)=TotalEnergyOriginIndividual(:,:) + StepEnergyOriginIndividual(:,:);
-    SoC_energy_CER(t+1) = getSoCEnergyEC(members, MaximumStorageCapacity, StorageAllocation, SoC, t);
     
     % Advance to the next quarter
     [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
@@ -487,117 +488,117 @@ for i=1:3
 end
 
 
-%% 3. EC RULE-BASED REFERENCE MODEL
-
-% --- Initalization of tracking vectors and counters ---
-PowerSurplus=zeros(SimulationSteps,members);
-PowerShortage=zeros(SimulationSteps,members);
-SoC=ones(SimulationSteps+1,members)*0; % SoC inicial del 50% por poner algo
-StepProfitBasicRules=zeros(SimulationSteps,members);
-SoldEnergyBasicRules = zeros(24*4,members);
-StepEnergyOriginBasicRules = zeros(SimulationSteps,3);
-TotalEnergyOriginIndividualBasicRules = zeros(members,3);
-
-% --- Restar time-related parameters ---
-hour = 1; % Starting hour
-weekDay = 1; % May 2023 started on Monday (thus Monday=1, ..., Sunday=7)
-quarter_h = 1; % Starting quarter
-
-
-% Simulation loop
-for t=1:SimulationSteps 
-
-    % --- Internal vectors initialization ---
-    StepEnergyOriginIndividualBasicRules = zeros(members,3);
-    EnergyStorageMaximumForParticipant=StorageAllocation*MaximumStorageCapacity;
-    MaxChargingPowerForParticipant=StorageAllocation*100;
-    MaxDischargingPowerForParticipant=StorageAllocation*100;
-    
-    
-    for n=1:members %Loop for each CE member
-    
-        % Charging power allocation for each participant
-        MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
-        
-        % Discharging power is limited by the allocation for each
-        % participant
-        MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep));
-        
-        % If the PV power allocated of the participant exceeds its demand
-        if Pgen_real_allocated(t,n)>PconsMeasured(t,n)
-            PowerSurplus(t,n)=Pgen_real_allocated(t,n)-PconsMeasured(t,n);
-            StepEnergyOriginIndividualBasicRules(n,1) = StepEnergyOriginIndividualBasicRules(n,1) + PconsMeasured(t,n)*TimeStep;
-            
-            % If the battery allocation of the participant its not full,
-            % the excess power can be used to charge the battery
-            if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)<100
-
-                % If the surplus is smaller than the maximum charging power
-                % for the participant, energy is used fully to charge the
-                % battery
-                if PowerSurplus(t,n)<MaxChargingPowerForParticipant(1,n)
-                    SoC(t+1,n)=SoC(t,n)+((PowerSurplus(t,n)*TimeStep*ChargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
-                
-                % If the surplus is bigger than the maximum charing power
-                % for the participant, the energy that can't be used to
-                % charge the battery will be sold to the grid
-                else
-                    SoC(t+1,n)=SoC(t,n)+((MaxChargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
-                    SoldEnergyBasicRules(quarter_h,n) = SoldEnergyBasicRules(quarter_h,n) + (PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
-                    StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)+(PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep*ElectricitySellingPrice(t,1);
-                end
-            
-            % If the battery allocation of the participant is full, all
-            % surplus is sold to the grid
-            else
-                StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)+PowerSurplus(t,n)*TimeStep*ElectricitySellingPrice(t,1);
-                SoldEnergyBasicRules(quarter_h,n) = SoldEnergyBasicRules(quarter_h,n) + PowerSurplus(t,n)*TimeStep;
-                SoC(t+1,n)=SoC(t,n);
-            end
-        
-        % If the PV power allocated of the participant does not exceed
-        % its demand
-        else
-            PowerShortage(t,n)=PconsMeasured(t,n)-Pgen_real_allocated(t,n);
-            StepEnergyOriginIndividualBasicRules(n,1) = StepEnergyOriginIndividualBasicRules(n,1) + Pgen_real_allocated(t,n)*TimeStep;
-            
-            % If there is energy in the battery allocation of the
-            % participant, demand can be supplied partiatime_margin_bidlly or fully by the
-            % battery
-            if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)>0
-                
-                % If the shortage is smaller than the maximum discharging
-                % power for the participant, then battery is used to supply
-                % the remaining demand
-                if PowerShortage(t,n)<MaxDischargingPowerForParticipant(1,n)
-                    SoC(t+1,n)=SoC(t,n)-(((PowerShortage(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
-                    StepEnergyOriginIndividualBasicRules(n,2) = StepEnergyOriginIndividualBasicRules(n,2) + PowerShortage(t,n)*TimeStep;
-                % If the shortage is bigger than the maximum discharing
-                % power for the participant, then a combination of battery
-                % and grid are used to supply the remaining demand
-                else
-                    SoC(t+1,n)=SoC(t,n)-(((MaxDischargingPowerForParticipant(1,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
-                    StepEnergyOriginIndividualBasicRules(n,2) = StepEnergyOriginIndividualBasicRules(n,2) + MaxDischargingPowerForParticipant(1,n)*TimeStep;
-                    StepProfitBasicRules(t,n)= StepProfitBasicRules(t,n)-(PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1);
-                    StepEnergyOriginIndividualBasicRules(n,3) = StepEnergyOriginIndividualBasicRules(n,3) + (PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep;
-                end
-            
-            % If the battery allocation of the participant is empty,
-            % demand must be supplied using power from the grid
-            else
-                StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)-PowerShortage(t,n)*TimeStep*price_next_1h(t,1);
-                StepEnergyOriginIndividualBasicRules(n,3) = StepEnergyOriginIndividualBasicRules(n,3) + PowerShortage(t,n)*TimeStep;
-                SoC(t+1,n)=SoC(t,n);
-            end
-        end  
-    end
-    
-    % Update tracking vector
-    StepEnergyOriginBasicRules(t,:) = sum(StepEnergyOriginIndividualBasicRules(:,:));
-    
-    % Advance to next quarter
-    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
-end
+% %% 3. EC RULE-BASED REFERENCE MODEL
+% 
+% % --- Initalization of tracking vectors and counters ---
+% PowerSurplus=zeros(SimulationSteps,members);
+% PowerShortage=zeros(SimulationSteps,members);
+% SoC=ones(SimulationSteps+1,members)*0; % SoC inicial del 50% por poner algo
+% StepProfitBasicRules=zeros(SimulationSteps,members);
+% SoldEnergyBasicRules = zeros(24*4,members);
+% StepEnergyOriginBasicRules = zeros(SimulationSteps,3);
+% TotalEnergyOriginIndividualBasicRules = zeros(members,3);
+% 
+% % --- Restar time-related parameters ---
+% hour = 1; % Starting hour
+% weekDay = 1; % May 2023 started on Monday (thus Monday=1, ..., Sunday=7)
+% quarter_h = 1; % Starting quarter
+% 
+% 
+% % Simulation loop
+% for t=1:SimulationSteps 
+% 
+%     % --- Internal vectors initialization ---
+%     StepEnergyOriginIndividualBasicRules = zeros(members,3);
+%     EnergyStorageMaximumForParticipant=StorageAllocation*MaximumStorageCapacity;
+%     MaxChargingPowerForParticipant=StorageAllocation*100;
+%     MaxDischargingPowerForParticipant=StorageAllocation*100;
+% 
+% 
+%     for n=1:members %Loop for each CE member
+% 
+%         % Charging power allocation for each participant
+%         MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep)*ChargeEfficiency);
+% 
+%         % Discharging power is limited by the allocation for each
+%         % participant
+%         MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep)*DischargeEfficiency);
+% 
+%         % If the PV power allocated of the participant exceeds its demand
+%         if Pgen_real_allocated(t,n)>PconsMeasured(t,n)
+%             PowerSurplus(t,n)=Pgen_real_allocated(t,n)-PconsMeasured(t,n);
+%             StepEnergyOriginIndividualBasicRules(n,1) = StepEnergyOriginIndividualBasicRules(n,1) + PconsMeasured(t,n)*TimeStep;
+% 
+%             % If the battery allocation of the participant its not full,
+%             % the excess power can be used to charge the battery
+%             if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)<100
+% 
+%                 % If the surplus is smaller than the maximum charging power
+%                 % for the participant, energy is used fully to charge the
+%                 % battery
+%                 if PowerSurplus(t,n)<MaxChargingPowerForParticipant(1,n)
+%                     SoC(t+1,n)=SoC(t,n)+((PowerSurplus(t,n)*TimeStep*ChargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+% 
+%                 % If the surplus is bigger than the maximum charing power
+%                 % for the participant, the energy that can't be used to
+%                 % charge the battery will be sold to the grid
+%                 else
+%                     SoC(t+1,n)=SoC(t,n)+((MaxChargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
+%                     SoldEnergyBasicRules(quarter_h,n) = SoldEnergyBasicRules(quarter_h,n) + (PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
+%                     StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)+(PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep*ElectricitySellingPrice(t,1);
+%                 end
+% 
+%             % If the battery allocation of the participant is full, all
+%             % surplus is sold to the grid
+%             else
+%                 StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)+PowerSurplus(t,n)*TimeStep*ElectricitySellingPrice(t,1);
+%                 SoldEnergyBasicRules(quarter_h,n) = SoldEnergyBasicRules(quarter_h,n) + PowerSurplus(t,n)*TimeStep;
+%                 SoC(t+1,n)=SoC(t,n);
+%             end
+% 
+%         % If the PV power allocated of the participant does not exceed
+%         % its demand
+%         else
+%             PowerShortage(t,n)=PconsMeasured(t,n)-Pgen_real_allocated(t,n);
+%             StepEnergyOriginIndividualBasicRules(n,1) = StepEnergyOriginIndividualBasicRules(n,1) + Pgen_real_allocated(t,n)*TimeStep;
+% 
+%             % If there is energy in the battery allocation of the
+%             % participant, demand can be supplied partiatime_margin_bidlly or fully by the
+%             % battery
+%             if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)>0
+% 
+%                 % If the shortage is smaller than the maximum discharging
+%                 % power for the participant, then battery is used to supply
+%                 % the remaining demand
+%                 if PowerShortage(t,n)<MaxDischargingPowerForParticipant(1,n)
+%                     SoC(t+1,n)=SoC(t,n)-(((PowerShortage(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+%                     StepEnergyOriginIndividualBasicRules(n,2) = StepEnergyOriginIndividualBasicRules(n,2) + PowerShortage(t,n)*TimeStep;
+%                 % If the shortage is bigger than the maximum discharing
+%                 % power for the participant, then a combination of battery
+%                 % and grid are used to supply the remaining demand
+%                 else
+%                     SoC(t+1,n)=SoC(t,n)-(((MaxDischargingPowerForParticipant(1,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+%                     StepEnergyOriginIndividualBasicRules(n,2) = StepEnergyOriginIndividualBasicRules(n,2) + MaxDischargingPowerForParticipant(1,n)*TimeStep;
+%                     StepProfitBasicRules(t,n)= StepProfitBasicRules(t,n)-(PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1);
+%                     StepEnergyOriginIndividualBasicRules(n,3) = StepEnergyOriginIndividualBasicRules(n,3) + (PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep;
+%                 end
+% 
+%             % If the battery allocation of the participant is empty,
+%             % demand must be supplied using power from the grid
+%             else
+%                 StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)-PowerShortage(t,n)*TimeStep*price_next_1h(t,1);
+%                 StepEnergyOriginIndividualBasicRules(n,3) = StepEnergyOriginIndividualBasicRules(n,3) + PowerShortage(t,n)*TimeStep;
+%                 SoC(t+1,n)=SoC(t,n);
+%             end
+%         end  
+%     end
+% 
+%     % Update tracking vector
+%     StepEnergyOriginBasicRules(t,:) = sum(StepEnergyOriginIndividualBasicRules(:,:));
+% 
+%     % Advance to next quarter
+%     [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
+% end
 
 %% 4. RESULTS: KPIs AND PLOTS
 
@@ -633,14 +634,14 @@ xlabel('Participant')
 ylim([0 100])
 legend('FV','Battery','Grid')
 
-PercentualTotalEnergyDecisionIndividual=zeros(members,3);
+PercentualTotalEnergyDecisionIndividual=zeros(members,4);
 
 for n = 1:members
     PercentualTotalEnergyDecisionIndividual(n,:) = (TotalEnergyDecisionIndividual(n,:)/sum(TotalEnergyDecisionIndividual(n,:)))*100;
 end
 
 figure(103)
-% total_energy_decision_invidual: 6 filas (members) x 3 cols (acciones)
+% total_energy_decision_invidual: 6 filas (members) x 4 cols (acciones)
 % Valores en % para el total de cada fila
 
 bar(PercentualTotalEnergyDecisionIndividual,'stacked')
@@ -648,7 +649,7 @@ title('Power usage of RE')
 ylim([0 100])
 ylabel('Renewable power [%]')
 xlabel('Participant')
-legend('Sold to grid','Consumed from PV','Consumed from Battery')
+legend('Sold to grid','Consumed from PV','Consumed from Battery','PV energy sold as a service from battery')
 
 % Pendiente añadir en este gráfico anotaciones con métricas de BAT
 figure(104)
@@ -666,18 +667,19 @@ ylim([0 100])
 
 % Pendiente añadir en este gráfico anotaciones con métricas perfiles de
 % consumo
-figure(105)
-qs = 1:1:96;
-plot(qs, avg_days(:,1), qs, avg_days(:,2), qs, avg_days(:,3), qs, avg_days(:,4), qs, avg_days(:,5), qs, avg_days(:,6))
-title("Average-day power consumption for each CE member, POR: [" + num2str(POR(1), '%05.2f') ...
-    + ", " + num2str(POR(2), '%05.2f') + ", " + num2str(POR(3), '%05.2f') + "] [%], ADR: " + num2str(ADR, '%05.2f') + " [kW]", FontSize=14)
-legend('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
-xlim([1 96])
-ylabel('Power [kW]')
-xlabel('Time, in quarters')
-% dim = [0.15 0.5 0.5 0.4];
-% str = {'POR' POR, 'ADR' ADR};
-% annotation('textbox',dim,'String',str,'FitBoxToText','on');
+
+% figure(105)
+% qs = 1:1:96;
+% plot(qs, avg_days(:,1), qs, avg_days(:,2), qs, avg_days(:,3), qs, avg_days(:,4), qs, avg_days(:,5), qs, avg_days(:,6))
+% title("Average-day power consumption for each CE member, POR: [" + num2str(POR(1), '%05.2f') ...
+%     + ", " + num2str(POR(2), '%05.2f') + ", " + num2str(POR(3), '%05.2f') + "] [%], ADR: " + num2str(ADR, '%05.2f') + " [kW]", FontSize=14)
+% legend('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
+% xlim([1 96])
+% ylabel('Power [kW]')
+% xlabel('Time, in quarters')
+% % dim = [0.15 0.5 0.5 0.4];
+% % str = {'POR' POR, 'ADR' ADR};
+% % annotation('textbox',dim,'String',str,'FitBoxToText','on');
 
 
 %% LEGACY PLOTS
