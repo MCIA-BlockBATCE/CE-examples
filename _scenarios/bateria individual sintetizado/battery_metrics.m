@@ -15,7 +15,7 @@ function [CBU, AUR, ADC] = battery_metrics(SoC_energy_CER, max_capacity, days, s
 %       full charge and discharge.
 
 
-CE_SoC_signal = 100*SoC_energy_CER(1:672)/max_capacity;
+CE_SoC_signal = 100*SoC_energy_CER(1:steps)/max_capacity;
 AUR_low = zeros(days,1);
 AUR_high = zeros(days,1); 
 CBU = 0;

@@ -41,11 +41,8 @@ elseif((bid_amount/DischargeEfficiency) <= stored_energy)
 % Se entiende que esto solo se va a poder aplicar en casos en los que antes
 % de la oferta se disponga de alguna energía de generación disponible para
 % cargar la batería.
-elseif((bid_amount/DischargeEfficiency) > stored_energy)
-       FCoste1 = 2;
 else
-       P_discharge_max_bid = P_discharge_max;
-
+       FCoste1 = 2;
 end
 
 if Energy_price < Selling_price

@@ -99,6 +99,8 @@ ServiceSafetyMargin = 0.2; % Value from 0.0 (all margin, no bids) to 1.0 (no mar
 energy_cost_bought_while_bid = 0;
 bid_profit = zeros(SimulationSteps,1);
 BidPrice = 0.1; % arbitrary? TODOAlbert
+BidAmount = 0;
+BidStep = -4;
 
 
 % --- Starting simulation time ---
@@ -177,8 +179,7 @@ for t=1:SimulationSteps
     % At 23:00 (simulation time) forecasting techniques are used to predict
     % the day-ahead aggregate surplus and select the offert with most
     % revenue.
-    % TODOAlbert modificar a les 23:00
-    if quarter_h == 1
+    if quarter_h == 93
         [BidAmount, BidStep] = serviceSelection(TimeStep, t, quarter_h, Pgen_pred_1h, PconsForecast1h, ...
             price_next_1h, DischargeEfficiency, ServiceSafetyMargin, MaximumStorageCapacity);
     end
@@ -194,7 +195,7 @@ for t=1:SimulationSteps
     [PVPowerManagementDecision(t,n), BidAccepted, MaxDischargingPowerForParticipantIfBid] = chooseCF1(TimeHorizonToBid, ...
             SoC_energy_CER, BidAmount, t, BidStep, PconsForecast3h, PconsForecast1h, Pgen_pred_3h_allocated, ...
             Pgen_pred_1h_allocated, TimeStep, price_next_1h, ElectricitySellingPrice, price_next_3h, ...
-            SoC, price_next_6h, MaxDischargingPowerForParticipant, n, DischargeEfficiency);
+            SoC, price_next_6h, MaxDischargingPowerForParticipant, n, DischargeEfficiency, StorageAllocation);
         
    
     % If the participant decides on selling the PV generated power to
@@ -450,6 +451,7 @@ for t=1:SimulationSteps
         [SoC, bid_profit, StepProfit, energy_cost_bought_while_bid, TotalEnergyDecisionIndividual] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
             MaximumStorageCapacity, StepProfit, GenerationPowerAllocation, BidPrice, ...
             energy_cost_bought_while_bid, step_energy_origin, price_next_1h, TotalEnergyDecisionIndividual);
+        BidStep
     end
     
     % Update individual tracking vector
@@ -612,7 +614,7 @@ t = t';
 [CBU, ADC, BCPD] = battery_metrics(SoC_energy_CER, MaximumStorageCapacity, SimulationDays, SimulationSteps);
 
 
-CE_SoC_signal = 100*SoC_energy_CER(1:672)/MaximumStorageCapacity;
+CE_SoC_signal = 100*SoC_energy_CER(1:SimulationSteps)/MaximumStorageCapacity;
 
 Pcons_agg = zeros(SimulationSteps,1);
 for i = 1:SimulationSteps
@@ -620,7 +622,7 @@ for i = 1:SimulationSteps
 end
 
 figure(101)
-plot(t(1:672), Pcons_agg(1:672), t(1:672), Pgen_real(1:672))
+plot(t(1:SimulationSteps), Pcons_agg(1:SimulationSteps), t(1:SimulationSteps), Pgen_real(1:SimulationSteps))
 title('Aggregated power consumption vs aggregated power generation')
 ylabel('Power [kW]')
 xlabel('Time')
@@ -653,7 +655,7 @@ legend('Sold to grid','Consumed from PV','Consumed from Battery','PV energy sold
 
 % Pendiente añadir en este gráfico anotaciones con métricas de BAT
 figure(104)
-plot(t(1:672),CE_SoC_signal)
+plot(t(1:SimulationSteps),CE_SoC_signal)
 title("Battery State of Charge (SoC), AUR: [" + num2str(ADC(1), '%05.2f') + ", " ...
     + num2str(ADC(2), '%05.2f') + "] [%], CBU: " + num2str(CBU, '%05.2f') + ", ADC: " ...
     + num2str(BCPD, '%05.2f'), FontSize=14)
@@ -702,7 +704,7 @@ ylim([0 100])
 % figure(18)
 % subplot(2,1,1)
 % hold on
-% bar(t(1:672),origen_por_horas(1:672,:),'stacked')
+% bar(t(1:SimulationSteps),origen_por_horas(1:SimulationSteps,:),'stacked')
 % legend('Origen placas','Origen batería','Origen red eléctrica')
 % ylabel('Energía consumida (kWh equivalente)')
 % yyaxis right
@@ -710,29 +712,29 @@ ylim([0 100])
 % hold off
 
 % subplot(2,1,2)
-% plot(t(1:672),100*SoC_energy_CER(1:672)/capacidad)
+% plot(t(1:SimulationSteps),100*SoC_energy_CER(1:SimulationSteps)/capacidad)
 % ylabel('SoC de la batería (%)')
 % ylim([0 100])
 % sgtitle("Validación de la regulación del sistema para el cumplimiento de una oferta")
 
 % figure(19)
-% plot(t(1:672),100*SoC_energy_CER(1:672)/max_capacity)
+% plot(t(1:SimulationSteps),100*SoC_energy_CER(1:SimulationSteps)/max_capacity)
 % title('Estado de carga (SoC) de la batería')
 % ylabel('SoC (%)')
 % xlabel('Tiempo')
 % ylim([0 100])
 
 figure(20)
-plot(t(1:672),EnergyOriginInstant(1:672,1),t(1:672),EnergyOriginInstant(1:672,2),t(1:672),EnergyOriginInstant(1:672,3))
+plot(t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,1),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,2),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,3))
 title('Potencia consumida según origen')
 legend('Origen placas','Origen batería','Origen red eléctrica')
 ylabel('Potencia consumida (kW)')
 xlabel('Tiempo')
 % yyaxis right
-% plot(t(1:672), Pgen_real(1:672))
+% plot(t(1:SimulationSteps), Pgen_real(1:SimulationSteps))
 
 % figure(21)
-% plot(t(1:672),price_next_1h(1:672))
+% plot(t(1:SimulationSteps),price_next_1h(1:SimulationSteps))
 % title('Precio de compra de electricidad a la red')
 % ylabel('Precio (€/kWh)')
 % xlabel('Tiempo')
