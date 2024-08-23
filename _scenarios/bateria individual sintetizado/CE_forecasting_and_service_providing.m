@@ -66,7 +66,7 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 %
 %   - Allocation based on instantly available power consumption
 %   measurements, CoR_type = 2.
-CoR_type = 0;
+CoR_type = 2;
 [GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
 
 
