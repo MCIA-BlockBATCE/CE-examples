@@ -1,0 +1,66 @@
+version: "3"
+
+services:
+  node-red:
+    image: nodered:nd
+    container_name: node
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - "1880:1880"
+    restart: always
+    networks:
+      built_in_container_network:
+        ipv4_address: 172.16.238.6
+    volumes:
+      - nodered-storage:/data
+  web:
+    image: grafana/grafana
+    container_name: graf
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=user
+      - GF_SECURITY_ADMIN_PASSWORD=UPC2024
+    restart: always
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana-provisioning/:/etc/grafana/provisioning
+    networks:
+      built_in_container_network:
+        ipv4_address: 172.16.238.3
+
+  database:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - data:/var/lib/influxdb
+      - config:/etc/influxdb
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=user
+      - DOCKER_INFLUXDB_INIT_PASSWORD=upc2024upc
+      - DOCKER_INFLUXDB_INIT_ORG=upc
+      - DOCKER_INFLUXDB_INIT_BUCKET=mydb
+    restart: always
+    networks:
+      built_in_container_network:
+        ipv4_address: 172.16.238.2
+
+volumes:
+  data:
+    name: influx_data
+  config:
+    name: influx_config
+  grafana-storage:
+  nodered-storage:
+
+networks:
+  built_in_container_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
