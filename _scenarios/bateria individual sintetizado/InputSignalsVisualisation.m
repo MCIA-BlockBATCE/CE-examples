@@ -86,7 +86,18 @@ ylabel('Power [kW]')
 xlabel('Time')
 legend('Aggregated power consumption','Aggregated power generation')
 
+
 figure(102)
+plot(t(1:SimulationSteps), PconsMeasured(1:SimulationSteps,1),t(1:SimulationSteps), PconsMeasured(1:SimulationSteps,2), ...
+    t(1:SimulationSteps), PconsMeasured(1:SimulationSteps,3),t(1:SimulationSteps), PconsMeasured(1:SimulationSteps,4), ...
+    t(1:SimulationSteps), PconsMeasured(1:SimulationSteps,5),t(1:SimulationSteps), PconsMeasured(1:SimulationSteps,6))
+title('Power consumption for each member')
+legend('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
+ylabel('Power [kW]')
+xlabel('Time')
+
+
+figure(103)
 plot(t(1:SimulationSteps), price_next_1h(1:SimulationSteps))
 title('Electricity buying price')
 ylabel('Price [€/kWh]')
