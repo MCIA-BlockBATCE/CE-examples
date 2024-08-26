@@ -349,7 +349,7 @@ for t=1:SimulationSteps
         % power or power purchased from the grid        
         else
             PowerShortage(t,n)=PconsMeasured(t,n)-Pgen_real_allocated(t,n);
-            StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+Pgen_real_allocated(t,n);
+            StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+Pgen_real_allocated(t,n)*TimeStep;;
             TotalEnergyDecisionIndividual(n,2)=TotalEnergyDecisionIndividual(n,2)+Pgen_real_allocated(t,n)*TimeStep;
             StepEnergyDecisionIndividual(n,2)=StepEnergyDecisionIndividual(n,2)+Pgen_real_allocated(t,n)*TimeStep;
   
