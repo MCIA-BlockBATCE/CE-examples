@@ -454,9 +454,9 @@ for t=1:SimulationSteps
     ServiceProviding = checkForServiceProviding(t, BidStep);
     if (ServiceProviding == true)
         bid_counter = bid_counter + 1;
-        [SoC, bid_profit, StepProfit, energy_cost_bought_while_bid, TotalEnergyDecisionIndividual] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
+        [SoC, bid_profit, StepProfit, energy_cost_bought_while_bid, TotalEnergyDecisionIndividual, StepEnergyDecisionIndividual] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
             MaximumStorageCapacity, StepProfit, GenerationPowerAllocation, BidPrice, ...
-            energy_cost_bought_while_bid, step_energy_origin, price_next_1h, TotalEnergyDecisionIndividual);
+            energy_cost_bought_while_bid, step_energy_origin, price_next_1h, TotalEnergyDecisionIndividual, StepEnergyDecisionIndividual);
     end
     
     % Update individual tracking vector
@@ -802,34 +802,34 @@ xlabel('Tiempo')
 
 %%
 
-filename = 'SoC_energy_CER.txt';
+filename = './csv_output/SoC_energy_CER.txt';
 csvwrite(filename,SoC_energy_CER);
 
-filename = 'pv_consumption.txt';
+filename = './csv_output/pv_consumption.txt';
 csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,1));
 
-filename = 'bat_consumption.txt';
+filename = './csv_output/bat_consumption.txt';
 csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,2));
 
-filename = 'grid_consumption.txt';
+filename = './csv_output/grid_consumption.txt';
 csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,3));
 
-filename = 'last_day_economic_balance.txt';
+filename = './csv_output/last_day_economic_balance.txt';
 csvwrite(filename, StepProfit(:,1));
 
-col 1 = PV energy sold to grid
-col 2 = PV energy directly consumed 
-col 3 = PV energy consumed from battery
-col 4 = PV energy sold as a service from battery
+% col 1 = PV energy sold to grid
+% col 2 = PV energy directly consumed 
+% col 3 = PV energy consumed from battery
+% col 4 = PV energy sold as a service from battery
 
-filename = 'pv_energy_sold_to_grid.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,1);
+filename = './csv_output/pv_energy_sold_to_grid.txt';
+csvwrite(filename, StepEnergyDecisionIndividual(:,1));
 
-filename = 'pv_energy_directly_consumed.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,2);
+filename = './csv_output/pv_energy_directly_consumed.txt';
+csvwrite(filename, StepEnergyDecisionIndividual(:,2));
 
-filename = 'pv_energy_consumed_from_battery.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,3);
+filename = './csv_output/pv_energy_consumed_from_battery.txt';
+csvwrite(filename, StepEnergyDecisionIndividual(:,3));
 
-filename = 'pv_energy_sold_as_a_service.txt';
-csvwrite('/csv_output/pv_energy_sold_as_a_service.txt', StepEnergyDecisionIndividual(:,4);
+filename = './csv_output/pv_energy_sold_as_a_service.txt';
+csvwrite(filename, StepEnergyDecisionIndividual(:,4));

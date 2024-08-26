@@ -1,6 +1,6 @@
-function [SoC, bid_profit, StepProfit, energy_cost_bought_while_bid, TotalEnergyDecisionIndividual] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
+function [SoC, bid_profit, StepProfit, energy_cost_bought_while_bid, TotalEnergyDecisionIndividual, StepEnergyDecisionIndividual] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
            MaximumStorageCapacity, StepProfit, GenerationPowerAllocation, bid_price, energy_cost_bought_while_bid, ...
-           step_energy_origin, price_next_1h, TotalEnergyDecisionIndividual)
+           step_energy_origin, price_next_1h, TotalEnergyDecisionIndividual, StepEnergyDecisionIndividual)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -14,6 +14,7 @@ function [SoC, bid_profit, StepProfit, energy_cost_bought_while_bid, TotalEnergy
         energy_cost_bought_while_bid = energy_cost_bought_while_bid + (step_energy_origin(1,3) * price_next_1h(t));
         bid_profit(t,1) = 0;
         TotalEnergyDecisionIndividual(n,4) = TotalEnergyDecisionIndividual(n,4) +  storage_energy_for_bid(n);
+        StepEnergyDecisionIndividual(t,4) = StepEnergyDecisionIndividual(t,4) + storage_energy_for_bid(n);
 
         if t == BidStep+3
             bid_profit(t,1) = BidAmount * bid_price;

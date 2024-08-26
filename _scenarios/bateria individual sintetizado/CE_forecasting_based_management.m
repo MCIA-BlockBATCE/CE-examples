@@ -713,10 +713,10 @@ title('Final economic net profit in euros, Basic Rules')
 % title("Facturación agregada de la comunidad (semanal)")
 % ylabel('Euros (€)')
 % 
-% t1 = datetime(2023,5,1,0,0,0);
-% t2 = datetime(2023,5,31,0,0,0);
-% t = t1:minutes(15):t2;
-% t = t';
+t1 = datetime(2023,5,1,0,0,0);
+t2 = datetime(2023,5,31,0,0,0);
+t = t1:minutes(15):t2;
+t = t';
 
 % figure(18)
 % subplot(2,1,1)
@@ -741,14 +741,14 @@ title('Final economic net profit in euros, Basic Rules')
 % xlabel('Tiempo')
 % ylim([0 100])
 % 
-% figure(20)
-% plot(t(1:672),energy_origin_instant(1:672,1),t(1:672),energy_origin_instant(1:672,2),t(1:672),energy_origin_instant(1:672,3))
-% title('Potencia consumida según origen')
-% legend('Origen placas','Origen batería','Origen red eléctrica')
-% ylabel('Potencia consumida (kW)')
-% xlabel('Tiempo')
-% % yyaxis right
-% % plot(t(1:672), Pgen_real(1:672))
+figure(20)
+plot(t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,1),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,2),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,3))
+title('Potencia consumida según origen')
+legend('Origen placas','Origen batería','Origen red eléctrica')
+ylabel('Potencia consumida (kW)')
+xlabel('Tiempo')
+% yyaxis right
+% plot(t(1:672), Pgen_real(1:672))
 % 
 % figure(21)
 % plot(t(1:672),price_next_1h(1:672))
