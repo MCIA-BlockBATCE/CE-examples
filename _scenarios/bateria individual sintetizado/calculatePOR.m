@@ -165,7 +165,7 @@ else
 
         % Find which function is bigger from Nk to Nk+1
         y1_is_bigger_between = false;
-        if (y1CE(NK+1) > y2CE(NKK+1)) 
+        if (y1CE(NK+1) > y2CE(NK+1)) 
             y1_is_bigger_between = true;
         end
     
@@ -180,15 +180,18 @@ else
     % Compute area for the last segment
     NZ = intersect_indexes(end);
     y1_is_bigger_after_NZ = false;
-
-    if (y1CE(NZ+1) > y2CE(NZ+1)) 
-        y1_is_bigger_after_NZ = true;
-    end
-
-    if (y1_is_bigger_after_NZ)
-        area_segment_Z = trapz(y2CE(NZ:end));
+    if NZ ~= length(y1CE)
+        if (y1CE(NZ+1) > y2CE(NZ+1)) 
+            y1_is_bigger_after_NZ = true;
+        end
+    
+        if (y1_is_bigger_after_NZ)
+            area_segment_Z = trapz(y2CE(NZ:end));
+        else
+            area_segment_Z = trapz(y1CE(NZ:end));
+        end
     else
-        area_segment_Z = trapz(y1CE(NZ:end));
+        area_segment_Z = 0;
     end
 
     total_intersect_area = area_segment_1 + intermediate_area + area_segment_Z;
