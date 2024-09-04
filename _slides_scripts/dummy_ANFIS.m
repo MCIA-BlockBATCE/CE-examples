@@ -30,7 +30,7 @@ IO_matrix_training = IO_matrix(51:150,:);
 IO_matrix_testing = IO_matrix(151:200,:);
 
 % ANFIS
-opt=anfisOptions('EpochNumber',5);
+opt=anfisOptions('EpochNumber',50);
 fis = anfis(IO_matrix_training,opt);
 predicted_data = evalfis(fis,IO_matrix_testing(:,1:7));
 RMS_1h = rms(predicted_data' - data(1,151:200));
@@ -38,6 +38,8 @@ RMS_1h = rms(predicted_data' - data(1,151:200));
 % test data and prediction comparison
 figure(1)
 plot(1:50,predicted_data',1:50,data(1,151:200))
+title("ANFIS model with forecasting horizon: 1 step")
+xlabel("Steps")
 legend("Predicted data","Synthesized data")
 
 clear IO_matrix
@@ -69,6 +71,8 @@ RMS_3h = rms(predicted_data' - data(1,151:198));
 % test data and prediction comparison
 figure(2)
 plot(1:48,predicted_data',1:48,data(1,151:198))
+title("ANFIS model with forecasting horizon: 3 steps")
+xlabel("Steps")
 legend("Predicted data","Synthesized data")
 
 

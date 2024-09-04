@@ -15,10 +15,10 @@ function [Profiles] = getCommunityProfiles(selection)
 % CAP1, EDU1, EDU2, RES1, RES3, RV4
 SurplusCommunity = [4 7 8 10 12 13];
 
-% ADM1, ADM2, ADM3, CAP3, EDU2, RV4
-DeficitCommunity = [1 2 3 7 8 13]; % TODO
+% ADM1, ADM2, ADM3, EDU1, EDU2, RV4
+DeficitCommunity = [1 3 4 5 7 8]; % TODO
 
-% CAP1, CAP2, EDU2, RES2, RV3, RV4
+% ADM2, ADM3, EDU1, EDU2, RES3, RV4
 BalancedCommunity = [2 3 7 8 12 13]; % TODO
 
 %% Case selection
