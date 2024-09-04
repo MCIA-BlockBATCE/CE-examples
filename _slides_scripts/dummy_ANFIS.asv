@@ -39,17 +39,11 @@ predicted_data = evalfis(fis,IO_matrix_testing(:,1:7));
 RMS_1h = rms(predicted_data' - data(1,177:200));
 
 % test data and prediction comparison
-dim = [0.15 0.5 0.5 0.4];
-str = {'RMS' RMS_1h};
-
 figure(1)
 plot(1:24,predicted_data',1:24,data(1,177:200))
-title("ANFIS model with forecasting horizon: 1 hour (1 step)")
-annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time [h]")
-ylabel("Power consumption [kW]")
-xlim([1 24])
-legend("Predicted consumption data","Synthesized consumption data")
+title("ANFIS model with forecasting horizon: 1 step")
+xlabel("Steps")
+legend("Predicted data","Synthesized data")
 
 clear IO_matrix
 %% 3h prediction ANFIS
@@ -78,14 +72,12 @@ predicted_data = evalfis(fis,IO_matrix_testing(:,1:7));
 RMS_3h = rms(predicted_data' - data(1,175:198));
 
 % test data and prediction comparison
-dim = [0.15 0.5 0.5 0.4];
-str = {'RMS' RMS_3h};
-
 figure(2)
 plot(1:24,predicted_data',1:24,data(1,175:198))
-title("ANFIS model with forecasting horizon: 3 hours (3 steps)")
-annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time [h]")
-ylabel("Power consumption [kW]")
-xlim([1 24])
-legend("Predicted consumption data","Synthesized consumption data")
+title("ANFIS model with forecasting horizon: 3 steps")
+xlabel("Steps")
+legend("Predicted data","Synthesized data")
+
+
+
+
