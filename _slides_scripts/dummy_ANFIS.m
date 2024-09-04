@@ -2,7 +2,7 @@ clear all
 close all
 
 %% 1h prediction ANFIS
-% synthesized data
+% synthetic data
 t = 0:0.002:0.399;
 data = 5*sin(25*2*pi*t)+0.2*randn(size(t))+6;
 
@@ -49,12 +49,12 @@ annotation('textbox',dim,'String',str,'FitBoxToText','on');
 xlabel("Time [h]")
 ylabel("Power consumption [kW]")
 xlim([1 24])
-legend("Predicted consumption data","Synthesized consumption data")
+legend("Predicted consumption data","Synthetic consumption data")
 
 clear IO_matrix
 %% 3h prediction ANFIS
 
-% use previous synthesized data and inputs
+% use previous synthetic consumption data and inputs
 
 % regroup into input/output matrix changing output vector
 % IO_matrix will be used from i=51 to i=198
@@ -80,7 +80,6 @@ RMS_3h = rms(predicted_data' - data(1,175:198));
 % test data and prediction comparison
 dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_3h};
-
 figure(2)
 plot(1:24,predicted_data',1:24,data(1,175:198))
 title("ANFIS model with forecasting horizon: 3 hours (3 steps)")
@@ -88,4 +87,4 @@ annotation('textbox',dim,'String',str,'FitBoxToText','on');
 xlabel("Time [h]")
 ylabel("Power consumption [kW]")
 xlim([1 24])
-legend("Predicted consumption data","Synthesized consumption data")
+legend("Predicted consumption data","Synthetic consumption data")
