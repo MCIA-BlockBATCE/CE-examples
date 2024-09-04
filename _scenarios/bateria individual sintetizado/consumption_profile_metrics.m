@@ -31,6 +31,8 @@ for j = 1:members
     end
 end
 
+avg_days = avg_days/7; % Number of days (7)
+
 % --- ADR calculation ---
 for j = 1:members
     mean_part(1,j) = mean(avg_days(:,j));
