@@ -69,7 +69,9 @@ CoR_type = 0;
 ChargeEfficiency=0.97;
 DischargeEfficiency=0.97;
 MaximumStorageCapacity=200;
-PVPowerGenerationFactor = 1;
+% Default value for PVPowerGenerationFactor (0.2) is according to previously defined
+% EC consumption profiles (surplus, deficit, balanced)
+PVPowerGenerationFactor = 0.2;
 
 
 % --- Internal parameters ---
@@ -93,7 +95,6 @@ quarter_h = 1; % Starting quarter
 % Load data from .mat files which contain PV generated power
 load("..\..\_data\Pgen_real.mat")
 load("..\..\_data\Pgen_real_3h.mat")
-
 
 % Load data from.mat files which contain measured power consumption
 load("..\..\_data\energia_cons_CER.mat")
@@ -591,12 +592,14 @@ t = t';
 CE_SoC_signal = 100*SoC_energy_CER(1:672)/MaximumStorageCapacity;
 
 Pcons_agg = zeros(SimulationSteps,1);
+Pgen_real_allocated_community = zeros(SimulationSteps,1);
 for i = 1:SimulationSteps
     Pcons_agg(i) = sum(PconsMeasured(i,:));
+    Pgen_real_allocated_community(i) = sum(Pgen_real_allocated(i,:));
 end
 
 figure(101)
-plot(t(1:672), Pcons_agg(1:672), t(1:672), Pgen_real(1:672))
+plot(t(1:672), Pcons_agg(1:672), t(1:672), Pgen_real_allocated_community(1:672))
 title('Aggregated power consumption vs aggregated power generation')
 ylabel('Power [kW]')
 xlabel('Time')
