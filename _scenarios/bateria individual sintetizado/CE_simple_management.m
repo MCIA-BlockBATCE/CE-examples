@@ -1,258 +1,320 @@
-clear all
-close all
+%% Section 1. PARAMETER DEFINITION
 
-% Declaracion de variables y ejecución de funciones (Lecturas y predicciones)
-% MES DE MAYO TIENE 2976 muestras = 4 cuartos * 24 horas * 31 días
-days = 7;
-steps = 24*4*days;
+% --- EC consumption profiles --
+% Assign one of the following values:
+%   - Surplus community (i.e. aggregated PV generation is higher than
+%   aggregated power consumption), CommunitySelection  = 0
+% 
+%   - Deficit community (i.e. aggregated PV generation is lower than
+%   aggregated power consumption), CommunitySelection  = 1
+% 
+%   - Balanced (i.e. aggregated PV generation is similar to aggregated
+%   power consumption), CommunitySelection  = 2
+CommunitySelection = 1;
+EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 
-% aquí se acotaria la comunidad por ejemplo
-CER_excedentaria = [4 7 8 10 12 13];
-% CER_deficitaria = [x x x x x x]:
-% CER_balanceada = [x x x x x x]:
 
-% aquí elegimos tipo de CoR
-CoR_type = 0; % fixed allocation
-% CoR_type = 1; % allocation based on the moment of the week (variable)
-% CoR_type = 2; % allocation based on consumption of previous step (dynamic variable)
+% --- PV power allocation coefficients ---
+% Assign one of the following values: 
+%   - Fixed and constant allocation, CoR_type = 0
+%
+%   - Variable allocation considering only information that is available to the
+%   customer in invoices, which are aggregated power consumption in each of
+%   the 3 tariff section (low price, mid price, high price). For reference,
+%   weekends are all-day low price, and working days follow: 0h-8h (low),
+%   8h-10h (mid), 10h-14h (high), 14h-18h (mid), 18h-22h(high), 22h-0h (mid).
+%   CoR_type = 1.
+%
+%   - Allocation based on instantly available power consumption
+%   measurements, CoR_type = 2.
+CoR_type = 0;
+[GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
 
-members=length(CER_excedentaria); % Numero de participantes
 
-% FRECUENCIA HORARIA A CUARTOHORARIA
-time_unit=0.25; % Tiempo entre ejecuciones (1h) HABRÁ QUE CAMBIAR A 0.25
+% --- Battery parameters ---
+ChargeEfficiency=0.97;
+DischargeEfficiency=0.97;
+MaximumStorageCapacity=200;
+% Default value for PVPowerGenerationFactor (0.2) is according to previously defined
+% EC consumption profiles (surplus, deficit, balanced)
+PVPowerGenerationFactor = 0.2;
 
+
+% --- Internal parameters ---
+SimulationDays = 7;
+TimeStep=0.25; % Time step in fractions of hour (e.g. 0.25 stands for 1/4 hour data)
+SimulationSteps = 24*(1/TimeStep)*SimulationDays;
+members=length(EnergyCommunityConsumptionProfiles);
+PowerSurplus=zeros(SimulationSteps,members);
+PowerShortage=zeros(SimulationSteps,members);
+SoC=zeros(SimulationSteps+1,members); % Initial SoC
+ElectricitySellingPrice=0.07 * ones(SimulationSteps,1); % Selling price in €/kWh
+
+
+% --- Starting simulation time ---
+hour = 1; % Starting hour
+weekDay = 1; % May 2023 started on Monday (thus Monday=1, ..., Sunday=7)
+quarter_h = 1; % Starting quarter
+
+
+% --- Input data ---
+% Load data from .mat files which contain PV generated power
 load("..\..\_data\Pgen_real.mat")
+load("..\..\_data\Pgen_real_3h.mat")
 
-% NOTA: Estas tablas NO contienen columnas de marca temporal separada dia,
-% mes año, hora
-% NOTA: Paso a potencia (kW) la magnitud de energía (kWh), multiplico por 4
-% NOTA: aquí cargo TODOS los perfiles de consumo, y ya luego elegimos la
-% comunidad
-
+% Load data from.mat files which contain measured power consumption
 load("..\..\_data\energia_cons_CER.mat")
+load("..\..\_data\energia_cons_CER_3h.mat")
+PconsMeasured = energia_cons_CER(:,EnergyCommunityConsumptionProfiles)/TimeStep;
+PconsMeasured3h = energia_cons_CER_3h(:,EnergyCommunityConsumptionProfiles)/TimeStep;
 
-Pcons_real = energia_cons_CER(:,CER_excedentaria) * 4;
 
-if CoR_type == 0
-   
-    time_band_bill(CER_excedentaria)
-    [generation_allocation] = bbce2_calculo_coeficientes_estaticos();
-    generation_allocation = sum(generation_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
-    generation_allocation = generation_allocation/sum(generation_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
-    storage_allocation=generation_allocation;
+% Load data from .mat files which contain forecasted PV generation
+% following Osterwald equation to estimate the nominal power for generic
+% PV equipment.
+load("..\..\_data\Pgen_pred_1h.mat")
+load("..\..\_data\Pgen_pred_3h.mat")
 
-elseif CoR_type == 1
 
-    time_band_bill(CER_excedentaria)
-    [generation_allocation] = bbce2_calculo_coeficientes_estaticos();
-    generation_allocation=generation_allocation(1:members,1:3);
-    storage_allocation=generation_allocation(1:members,:);
-    storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
-    storage_allocation = storage_allocation/sum(storage_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
+% Load data which contain forecasted power consumption, obtained offline
+% using Adaptive Neuro-Fuzzy Inference System (ANFIS) in MATLAB.
+load("..\..\_data\Pcons_pred_1h.mat")
+load("..\..\_data\Pcons_pred_3h.mat")
+PconsForecast1h = Pcons_pred_1h(:,EnergyCommunityConsumptionProfiles)/TimeStep;
+PconsForecast3h = Pcons_pred_3h(:,EnergyCommunityConsumptionProfiles)/TimeStep;
 
-else 
 
-    [generation_allocation] = bbce2_calculo_coeficientes_dinamicos(CER_excedentaria); 
-
-    % Se usan CoR estaticos para repartir la bateria
-    time_band_bill(CER_excedentaria)
-    [storage_allocation] = bbce2_calculo_coeficientes_estaticos();
-    storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
-    storage_allocation = storage_allocation/sum(storage_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
-
-end
-
-P_surplus=zeros(steps,members);
-P_shortage=zeros(steps,members);
-
-SoC=ones(steps+1,members)*0; % SoC inicial
-
-% Parámetros batería
-Ef_charge=0.97;
-Ef_discharge=0.97;
-max_capacity=200;
-factor_gen = 1;
-
-selling_price=0.07 * ones(steps,1);
-
+% Load data which contains electricity buying price according to
+% OMIE (iberian markets).
 load("..\..\_data\buying_prices.mat");
 
-% TESTING PURPOSES ONLY
-hour = 1;
-week_day = 1; % Mayo 2023 empieza lunes
-quarter_h = 1;
+%% EC TESTED MODEL
 
-%% Calculo balance economico sin optimizar
+% --- Initalization of tracking vectors and counters ---
+PowerSurplus=zeros(SimulationSteps,members);
+PowerShortage=zeros(SimulationSteps,members);
 
-P_surplus=zeros(steps,members);
-P_shortage=zeros(steps,members);
+SoC=ones(SimulationSteps+1,members)*0; 
+SoC_energy_CER = zeros(SimulationSteps,1);
 
-SoC=ones(steps+1,members)*0; % SoC inicial del 50% por poner algo
-Ef_charge=0.97;
-Ef_discharge=0.97;
+StepProfitBasicRules=zeros(SimulationSteps,members);
+SoldEnergyBasicRules = zeros(24*4,members);
 
-step_profit=zeros(steps,members);
+StepEnergyOriginBasicRules = zeros(SimulationSteps,3);
+TotalEnergyOriginIndividualBasicRules = zeros(members,3);
 
-daily_energy_origin = zeros(24*4,3);
+% According to the selected sharing coefficient method and the available
+% power consumption data (see --- PV power allocation coefficients --- )
+% PV power allocation is computed.
+[Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated] = PV_power_allocation_forecasting(Pgen_real, Pgen_pred_1h, ...
+    Pgen_pred_3h, GenerationPowerAllocation, PVPowerGenerationFactor, CoR_type, members, weekDay, hour);
 
-sold_energy = zeros(24*4,members);
+% Tracking of energy by use
+TotalEnergyDecisionIndividualBasicRules = zeros(members,3);
+% col 1 = PV energy sold to grid
+% col 2 = PV energy directly consumed 
+% col 3 = PV energy consumed from battery
 
-step_energy_origin = zeros(steps,3);
+% --- Restar time-related parameters ---
+hour = 1; % Starting hour
+weekDay = 1; % May 2023 started on Monday (thus Monday=1, ..., Sunday=7)
+quarter_h = 1; % Starting quarter
 
-total_energy_origin_individual=zeros(members,3);
 
-% TESTING PURPOSES ONLY
-hour = 1;
-week_day = 1; % Mayo 2023 empieza lunes
-quarter_h = 1;
+% Simulation loop
+for t=1:SimulationSteps 
 
-if CoR_type == 0
+    % --- Internal vectors initialization ---
+    StepEnergyOriginIndividualBasicRules = zeros(members,3);
+    EnergyStorageMaximumForParticipant=StorageAllocation*MaximumStorageCapacity;
+    MaxChargingPowerForParticipant=StorageAllocation*100;
+    MaxDischargingPowerForParticipant=StorageAllocation*100;
 
-    for n=1:members     
-    
-        Pgen_real_allocated(:,n) = Pgen_real * generation_allocation(1,n).'*factor_gen;
 
+    for n=1:members %Loop for each CE member
+
+        % Charging power allocation for each participant
+        MaxChargingPowerForParticipant(1,n)=min(MaxChargingPowerForParticipant(1,n)*ChargeEfficiency,((100-SoC(t,n))/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep)*ChargeEfficiency);
+
+        % Discharging power is limited by the allocation for each
+        % participant
+        MaxDischargingPowerForParticipant(1,n)=min(MaxDischargingPowerForParticipant(1,n)*DischargeEfficiency,(SoC(t,n)/100)*EnergyStorageMaximumForParticipant(1,n)*(1/TimeStep)*DischargeEfficiency);
+
+        % If the PV power allocated of the participant exceeds its demand
+        if Pgen_real_allocated(t,n)>PconsMeasured(t,n)
+            PowerSurplus(t,n)=Pgen_real_allocated(t,n)-PconsMeasured(t,n);
+            StepEnergyOriginIndividualBasicRules(n,1) = StepEnergyOriginIndividualBasicRules(n,1) + PconsMeasured(t,n)*TimeStep;
+            TotalEnergyDecisionIndividualBasicRules(n,2) = TotalEnergyDecisionIndividualBasicRules(n,2) + PconsMeasured(t,n)*TimeStep;
+
+            % If the battery allocation of the participant its not full,
+            % the excess power can be used to charge the battery
+            if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)<100
+
+                % If the surplus is smaller than the maximum charging power
+                % for the participant, energy is used fully to charge the
+                % battery
+                if PowerSurplus(t,n)<MaxChargingPowerForParticipant(1,n)
+                    SoC(t+1,n)=SoC(t,n)+((PowerSurplus(t,n)*TimeStep*ChargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+                    
+                % If the surplus is bigger than the maximum charing power
+                % for the participant, the energy that can't be used to
+                % charge the battery will be sold to the grid
+                else
+                    SoC(t+1,n)=SoC(t,n)+((MaxChargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
+                    SoldEnergyBasicRules(quarter_h,n) = SoldEnergyBasicRules(quarter_h,n) + (PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
+                    StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)+(PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep*ElectricitySellingPrice(t,1);
+                    TotalEnergyDecisionIndividualBasicRules(n,1) = TotalEnergyDecisionIndividualBasicRules(n,1)+(PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
+                end
+
+            % If the battery allocation of the participant is full, all
+            % surplus is sold to the grid
+            else
+                StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)+PowerSurplus(t,n)*TimeStep*ElectricitySellingPrice(t,1);
+                SoldEnergyBasicRules(quarter_h,n) = SoldEnergyBasicRules(quarter_h,n) + PowerSurplus(t,n)*TimeStep;
+                SoC(t+1,n)=SoC(t,n);
+                TotalEnergyDecisionIndividualBasicRules(n,1) = TotalEnergyDecisionIndividualBasicRules(n,1) + PowerSurplus(t,n)*TimeStep;
+            end
+
+        % If the PV power allocated of the participant does not exceed
+        % its demand
+        else
+            PowerShortage(t,n)=PconsMeasured(t,n)-Pgen_real_allocated(t,n);
+            StepEnergyOriginIndividualBasicRules(n,1) = StepEnergyOriginIndividualBasicRules(n,1) + Pgen_real_allocated(t,n)*TimeStep;
+            TotalEnergyDecisionIndividualBasicRules(n,2) = TotalEnergyDecisionIndividualBasicRules(n,2) + Pgen_real_allocated(t,n)*TimeStep;
+
+            % If there is energy in the battery allocation of the
+            % participant, demand can be supplied partiatime_margin_bidlly or fully by the
+            % battery
+            if EnergyStorageMaximumForParticipant(1,n)>0 && SoC(t,n)>0
+
+                % If the shortage is smaller than the maximum discharging
+                % power for the participant, then battery is used to supply
+                % the remaining demand
+                if PowerShortage(t,n)<MaxDischargingPowerForParticipant(1,n)
+                    SoC(t+1,n)=SoC(t,n)-(((PowerShortage(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+                    StepEnergyOriginIndividualBasicRules(n,2) = StepEnergyOriginIndividualBasicRules(n,2) + PowerShortage(t,n)*TimeStep;
+                    TotalEnergyDecisionIndividualBasicRules(n,3) = TotalEnergyDecisionIndividualBasicRules(n,3) + PowerShortage(t,n)*TimeStep;
+                % If the shortage is bigger than the maximum discharing
+                % power for the participant, then a combination of battery
+                % and grid are used to supply the remaining demand
+                else
+                    SoC(t+1,n)=SoC(t,n)-(((MaxDischargingPowerForParticipant(1,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
+                    StepEnergyOriginIndividualBasicRules(n,2) = StepEnergyOriginIndividualBasicRules(n,2) + MaxDischargingPowerForParticipant(1,n)*TimeStep;
+                    StepProfitBasicRules(t,n)= StepProfitBasicRules(t,n)-(PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1);
+                    StepEnergyOriginIndividualBasicRules(n,3) = StepEnergyOriginIndividualBasicRules(n,3) + (PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep;
+                    TotalEnergyDecisionIndividualBasicRules(n,3) = TotalEnergyDecisionIndividualBasicRules(n,3) + MaxDischargingPowerForParticipant(1,n)*TimeStep;
+                end
+
+            % If the battery allocation of the participant is empty,
+            % demand must be supplied using power from the grid
+            else
+                StepProfitBasicRules(t,n)=StepProfitBasicRules(t,n)-PowerShortage(t,n)*TimeStep*price_next_1h(t,1);
+                StepEnergyOriginIndividualBasicRules(n,3) = StepEnergyOriginIndividualBasicRules(n,3) + PowerShortage(t,n)*TimeStep;
+                SoC(t+1,n)=SoC(t,n);
+            end
+        end  
     end
 
+    SoC_energy_CER(t+1) = getSoCEnergyEC(members, MaximumStorageCapacity, StorageAllocation, SoC, t);
+
+    % Update tracking vector and counters
+    StepEnergyOriginBasicRules(t,:) = sum(StepEnergyOriginIndividualBasicRules(:,:));
+
+    TotalEnergyOriginIndividualBasicRules(:,:)=TotalEnergyOriginIndividualBasicRules(:,:) + StepEnergyOriginIndividualBasicRules(:,:);
+
+    % Advance to next quarter
+    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
+    
 end
 
-if CoR_type == 2
+% Aggregate variables at simulation end
+final_billBasicRules = -sum(StepProfitBasicRules);
+SoC_BasicRules = SoC;
+total_energy_consumption_individualBasicRules = sum(TotalEnergyOriginIndividualBasicRules.');
 
-    for n=1:members     
-  
-        Pgen_real_allocated(:,n) = generation_allocation(:,n).*Pgen_real*factor_gen;
-
-    end
-end
-
-
-for t=1:steps
-   
-step_energy_origin_individual = zeros(members,3);
-
-E_st_max=storage_allocation*max_capacity;
-P_charge_max=storage_allocation*100;
-P_discharge_max=storage_allocation*100;
-
-if CoR_type == 1
-
-    [X] = time_band(week_day,hour);
-    
-    for n=1:members     
-
-        Pgen_real_allocated(:,n) = Pgen_real * generation_allocation(n,X)*factor_gen;
-    
-    end
-end
-
-    for n=1:members %EMPIEZA EL ALGORITMO
-
-    P_charge_max(1,n)=min(P_charge_max(1,n)*Ef_charge,((100-SoC(t,n))/100)*E_st_max(1,n)*(1/time_unit));
-    P_discharge_max(1,n)=min(P_discharge_max(1,n)*Ef_discharge,(SoC(t,n)/100)*E_st_max(1,n)*(1/time_unit));
-
-      if Pgen_real_allocated(t,n)>Pcons_real(t,n)
-           P_surplus(t,n)=Pgen_real_allocated(t,n)-Pcons_real(t,n);
-           step_energy_origin_individual(n,1) = step_energy_origin_individual(n,1) + Pcons_real(t,n);%Unidad_t;
-           if E_st_max(1,n)>0 && SoC(t,n)<100
-               if P_surplus(t,n)<P_charge_max(1,n)
-                   SoC(t+1,n)=SoC(t,n)+((P_surplus(t,n)*time_unit*Ef_charge)/E_st_max(1,n))*100;
-               else
-                   SoC(t+1,n)=SoC(t,n)+((P_charge_max(1,n)*time_unit)/E_st_max(1,n))*100;
-                   sold_energy(quarter_h,n) = sold_energy(quarter_h,n) + (P_surplus(t,n)-P_charge_max(1,n)/Ef_charge)*time_unit;
-                   step_profit(t,n)=step_profit(t,n)+(P_surplus(t,n)-P_charge_max(1,n)/Ef_charge)*time_unit*selling_price(t,1);
-               end
-           else
-               step_profit(t,n)=step_profit(t,n)+P_surplus(t,n)*time_unit*selling_price(t,1);
-               sold_energy(quarter_h,n) = sold_energy(quarter_h,n) + P_surplus(t,n)*time_unit;
-               SoC(t+1,n)=SoC(t,n);
-           end
-       else
-           P_shortage(t,n)=Pcons_real(t,n)-Pgen_real_allocated(t,n);
-           step_energy_origin_individual(n,1) = step_energy_origin_individual(n,1) + Pgen_real_allocated(t,n);%Unidad_t
-           if E_st_max(1,n)>0 && SoC(t,n)>0
-               if P_shortage(t,n)<P_discharge_max(1,n)
-                    SoC(t+1,n)=SoC(t,n)-(((P_shortage(t,n)*time_unit)/Ef_discharge)/E_st_max(1,n))*100;
-                    step_energy_origin_individual(n,2) = step_energy_origin_individual(n,2) + P_shortage(t,n);%Unidad_t
-               else
-                    SoC(t+1,n)=SoC(t,n)-(((P_discharge_max(1,n)*time_unit)/Ef_discharge)/E_st_max(1,n))*100;
-                    step_energy_origin_individual(n,2) = step_energy_origin_individual(n,2) + P_discharge_max(1,n);%Unidad_t
-                    step_profit(t,n)= step_profit(t,n)-(P_shortage(t,n)-P_discharge_max(1,n))*time_unit*price_next_1h(t,1);
-                    step_energy_origin_individual(n,3) = step_energy_origin_individual(n,3) + (P_shortage(t,n)-P_discharge_max(1,n));%Unidad_t
-               end
-           else
-               step_profit(t,n)=step_profit(t,n)-P_shortage(t,n)*time_unit*price_next_1h(t,1);
-               step_energy_origin_individual(n,3) = step_energy_origin_individual(n,3) + P_shortage(t,n);%Unidad_t
-               SoC(t+1,n)=SoC(t,n);
-           end
-      end  
-
-      energy_origin_instant_individual(t,n,:) = step_energy_origin_individual(n,:);
-
-    
-    end % AQUÍ ACABA LOOP POR PARTICIPANTE
-
-    for i=1:3
-        energy_origin_instant(t,i) = sum(energy_origin_instant_individual(t,:,i));
-    end
-    
-    
-    acum = 0;
-    for z = 1:members
-        acum = acum + (max_capacity * storage_allocation(z) * (SoC(t+1,z)/100));
-    end
-    
-    SoC_energy_CER(t+1) = acum; 
-    
-    daily_energy_origin(quarter_h,:) = daily_energy_origin(quarter_h,:) + sum(step_energy_origin_individual(:,:));
-    
-    step_energy_origin = sum(step_energy_origin_individual(:,:));
-    
-    total_energy_origin_individual(:,:)=total_energy_origin_individual(:,:) + step_energy_origin_individual(:,:);
-    
-    % ch
-    [quarter_h,hour,week_day] = siguiente_ch(quarter_h,hour,week_day);
-
-
-end
-
-final_bill = -sum(step_profit);
-SoC_pred=SoC;
-total_energy_consumption_individual = sum(total_energy_origin_individual.');
-total_energy_origin = sum(total_energy_origin_individual);
-total_energy_consumption = sum(total_energy_origin);
-for i=1:3
-    percentage_energy_origin(i,1) = total_energy_origin(1,i)/total_energy_consumption;
-end
 for i=1:3
     for n=1:members
-        total_energy_origin_individual(n,i) = total_energy_origin_individual(n,i)/total_energy_consumption_individual(1,n);
+        TotalEnergyOriginIndividualBasicRules(n,i) = TotalEnergyOriginIndividualBasicRules(n,i)/total_energy_consumption_individualBasicRules(1,n);
     end
 end
 
-total_final_bill = sum(final_bill);
-
-%%
+%% 3. RESULTS: KPIs AND PLOTS
 
 t1 = datetime(2023,5,1,0,0,0);
 t2 = datetime(2023,5,31,0,0,0);
 t = t1:minutes(15):t2;
 t = t';
 
-figure(19)
-plot(t(1:672),100*SoC_energy_CER(1:672)/max_capacity)
-title('Estado de carga (SoC) de la batería')
-ylabel('SoC (%)')
-xlabel('Tiempo')
+[ADR,POR,avg_days] = consumption_profile_metrics(PconsMeasured);
+[CBU, ADC, BCPD] = battery_metrics(SoC_energy_CER, MaximumStorageCapacity, SimulationDays, SimulationSteps);
+
+CE_SoC_signal = 100*SoC_energy_CER(1:672)/MaximumStorageCapacity;
+
+Pcons_agg = zeros(SimulationSteps,1);
+Pgen_real_allocated_community = zeros(SimulationSteps,1);
+for i = 1:SimulationSteps
+    Pcons_agg(i) = sum(PconsMeasured(i,:));
+    Pgen_real_allocated_community(i) = sum(Pgen_real_allocated(i,:));
+end
+
+figure(101)
+plot(t(1:672), Pcons_agg(1:672), t(1:672), Pgen_real_allocated_community(1:672))
+title('Aggregated power consumption vs aggregated power generation')
+ylabel('Power [kW]')
+xlabel('Time')
+legend('Aggregated power consumption','Aggregated power generation')
+
+% Pendiente añadir en este gráfico anotaciones con métricas de BAT
+figure(104)
+plot(t(1:672),CE_SoC_signal)
+title("Battery State of Charge (SoC), AUR: [" + num2str(ADC(1), '%05.2f') + ", " ...
+    + num2str(ADC(2), '%05.2f') + "] [%], CBU: " + num2str(CBU, '%05.2f') + ", ADC: " ...
+    + num2str(BCPD, '%05.2f'), FontSize=14)
+ylabel('SoC [%]')
+xlabel('Time')
 ylim([0 100])
+% dim = [0.15 0.5 0.5 0.4];
+% str = {'AUR' [AUR(1),AUR(2)], 'CBC' CBC, 'BCPD' BCPD};
+% annotation('textbox',dim,'String',str,'FitBoxToText','on');
 
-figure(20)
-plot(t(1:672),energy_origin_instant(1:672,1),t(1:672),energy_origin_instant(1:672,2),t(1:672),energy_origin_instant(1:672,3))
-title('Potencia consumida según origen')
-legend('Origen placas','Origen batería','Origen red eléctrica')
-ylabel('Potencia consumida (kW)')
-xlabel('Tiempo')
+figure(105)
+qs = 1:1:96;
+plot(qs, avg_days(:,1), qs, avg_days(:,2), qs, avg_days(:,3), qs, avg_days(:,4), qs, avg_days(:,5), qs, avg_days(:,6))
+title("Average-day power consumption for each CE member, POR: [" + num2str(POR(1), '%05.2f') ...
+    + ", " + num2str(POR(2), '%05.2f') + ", " + num2str(POR(3), '%05.2f') + "] [%], ADR: " + num2str(ADR, '%05.2f') + " [kW]", FontSize=14)
+legend('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
+xlim([1 96])
+ylabel('Power [kW]')
+xlabel('Time, in quarters')
 
-figure(7)
-bar(total_energy_origin_individual,'stacked')
-legend('Origen placas','Origen batería','Origen red eléctrica')
+figure(201)
+bar(TotalEnergyOriginIndividualBasicRules*100,'stacked')
+title('Power consumption by origin')
+ylabel('Power consumption [%]')
+xlabel('Participant')
+ylim([0 100])
+legend('FV','Battery','Grid')
+
+PercentualTotalEnergyDecisionIndividualBasicRules=zeros(members,3);
+
+for n = 1:members
+    PercentualTotalEnergyDecisionIndividualBasicRules(n,:) = (TotalEnergyDecisionIndividualBasicRules(n,:)/sum(TotalEnergyDecisionIndividualBasicRules(n,:)))*100;
+end
+
+figure(202)
+% total_energy_decision_invidual: 6 filas (members) x 3 cols (actions)
+% Valores en % para el total de cada fila
+
+bar(PercentualTotalEnergyDecisionIndividualBasicRules,'stacked')
+title('Power usage of RE')
+ylim([0 100])
+ylabel('Renewable power [%]')
+xlabel('Participant')
+legend('Sold to grid','Consumed from PV','Consumed from Battery')
+
+% Final bill comparison
+figure(203)
+bar(-final_billBasicRules)
+title('Final economic net profit in euros, Basic Rules')
+
 

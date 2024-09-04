@@ -683,7 +683,7 @@ title('Power usage of RE')
 ylim([0 100])
 ylabel('Renewable power [%]')
 xlabel('Participant')
-legend('Sold to grid','Consumed from PV','Consumed from Battery','PV energy sold as a service from battery')
+legend('Sold to grid','Consumed from PV','Consumed from Battery')
 
 % Final bill comparison
 figure(3)
