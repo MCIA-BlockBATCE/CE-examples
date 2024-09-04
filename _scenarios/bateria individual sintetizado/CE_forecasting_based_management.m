@@ -746,13 +746,11 @@ t = t';
 % 
 figure(20)
 plot(t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,1),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,2),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,3))
-title('Potencia consumida según origen')
-legend('Origen placas','Origen batería','Origen red eléctrica')
-ylabel('Potencia consumida (kW)')
-xlabel('Tiempo')
-% yyaxis right
-% plot(t(1:672), Pgen_real(1:672))
-% 
+title('Consumed energy by origin')
+legend('FV','Battery','Grid')
+ylabel('KWh')
+xlabel('Time')
+
 % figure(21)
 % plot(t(1:672),price_next_1h(1:672))
 % title('Precio de compra de electricidad a la red')

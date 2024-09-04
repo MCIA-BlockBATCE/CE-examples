@@ -287,7 +287,7 @@ xlim([1 96])
 ylabel('Power [kW]')
 xlabel('Time, in quarters')
 
-figure(201)
+figure(106)
 bar(TotalEnergyOriginIndividualBasicRules*100,'stacked')
 title('Power consumption by origin')
 ylabel('Power consumption [%]')
@@ -301,7 +301,7 @@ for n = 1:members
     PercentualTotalEnergyDecisionIndividualBasicRules(n,:) = (TotalEnergyDecisionIndividualBasicRules(n,:)/sum(TotalEnergyDecisionIndividualBasicRules(n,:)))*100;
 end
 
-figure(202)
+figure(107)
 % total_energy_decision_invidual: 6 filas (members) x 3 cols (actions)
 % Valores en % para el total de cada fila
 
@@ -312,9 +312,17 @@ ylabel('Renewable power [%]')
 xlabel('Participant')
 legend('Sold to grid','Consumed from PV','Consumed from Battery')
 
+figure(108)
+plot(t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,1),t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,2),t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,3))
+title('Consumed energy by origin')
+legend('FV','Battery','Grid')
+ylabel('KWh')
+xlabel('Time')
+
 % Final bill comparison
-figure(203)
+figure(201)
 bar(-final_billBasicRules)
 title('Final economic net profit in euros, Basic Rules')
+
 
 
