@@ -1,5 +1,8 @@
 clear all
 close all
+% Authors: M.Delgado-Prieto, A.Llufriu-López, J.Valls-Pérez
+% Universitat Politècnica de Catalunya (UPC)
+% MCIA Innovation Electronics Research Center
 
 % This script models an energy community (EC) where each of its members
 % can use a fix allocation of the EC energy storage system (battery). PV

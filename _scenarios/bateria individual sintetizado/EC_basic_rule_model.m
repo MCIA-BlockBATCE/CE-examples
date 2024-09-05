@@ -1,3 +1,37 @@
+clear all
+close all
+% Authors: M.Delgado-Prieto, A.Llufriu-López, J.Valls-Pérez
+% Universitat Politècnica de Catalunya (UPC)
+% MCIA Innovation Electronics Research Center
+
+% This script models an energy community (EC) where each of its members
+% can use a fix allocation of the EC energy storage system (battery). PV
+% power allocation method can be chosen by the user, as well as scenarios
+% for consumption profiles (see Section 1).
+% 
+% In this particular case, basic operation rules for managing PV power
+% generation, such as (from top priority to bottom):
+%           consumption > storage > sell to grid
+% 
+% Therefore, no forecasting techniques are used.
+%
+% The script is organized in the following sections:
+% 
+%   Section 1. PARAMETER DEFINITION
+%       This section allows for user interaction as EC consumption profiles
+%       can be selected, as well as PV power allocation coefficients.
+%       However, default values are preset for out of the box running.
+%
+%   Section 2. EC RULE-BASED REFERENCE MODEL
+%       This section runs the EC rule-based reference model.
+%
+%   Section 3. RESULTS: KPIs AND PLOTS
+%       This section displays plots which illustrate the usage of PV power
+%       generation, battery and market interaction (if allowed). KPIs are
+%       computed to compare the specific management method vs a rule-based
+%       reference model.
+% 
+
 %% Section 1. PARAMETER DEFINITION
 
 % --- EC consumption profiles --
@@ -10,7 +44,7 @@
 % 
 %   - Balanced (i.e. aggregated PV generation is similar to aggregated
 %   power consumption), CommunitySelection  = 2
-CommunitySelection = 1;
+CommunitySelection = 0;
 EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 
 
@@ -35,9 +69,9 @@ CoR_type = 0;
 ChargeEfficiency=0.97;
 DischargeEfficiency=0.97;
 MaximumStorageCapacity=200;
-% Default value for PVPowerGenerationFactor (0.2) is according to previously defined
+% Default value for PVPowerGenerationFactor (0.8) is according to previously defined
 % EC consumption profiles (surplus, deficit, balanced)
-PVPowerGenerationFactor = 0.2;
+PVPowerGenerationFactor = 0.8;
 
 
 % --- Internal parameters ---
@@ -88,7 +122,7 @@ PconsForecast3h = Pcons_pred_3h(:,EnergyCommunityConsumptionProfiles)/TimeStep;
 % OMIE (iberian markets).
 load("..\..\_data\buying_prices.mat");
 
-%% EC TESTED MODEL
+%% 2. EC TESTED MODEL
 
 % --- Initalization of tracking vectors and counters ---
 PowerSurplus=zeros(SimulationSteps,members);
@@ -257,15 +291,45 @@ for i = 1:SimulationSteps
     Pgen_real_allocated_community(i) = sum(Pgen_real_allocated(i,:));
 end
 
-figure(101)
+PercentualTotalEnergyDecisionIndividualBasicRules=zeros(members,3);
+
+for n = 1:members
+    PercentualTotalEnergyDecisionIndividualBasicRules(n,:) = (TotalEnergyDecisionIndividualBasicRules(n,:)/sum(TotalEnergyDecisionIndividualBasicRules(n,:)))*100;
+end
+
+% info for annotation
+if (CommunitySelection == 0)
+    scenario = "Surplus";
+elseif (CommunitySelection == 1)
+    scenario = "Deficit";
+elseif (CommunitySelection == 2)
+    scenario = "Balanced";
+end
+dim = [0.15 0.5 0.5 0.4];
+str = {'Current EC scenario:' scenario};
+
+% inputs, consumption vs generation
+figure(1)
 plot(t(1:672), Pcons_agg(1:672), t(1:672), Pgen_real_allocated_community(1:672))
-title('Aggregated power consumption vs aggregated power generation')
+title('Aggregated power consumption vs Aggregated power generation')
 ylabel('Power [kW]')
 xlabel('Time')
-legend('Aggregated power consumption','Aggregated power generation')
+legend('Agg power cons','Agg power gen')
+annotation('textbox',dim,'String',str,'FitBoxToText','on');
 
-% Pendiente añadir en este gráfico anotaciones con métricas de BAT
-figure(104)
+% power consumption by origin
+figure(2)
+plot(t(1:SimulationSteps), StepEnergyOriginBasicRules(1:SimulationSteps,1)/TimeStep, ...
+    t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,2)/TimeStep, ...
+    t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,3)/TimeStep)
+title('Power consumption by origin')
+legend('PV','Battery','Grid')
+ylabel('Power consumption [kW]')
+xlabel('Time')
+annotation('textbox',dim,'String',str,'FitBoxToText','on');
+
+% SoC over time and battery KPIs
+figure(3)
 plot(t(1:672),CE_SoC_signal)
 title("Battery State of Charge (SoC), AUR: [" + num2str(ADC(1), '%05.2f') + ", " ...
     + num2str(ADC(2), '%05.2f') + "] [%], CBU: " + num2str(CBU, '%05.2f') + ", ADC: " ...
@@ -273,56 +337,67 @@ title("Battery State of Charge (SoC), AUR: [" + num2str(ADC(1), '%05.2f') + ", "
 ylabel('SoC [%]')
 xlabel('Time')
 ylim([0 100])
-% dim = [0.15 0.5 0.5 0.4];
-% str = {'AUR' [AUR(1),AUR(2)], 'CBC' CBC, 'BCPD' BCPD};
-% annotation('textbox',dim,'String',str,'FitBoxToText','on');
 
-figure(105)
+% power consumption by origin for each member
+figure(4)
+bar(TotalEnergyOriginIndividualBasicRules*100,'stacked')
+title('Power consumption by origin for each member')
+ylabel('Power consumption [%]')
+xlabel('EC members')
+ylim([0 100])
+legend('PV','Battery','Grid')
+
+% renewable power usage for each member
+figure(5)
+b = bar(PercentualTotalEnergyDecisionIndividualBasicRules,'stacked', 'FaceColor', 'flat');
+title('Renewable power usage for each member')
+ylim([0 100])
+ylabel('Renewable power [%]')
+xlabel('EC members')
+legend('Sold to grid','Consumed from PV','Consumed from Battery')
+b(1).CData = [0.9290, 0.6940, 0.1250];
+b(2).CData = [0, 0.4470, 0.7410];
+b(3).CData = [0.8500, 0.3250, 0.0980];
+
+figure(6)
 qs = 1:1:96;
 plot(qs, avg_days(:,1), qs, avg_days(:,2), qs, avg_days(:,3), qs, avg_days(:,4), qs, avg_days(:,5), qs, avg_days(:,6))
 title("Average-day power consumption for each CE member, POR: [" + num2str(POR(1), '%05.2f') ...
     + ", " + num2str(POR(2), '%05.2f') + ", " + num2str(POR(3), '%05.2f') + "] [%], ADR: " + num2str(ADR, '%05.2f') + " [kW]", FontSize=14)
 legend('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
 xlim([1 96])
-ylabel('Power [kW]')
+ylabel('Power consumption [kW]')
 xlabel('Time, in quarters')
 
-figure(106)
-bar(TotalEnergyOriginIndividualBasicRules*100,'stacked')
-title('Power consumption by origin')
-ylabel('Power consumption [%]')
-xlabel('Participant')
-ylim([0 100])
-legend('FV','Battery','Grid')
+% Final bill comparison
+figure(7)
+bar(-final_billBasicRules)
+title('Economic balance for each member')
+ylabel('Monetary units')
+xlabel('EC members')
 
-PercentualTotalEnergyDecisionIndividualBasicRules=zeros(members,3);
+%% LEGACY
 
-for n = 1:members
-    PercentualTotalEnergyDecisionIndividualBasicRules(n,:) = (TotalEnergyDecisionIndividualBasicRules(n,:)/sum(TotalEnergyDecisionIndividualBasicRules(n,:)))*100;
-end
+% figure(106)
+% bar(TotalEnergyOriginIndividualBasicRules*100,'stacked')
+% title('Power consumption by origin')
+% ylabel('Power consumption [%]')
+% xlabel('Participant')
+% ylim([0 100])
+% legend('FV','Battery','Grid')
 
-figure(107)
+% figure(107)
 % total_energy_decision_invidual: 6 filas (members) x 3 cols (actions)
 % Valores en % para el total de cada fila
 
-bar(PercentualTotalEnergyDecisionIndividualBasicRules,'stacked')
-title('Power usage of RE')
-ylim([0 100])
-ylabel('Renewable power [%]')
-xlabel('Participant')
-legend('Sold to grid','Consumed from PV','Consumed from Battery')
-
-figure(108)
-plot(t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,1),t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,2),t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,3))
-title('Consumed energy by origin')
-legend('FV','Battery','Grid')
-ylabel('KWh')
-xlabel('Time')
+% figure(108)
+% plot(t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,1),t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,2),t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,3))
+% title('Consumed energy by origin')
+% legend('FV','Battery','Grid')
+% ylabel('KWh')
+% xlabel('Time')
 
 % Final bill comparison
-figure(201)
-bar(-final_billBasicRules)
-title('Final economic net profit in euros, Basic Rules')
-
-
-
+% figure(201)
+% bar(-final_billBasicRules)
+% title('Final economic net profit in euros, Basic Rules')
