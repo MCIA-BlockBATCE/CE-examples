@@ -98,7 +98,7 @@ bid_counter = 0;
 ServiceSafetyMargin = 0.2; % Value from 0.0 (all margin, no bids) to 1.0 (no margin)
 energy_cost_bought_while_bid = 0;
 bid_profit = zeros(SimulationSteps,1);
-BidPrice = 0.1; % arbitrary? TODOAlbert
+BidPrice = 0.1; % Default value
 BidAmount = 0;
 BidStep = -4;
 
@@ -613,6 +613,8 @@ for t=1:SimulationSteps
     end
 
     % Update tracking vector and counters
+    SoC_energy_CER_unoptimised(t+1) = getSoCEnergyEC(members, MaximumStorageCapacity, StorageAllocation, SoC, t);
+
     StepEnergyOriginBasicRules(t,:) = sum(StepEnergyOriginIndividualBasicRules(:,:));
 
     TotalEnergyOriginIndividualBasicRules(:,:)=TotalEnergyOriginIndividualBasicRules(:,:) + StepEnergyOriginIndividualBasicRules(:,:);
@@ -633,6 +635,7 @@ for i=1:3
     end
 end
 
+
 %% 4. RESULTS: KPIs AND PLOTS
 
 % --- Plots ---
@@ -643,29 +646,23 @@ t = t';
 
 [ADR,POR,avg_days] = consumption_profile_metrics(PconsMeasured);
 [CBU, ADC, BCPD] = battery_metrics(SoC_energy_CER, MaximumStorageCapacity, SimulationDays, SimulationSteps);
+[CBU2, ADC2, BCPD2] = battery_metrics(SoC_energy_CER_unoptimised, MaximumStorageCapacity, SimulationDays, SimulationSteps);
 
 
 CE_SoC_signal = 100*SoC_energy_CER(1:SimulationSteps)/MaximumStorageCapacity;
+CE_Soc_signal_unoptimised = 100*SoC_energy_CER_unoptimised(1:SimulationSteps)/MaximumStorageCapacity;
 
 Pcons_agg = zeros(SimulationSteps,1);
+Pgen_real_allocated_community = zeros(SimulationSteps,1);
 for i = 1:SimulationSteps
     Pcons_agg(i) = sum(PconsMeasured(i,:));
+    Pgen_real_allocated_community(i) = sum(Pgen_real_allocated(i,:));
 end
+PercentualTotalEnergyDecisionIndividualBasicRules=zeros(members,3);
 
-figure(101)
-plot(t(1:SimulationSteps), Pcons_agg(1:SimulationSteps), t(1:SimulationSteps), Pgen_real(1:SimulationSteps))
-title('Aggregated power consumption vs aggregated power generation')
-ylabel('Power [kW]')
-xlabel('Time')
-legend('Aggregated power consumption','Aggregated power generation')
-
-figure(102)
-bar(TotalEnergyOriginIndividual*100,'stacked')
-title('Power consumption by origin')
-ylabel('Power consumption [%]')
-xlabel('Participant')
-ylim([0 100])
-legend('FV','Battery','Grid')
+for n = 1:members
+    PercentualTotalEnergyDecisionIndividualBasicRules(n,:) = (TotalEnergyDecisionIndividualBasicRules(n,:)/sum(TotalEnergyDecisionIndividualBasicRules(n,:)))*100;
+end
 
 PercentualTotalEnergyDecisionIndividual=zeros(members,4);
 
@@ -673,26 +670,181 @@ for n = 1:members
     PercentualTotalEnergyDecisionIndividual(n,:) = (TotalEnergyDecisionIndividual(n,:)/sum(TotalEnergyDecisionIndividual(n,:)))*100;
 end
 
-figure(103)
-% total_energy_decision_invidual: 6 filas (members) x 4 cols (acciones)
-% Valores en % para el total de cada fila
+final_bill_unoptimised = -sum(StepProfitBasicRules);
 
-bar(PercentualTotalEnergyDecisionIndividual,'stacked')
-title('Power usage of RE')
-ylim([0 100])
-ylabel('Renewable power [%]')
-xlabel('Participant')
-legend('Sold to grid','Consumed from PV','Consumed from Battery','PV energy sold as a service from battery')
+Y = categorical({'Avanced rule model based on predictions with balance services','Basic rule model'});
+Y = reordercats(Y,{'Avanced rule model based on predictions with balance services','Basic rule model'});
 
-% Pendiente añadir en este gráfico anotaciones con métricas de BAT
-figure(104)
-plot(t(1:SimulationSteps),CE_SoC_signal)
-title("Battery State of Charge (SoC), AUR: [" + num2str(ADC(1), '%05.2f') + ", " ...
+total_final_bill = sum(final_bill);
+total_final_bill_unoptimised = sum(final_bill_unoptimised);
+
+% info for annotation
+if (CommunitySelection == 0)
+    scenario = "Surplus";
+elseif (CommunitySelection == 1)
+    scenario = "Deficit";
+elseif (CommunitySelection == 2)
+    scenario = "Balanced";
+end
+dim = [0.15 0.5 0.5 0.4];
+str = {'Current EC scenario:' scenario};
+
+% inputs, consumption vs generation
+figure(1)
+plot(t(1:672), Pcons_agg(1:672), t(1:672), Pgen_real_allocated_community(1:672))
+title('Aggregated power consumption vs Aggregated power generation')
+ylabel('Power [kW]')
+xlabel('Time')
+legend('Agg power cons','Agg power gen')
+annotation('textbox',dim,'String',str,'FitBoxToText','on');
+
+% power consumption by origin
+figure(2)
+plot(t(1:SimulationSteps), StepEnergyOriginBasicRules(1:SimulationSteps,1)/TimeStep, ...
+    t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,2)/TimeStep, ...
+    t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,3)/TimeStep)
+title('Power consumption by origin')
+legend('PV','Battery','Grid')
+ylabel('Power consumption [kW]')
+xlabel('Time')
+annotation('textbox',dim,'String',str,'FitBoxToText','on');
+
+% SoC over time and battery KPIs
+figure(3)
+subplot(2,1,1)
+plot(t(1:672),CE_SoC_signal)
+title("Advanced rule model (SoC), AUR: [" + num2str(ADC(1), '%05.2f') + ", " ...
     + num2str(ADC(2), '%05.2f') + "] [%], CBU: " + num2str(CBU, '%05.2f') + ", ADC: " ...
     + num2str(BCPD, '%05.2f'), FontSize=14)
 ylabel('SoC [%]')
 xlabel('Time')
 ylim([0 100])
+subplot(2,1,2)
+plot(t(1:672),CE_Soc_signal_unoptimised)
+title("Basic rule model, AUR: [" + num2str(ADC2(1), '%05.2f') + ", " ...
+    + num2str(ADC2(2), '%05.2f') + "] [%], CBU: " + num2str(CBU2, '%05.2f') + ", ADC: " ...
+    + num2str(BCPD2, '%05.2f'), FontSize=14)
+ylabel('SoC [%]')
+xlabel('Time')
+ylim([0 100])
+sgtitle('Battery State of Charge (SoC)')
+
+% power consumption by origin for each member
+figure(4)
+subplot(1,2,1)
+bar(TotalEnergyOriginIndividualBasicRules*100,'stacked')
+title('Basic rule model')
+ylabel('Power consumption [%]')
+xlabel('EC members')
+ylim([0 100])
+legend('PV','Battery','Grid')
+subplot(1,2,2)
+bar(TotalEnergyOriginIndividual*100,'stacked')
+title('Advanced rule model based on prediction with balance services')
+ylabel('Power consumption [%]')
+xlabel('EC members')
+ylim([0 100])
+legend('PV','Battery','Grid')
+sgtitle('Power consumption by origin for each member')
+
+% renewable power usage for each member
+figure(5)
+subplot(1,2,1)
+b = bar(PercentualTotalEnergyDecisionIndividualBasicRules,'stacked', 'FaceColor', 'flat');
+title('Basic rule model')
+ylim([0 100])
+ylabel('Renewable power [%]')
+xlabel('EC members')
+legend('Sold to grid','Consumed from PV','Consumed from Battery')
+b(1).CData = [0.9290, 0.6940, 0.1250];
+b(2).CData = [0, 0.4470, 0.7410];
+b(3).CData = [0.8500, 0.3250, 0.0980];
+subplot(1,2,2)
+b2 = bar(PercentualTotalEnergyDecisionIndividual, 'stacked', 'FaceColor', 'flat');
+title('Advanced rule model based on prediction with balance services')
+ylim([0 100])
+ylabel('Renewable power [%]')
+xlabel('EC members')
+legend('Sold to grid','Consumed from PV','Consumed from Battery','PV energy sold as a service from battery')
+b2(1).CData = [0.9290, 0.6940, 0.1250];
+b2(2).CData = [0, 0.4470, 0.7410];
+b2(3).CData = [0.8500, 0.3250, 0.0980];
+b2(4).CData = [0.4940, 0.1840, 0.5560];
+sgtitle('Renewable power usage for each member')
+
+figure(6)
+qs = 1:1:96;
+plot(qs, avg_days(:,1), qs, avg_days(:,2), qs, avg_days(:,3), qs, avg_days(:,4), qs, avg_days(:,5), qs, avg_days(:,6))
+title("Average-day power consumption for each CE member, POR: [" + num2str(POR(1), '%05.2f') ...
+    + ", " + num2str(POR(2), '%05.2f') + ", " + num2str(POR(3), '%05.2f') + "] [%], ADR: " + num2str(ADR, '%05.2f') + " [kW]", FontSize=14)
+legend('P1', 'P2', 'P3', 'P4', 'P5', 'P6')
+xlim([1 96])
+ylabel('Power consumption [kW]')
+xlabel('Time, in quarters')
+
+% Final bill comparison
+figure(7)
+subplot(1,2,1)
+bar(-final_billBasicRules)
+title('Rule based model')
+ylabel('Monetary units')
+xlabel('EC members')
+subplot(1,2,2)
+bar(-final_bill)
+title('Advanced model based on predictions with balance service')
+ylabel('Monetary units')
+xlabel('EC members')
+sgtitle('Economic balance for each member')
+
+figure(8)
+bar(Y,[total_final_bill total_final_bill_unoptimised])
+title('Aggregated economic balance')
+ylabel('Monetary units')
+
+
+%% LEGACY PLOTS
+
+% figure(101)
+% plot(t(1:SimulationSteps), Pcons_agg(1:SimulationSteps), t(1:SimulationSteps), Pgen_real(1:SimulationSteps))
+% title('Aggregated power consumption vs aggregated power generation')
+% ylabel('Power [kW]')
+% xlabel('Time')
+% legend('Aggregated power consumption','Aggregated power generation')
+% 
+% figure(102)
+% bar(TotalEnergyOriginIndividual*100,'stacked')
+% title('Power consumption by origin')
+% ylabel('Power consumption [%]')
+% xlabel('Participant')
+% ylim([0 100])
+% legend('FV','Battery','Grid')
+% 
+% PercentualTotalEnergyDecisionIndividual=zeros(members,4);
+% 
+% for n = 1:members
+%     PercentualTotalEnergyDecisionIndividual(n,:) = (TotalEnergyDecisionIndividual(n,:)/sum(TotalEnergyDecisionIndividual(n,:)))*100;
+% end
+% 
+% figure(103)
+% % total_energy_decision_invidual: 6 filas (members) x 4 cols (acciones)
+% % Valores en % para el total de cada fila
+% 
+% bar(PercentualTotalEnergyDecisionIndividual,'stacked')
+% title('Power usage of RE')
+% ylim([0 100])
+% ylabel('Renewable power [%]')
+% xlabel('Participant')
+% legend('Sold to grid','Consumed from PV','Consumed from Battery','PV energy sold as a service from battery')
+% 
+% % Pendiente añadir en este gráfico anotaciones con métricas de BAT
+% figure(104)
+% plot(t(1:SimulationSteps),CE_SoC_signal)
+% title("Battery State of Charge (SoC), AUR: [" + num2str(ADC(1), '%05.2f') + ", " ...
+%     + num2str(ADC(2), '%05.2f') + "] [%], CBU: " + num2str(CBU, '%05.2f') + ", ADC: " ...
+%     + num2str(BCPD, '%05.2f'), FontSize=14)
+% ylabel('SoC [%]')
+% xlabel('Time')
+% ylim([0 100])
 % dim = [0.15 0.5 0.5 0.4];
 % str = {'AUR' [AUR(1),AUR(2)], 'CBC' CBC, 'BCPD' BCPD};
 % annotation('textbox',dim,'String',str,'FitBoxToText','on');
@@ -712,43 +864,40 @@ ylim([0 100])
 % % dim = [0.15 0.5 0.5 0.4];
 % % str = {'POR' POR, 'ADR' ADR};
 % % annotation('textbox',dim,'String',str,'FitBoxToText','on');
-
-figure(202)
-bar(TotalEnergyOriginIndividualBasicRules*100,'stacked')
-title('Power consumption by origin')
-ylabel('Power consumption [%]')
-xlabel('Participant')
-ylim([0 100])
-legend('FV','Battery','Grid')
-
-PercentualTotalEnergyDecisionIndividualBasicRules=zeros(members,3);
-
-for n = 1:members
-    PercentualTotalEnergyDecisionIndividualBasicRules(n,:) = (TotalEnergyDecisionIndividualBasicRules(n,:)/sum(TotalEnergyDecisionIndividualBasicRules(n,:)))*100;
-end
-
-figure(203)
-% total_energy_decision_invidual: 6 filas (members) x 4 cols (acciones)
-% Valores en % para el total de cada fila
-
-bar(PercentualTotalEnergyDecisionIndividualBasicRules,'stacked')
-title('Power usage of RE')
-ylim([0 100])
-ylabel('Renewable power [%]')
-xlabel('Participant')
-legend('Sold to grid','Consumed from PV','Consumed from Battery','PV energy sold as a service from battery')
-
-% Final bill comparison
-figure(3)
-subplot(1,2,1)
-bar(-final_bill)
-title('Final economic net profit in euros, Forecasting and Sevice providing')
-subplot(1,2,2)
-bar(-final_billBasicRules)
-title('Final economic net profit in euros, Basic Rules')
-
-
-%% LEGACY PLOTS
+% 
+% figure(202)
+% bar(TotalEnergyOriginIndividualBasicRules*100,'stacked')
+% title('Power consumption by origin')
+% ylabel('Power consumption [%]')
+% xlabel('Participant')
+% ylim([0 100])
+% legend('FV','Battery','Grid')
+% 
+% PercentualTotalEnergyDecisionIndividualBasicRules=zeros(members,3);
+% 
+% for n = 1:members
+%     PercentualTotalEnergyDecisionIndividualBasicRules(n,:) = (TotalEnergyDecisionIndividualBasicRules(n,:)/sum(TotalEnergyDecisionIndividualBasicRules(n,:)))*100;
+% end
+% 
+% figure(203)
+% % total_energy_decision_invidual: 6 filas (members) x 4 cols (acciones)
+% % Valores en % para el total de cada fila
+% 
+% bar(PercentualTotalEnergyDecisionIndividualBasicRules,'stacked')
+% title('Power usage of RE')
+% ylim([0 100])
+% ylabel('Renewable power [%]')
+% xlabel('Participant')
+% legend('Sold to grid','Consumed from PV','Consumed from Battery','PV energy sold as a service from battery')
+% 
+% % Final bill comparison
+% figure(204)
+% subplot(1,2,1)
+% bar(-final_bill)
+% title('Final economic net profit in euros, Forecasting and Sevice providing')
+% subplot(1,2,2)
+% bar(-final_billBasicRules)
+% title('Final economic net profit in euros, Basic Rules')
 
 % figure(7)
 % bar(total_energy_origin_individual,'stacked')
@@ -788,12 +937,12 @@ title('Final economic net profit in euros, Basic Rules')
 % xlabel('Tiempo')
 % ylim([0 100])
 
-figure(20)
-plot(t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,1),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,2),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,3))
-title('Potencia consumida según origen')
-legend('Origen placas','Origen batería','Origen red eléctrica')
-ylabel('Potencia consumida (kW)')
-xlabel('Tiempo')
+% figure(20)
+% plot(t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,1),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,2),t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,3))
+% title('Potencia consumida según origen')
+% legend('Origen placas','Origen batería','Origen red eléctrica')
+% ylabel('Potencia consumida (kW)')
+% xlabel('Tiempo')
 % yyaxis right
 % plot(t(1:SimulationSteps), Pgen_real(1:SimulationSteps))
 
@@ -803,36 +952,36 @@ xlabel('Tiempo')
 % ylabel('Precio (€/kWh)')
 % xlabel('Tiempo')
 
-%%
+%% OUTPUT FOR SIMULATION
 
-filename = './csv_output/SoC_energy_CER.txt';
-csvwrite(filename,SoC_energy_CER);
-
-filename = './csv_output/pv_consumption.txt';
-csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,1));
-
-filename = './csv_output/bat_consumption.txt';
-csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,2));
-
-filename = './csv_output/grid_consumption.txt';
-csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,3));
-
-filename = './csv_output/last_day_economic_balance.txt';
-csvwrite(filename, StepProfit(:,1));
-
-% col 1 = PV energy sold to grid
-% col 2 = PV energy directly consumed 
-% col 3 = PV energy consumed from battery
-% col 4 = PV energy sold as a service from battery
-
-filename = './csv_output/pv_energy_sold_to_grid.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,1));
-
-filename = './csv_output/pv_energy_directly_consumed.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,2));
-
-filename = './csv_output/pv_energy_consumed_from_battery.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,3));
-
-filename = './csv_output/pv_energy_sold_as_a_service.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,4));
+% filename = './csv_output/SoC_energy_CER.txt';
+% csvwrite(filename,SoC_energy_CER);
+% 
+% filename = './csv_output/pv_consumption.txt';
+% csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,1));
+% 
+% filename = './csv_output/bat_consumption.txt';
+% csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,2));
+% 
+% filename = './csv_output/grid_consumption.txt';
+% csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,3));
+% 
+% filename = './csv_output/last_day_economic_balance.txt';
+% csvwrite(filename, StepProfit(:,1));
+% 
+% % col 1 = PV energy sold to grid
+% % col 2 = PV energy directly consumed 
+% % col 3 = PV energy consumed from battery
+% % col 4 = PV energy sold as a service from battery
+% 
+% filename = './csv_output/pv_energy_sold_to_grid.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,1));
+% 
+% filename = './csv_output/pv_energy_directly_consumed.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,2));
+% 
+% filename = './csv_output/pv_energy_consumed_from_battery.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,3));
+% 
+% filename = './csv_output/pv_energy_sold_as_a_service.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,4));

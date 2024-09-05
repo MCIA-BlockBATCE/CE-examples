@@ -1016,11 +1016,11 @@ ylabel('Monetary units')
 % ylabel('Potencia consumida (kW)')
 % xlabel('Tiempo')
 
-sum(Pcons_agg)
-sum(Pgen_real_allocated_community)
-
-sum(final_bill)
-sum(final_billBasicRules)
+% sum(Pcons_agg)
+% sum(Pgen_real_allocated_community)
+% 
+% sum(final_bill)
+% sum(final_billBasicRules)
 
 % sum(Pcons_agg)
 % sum(Pgen_real_allocated_community)
