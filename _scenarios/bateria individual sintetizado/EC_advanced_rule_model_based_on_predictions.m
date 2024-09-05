@@ -61,7 +61,7 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 %
 %   - Allocation based on instantly available power consumption
 %   measurements, CoR_type = 2.
-CoR_type = 0;
+CoR_type = 1;
 [GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
 
 
@@ -147,7 +147,7 @@ TotalEnergyDecisionIndividual = zeros(members, 3);
 % power consumption data (see --- PV power allocation coefficients --- )
 % PV power allocation is computed.
 [Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated] = PV_power_allocation_forecasting(Pgen_real, Pgen_pred_1h, ...
-    Pgen_pred_3h, GenerationPowerAllocation, PVPowerGenerationFactor, CoR_type, members, weekDay, hour);
+    Pgen_pred_3h, GenerationPowerAllocation, PVPowerGenerationFactor, CoR_type, members, weekDay, hour, SimulationSteps);
 
 
 % Simulation loop
@@ -859,3 +859,6 @@ xlabel('Time')
 
 sum(Pcons_agg)
 sum(Pgen_real_allocated_community)
+
+sum(final_bill)
+sum(final_billBasicRules)

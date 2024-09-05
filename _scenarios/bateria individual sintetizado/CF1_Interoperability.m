@@ -16,7 +16,7 @@ cost_next3h = ((ConsPred3h-GenPred3h) * Energy_price3h);
 
 diff_bat = stored_energy-bid_amount/DischargeEfficiency;
 
-if ((cost_next3h>current_cost*2.5) && (SoC<15)) || ((Energy_price6h > Energy_price*1.5))
+if ((cost_next3h>current_cost*2) && (SoC<15)) || ((Energy_price6h > Energy_price*1.5))
        FCoste1 = 2;
 end   
 

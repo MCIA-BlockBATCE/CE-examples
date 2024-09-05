@@ -13,7 +13,7 @@ current_cost = (ConsPred1h - GenPred1h) * Energy_price;
  
 cost_next3h = (ConsPred3h/3 - GenPred3h/3) * Energy_price3h;
 
-if ((cost_next3h>current_cost*4.5) || (SoC < 1) || (Energy_price6h>Energy_price*1.25))
+if ((cost_next3h>current_cost*3) || (SoC < 1) || (Energy_price6h>Energy_price*1.25))
     % Do not use stored energy
     FCoste2 = 0;
 else

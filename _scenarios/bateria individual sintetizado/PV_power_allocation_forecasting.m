@@ -1,5 +1,5 @@
 function [Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated] = PV_power_allocation_forecasting(Pgen_real, Pgen_pred_1h, ...
-    Pgen_pred_3h, generation_allocation, factor_gen, CoR_type, members, week_day, hour)
+    Pgen_pred_3h, generation_allocation, factor_gen, CoR_type, members, week_day, hour, steps)
 %PV_POWER_FORECASTING Summary of this function goes here
 %   Detailed explanation goes here
 
