@@ -1,6 +1,6 @@
 function FCoste2 = CF2(ConsPred3h,ConsPred1h,GenPred3h, ...
                     GenPred1h,Energy_price,Energy_price3h,Energy_price6h,SoC)
-% CF2
+
 % This cost function compares the need for the battery now versus later. To do this,
 % we calculate the current deficit and the average deficit over the next three hours,
 % applying the current cost of electricity and the average cost for the next

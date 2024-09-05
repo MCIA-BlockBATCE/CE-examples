@@ -1,15 +1,17 @@
-function [ch,hora,dia_setmana] = goToNextTimeStep(ch,hora,dia_setmana)
+function [ch,hour,week_day] = goToNextTimeStep(ch,week_day)
+
+% This function returns updated time variables as time step increases
 
 ch = ch + 1;
-hora = ceil(ch/4);
+hour = ceil(ch/4);
 
 if ch == 97
-        dia_setmana=dia_setmana+1;
+        week_day=week_day+1;
         ch = 1;
-    if dia_setmana==8
-        dia_setmana=1;
+    if week_day==8
+        week_day=1;
     end
-    hora=1;
+    hour=1;
 end
 
 end

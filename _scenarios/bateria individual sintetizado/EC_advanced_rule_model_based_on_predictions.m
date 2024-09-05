@@ -418,7 +418,7 @@ for t=1:SimulationSteps
     SoC_energy_CER(t+1) = getSoCEnergyEC(members, MaximumStorageCapacity, StorageAllocation, SoC, t);
     
     % Advance to next quarter
-    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
+    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,weekDay);
 
 end % Simulation loop
 
@@ -564,7 +564,7 @@ for t=1:SimulationSteps
     TotalEnergyOriginIndividualBasicRules(:,:)=TotalEnergyOriginIndividualBasicRules(:,:) + StepEnergyOriginIndividualBasicRules(:,:);
 
     % Advance to next quarter
-    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
+    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,weekDay);
     
 end
 

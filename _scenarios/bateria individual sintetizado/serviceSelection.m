@@ -1,7 +1,12 @@
 function [BidAmount, BidStep] = serviceSelection(TimeStep, t, quarter_h, Pgen_pred_1h, ...
     PconsForecast1h, price_next_1h, DischargeEfficiency, ServiceSafetyMargin, MaximumStorageCapacity)
-%SERVICESELECTION Summary of this function goes here
-%   Detailed explanation goes here
+
+% This function uses consumption, generation and energy price forecast to
+% find the moment of highest surplus. This TimeStep is chosen to be the
+% BidStep for the following day, and the forcasted surplus is the
+% BidAmount.
+% BidAmount is then limited by the maximum battery capacity and
+% then multiplied by a safety margin to ensure the bid is satisfied.
 
 EnergyDiff_acum = zeros(1,96);
 
@@ -14,7 +19,7 @@ for j=2:96
 
 end
 
-CostDiff_acum = EnergyDiff_acum' .* price_next_1h(t:t+95,1); % Potser fer servir un altre vector de preus
+CostDiff_acum = EnergyDiff_acum' .* price_next_1h(t:t+95,1);
 
 [cost,bid_quarter_h] = max(CostDiff_acum);
 
@@ -34,8 +39,8 @@ if BidAmount > MaximumStorageCapacity*DischargeEfficiency
 end
 
 
-BidAmount = BidAmount*ServiceSafetyMargin; % Safety margin to ensure we 
-                              % satisfy the bid
+BidAmount = BidAmount*ServiceSafetyMargin; % Safety margin to ensure the bid
+                                           % is satisfied
 
 
 

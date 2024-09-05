@@ -1,6 +1,6 @@
 function FCoste1 = CF1(ConsPred3h,ConsPred1h,GenPred3h, ...
                     GenPred1h,Energy_price,Selling_price,Energy_price3h,SoC,Energy_price6h)
-% CF1
+
 % Consumption of allocated power is the default output.
 
 % To decide if we should store the energy for later we compute the

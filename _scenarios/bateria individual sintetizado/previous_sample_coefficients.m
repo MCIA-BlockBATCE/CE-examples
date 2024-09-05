@@ -1,21 +1,24 @@
-function [coeficients] = previous_sample_coefficients(CER)
+function [coefficients] = previous_sample_coefficients(CER)
+
+% This function returns generation allocation coefficients depending on
+% measured consumption of previous step
+
     load("..\..\_data\energia_cons_CER.mat")
-    num_participantes = length(CER);
-    consum = energia_cons_CER(:,CER);
+    members = length(CER);
+    consumption = energia_cons_CER(:,CER);
     
-    % ens basarem amb els consums de la mostra anterior (fa 15 min)
-    sum_consums_instant_anterior=zeros(2976,1);
-    coeficients=zeros(2976,num_participantes);
+    sum_previous_consumption=zeros(2976,1);
+    coefficients=zeros(2976,members);
     
     for t=2:2976
-        sum_consums_instant_anterior(t,1)=sum(consum(t-1,:));
-        for i=1:num_participantes
-            coeficients(t,i)=consum(t-1,i)/sum_consums_instant_anterior(t,1);
+        sum_previous_consumption(t,1)=sum(consumption(t-1,:));
+        for i=1:members
+            coefficients(t,i)=consumption(t-1,i)/sum_previous_consumption(t,1);
         end
-        if sum_consums_instant_anterior(t,:) == zeros(1,num_participantes)
-            coeficients(t,:) = ones(1,num_participantes)*(1/num_participantes);
+        if sum_previous_consumption(t,:) == zeros(1,members)
+            coefficients(t,:) = ones(1,members)*(1/members);
         end
     end
-    coeficients(1,:)=coeficients(2,:); %inicialización
+    coefficients(1,:)=coefficients(2,:);
 
 end

@@ -1,4 +1,7 @@
 function [X] = time_band(week_day,hour)
+
+% Returns time band depending on current weekday and hour.
+
     if (week_day>0 && week_day<6)
               if (hour>0 && hour<=8)
                  X=1;

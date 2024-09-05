@@ -1,54 +1,56 @@
-function [tabla_coeficientes_2d_promedios] = time_band_coefficients()
+function [time_band_allocation_coefficients] = time_band_coefficients()
 
-    dades_factures=readmatrix("..\..\_data\bbce2_Factures_ficticies.xlsx");
-    num_participantes = length(dades_factures)/12;
-    num_meses = 10;
-    coeficientes = zeros(num_participantes,3,num_meses);
+    % This function uses the time band bill, previously saved into a
+    % spreadsheet, to compute allocation coefficients.
+
+    consumption_data=readmatrix("..\..\_data\bbce2_Factures_ficticies.xlsx");
     
-    %% Declaración de vectores para sumatorios y tabla para CoR
-    filaStart = 1;
-    filaEnd = num_participantes;
-    dades_factures(dades_factures == 0) = 0.1;
+    % Initialization and declaration of variables and vectors
+    members = length(consumption_data)/12;
+    months = 10;
+    coefficients = zeros(members,3,months);
+    rowStart = 1;
+    rowEnd = members;
+    consumption_data(consumption_data == 0) = 0.1;
     
-    for mes = 1:num_meses
-        sumatorio_valle_total = sum(dades_factures(filaStart:filaEnd,1));
-        sumatorio_llano_total = sum(dades_factures(filaStart:filaEnd,2));
-        sumatorio_pico_total = sum(dades_factures(filaStart:filaEnd,3));
+    for mes = 1:months
+        valley_aggregate = sum(consumption_data(rowStart:rowEnd,1));
+        plain_aggregate = sum(consumption_data(rowStart:rowEnd,2));
+        peak_aggregate = sum(consumption_data(rowStart:rowEnd,3));
         k = 1;
     
-        for j = filaStart:filaEnd
-            % Valle
-            coeficientes(k,1,mes) = dades_factures(j,1)/sumatorio_valle_total;
-            % Llano
-            coeficientes(k,2,mes) = dades_factures(j,2)/sumatorio_llano_total;
-            % Pico
-            coeficientes(k,3,mes) = dades_factures(j,3)/sumatorio_pico_total;
+        for j = rowStart:rowEnd
+            % Valley
+            coefficients(k,1,mes) = consumption_data(j,1)/valley_aggregate;
+            % Plain
+            coefficients(k,2,mes) = consumption_data(j,2)/plain_aggregate;
+            % Peak
+            coefficients(k,3,mes) = consumption_data(j,3)/peak_aggregate;
             k = k + 1;
         end
        
-        filaStart = filaStart + (num_participantes);
-        filaEnd = filaEnd + (num_participantes);
+        rowStart = rowStart + (members);
+        rowEnd = rowEnd + (members);
     end
     
     
-    tabla_coeficientes_2d = coeficientes(:,:,1);
-    for k = 2:num_meses
+    coefficients_table_2d = coefficients(:,:,1);
+    for k = 2:months
     
-        tabla_coeficientes_2d = [tabla_coeficientes_2d; coeficientes(:,:,k)];
+        coefficients_table_2d = [coefficients_table_2d; coefficients(:,:,k)];
     
     end
     
-    % Para cada participante, 3 promedios
-    tabla_coeficientes_2d_promedios = zeros(num_participantes,3);
-    for j = 1:num_participantes
+    % 3 consumption averages for each member and each month
+    time_band_allocation_coefficients = zeros(members,3);
+    for j = 1:members
         
-       % Hago el promedio de todos los meses
        acum = 0;
-       for z = 1:num_meses
-            acum = acum + coeficientes(j,:,z);
+       for z = 1:months
+            acum = acum + coefficients(j,:,z);
        end
     
-       tabla_coeficientes_2d_promedios(j,:) = acum/num_meses;
+       time_band_allocation_coefficients(j,:) = acum/months;
     
     end
 end

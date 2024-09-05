@@ -8,8 +8,8 @@ function [generation_allocation, storage_allocation] = allocation_coefficients(C
        
         time_band_bill(CER)
         [generation_allocation] = time_band_coefficients();
-        generation_allocation = sum(generation_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
-        generation_allocation = generation_allocation/sum(generation_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
+        generation_allocation = sum(generation_allocation.');
+        generation_allocation = generation_allocation/sum(generation_allocation);
         storage_allocation=generation_allocation;
     
     elseif CoR_type == 1
@@ -26,11 +26,11 @@ function [generation_allocation, storage_allocation] = allocation_coefficients(C
     
         [generation_allocation] = previous_sample_coefficients(CER); 
     
-        % Se usan CoR estaticos para repartir la bateria
+        % Fixed allocation rules are used to allocate storage capacity
         time_band_bill(CER)
         [storage_allocation] = time_band_coefficients();
-        storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
-        storage_allocation = storage_allocation/sum(storage_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
+        storage_allocation = sum(storage_allocation.'); 
+        storage_allocation = storage_allocation/sum(storage_allocation); 
     
     end
 

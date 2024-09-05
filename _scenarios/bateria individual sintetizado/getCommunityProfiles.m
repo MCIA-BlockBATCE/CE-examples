@@ -1,6 +1,7 @@
 function [Profiles] = getCommunityProfiles(selection)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+% This function returns consumption profiles for 3 predefined communities
+% depending on the ratio between consumption and generation (Surplus
+% community, deficit community or balanced community)
 
 %% Key for consumption profiles
 % ADM = Administration building

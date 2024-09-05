@@ -1,6 +1,7 @@
 function [Pgen_real_allocated] = PV_power_allocation(Pgen_real, generation_allocation, factor_gen, CoR_type, members, week_day, hour)
-%PV_POWER_ALLOCATION Summary of this function goes here
-%   Detailed explanation goes here
+
+% Allocated generated power is returned multiplying allocation coefficients
+% with total generated power
 
     if CoR_type == 0
         for n=1:members     
@@ -16,7 +17,7 @@ function [Pgen_real_allocated] = PV_power_allocation(Pgen_real, generation_alloc
 
         if CoR_type == 1
 
-            for t=1:steps % EMPIEZA EL AÑO
+            for t=1:steps
                 [X] = time_band(week_day,hour);
     
                     for n=1:members     

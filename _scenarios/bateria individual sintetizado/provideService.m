@@ -1,11 +1,12 @@
 function [SoC, bid_profit, StepProfit, energy_cost_bought_while_bid, TotalEnergyDecisionIndividual, StepEnergyDecisionIndividual] = provideService(t, n, SoC, BidStep, StorageAllocation, BidAmount, ...
            MaximumStorageCapacity, StepProfit, GenerationPowerAllocation, bid_price, energy_cost_bought_while_bid, ...
            step_energy_origin, price_next_1h, TotalEnergyDecisionIndividual, StepEnergyDecisionIndividual)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
 
+% This function returns updated SoC and tracking vector after providing
+% service
+% When BidStep is reached, the Bid Amount is sold to costumer in 4 quarter
+% hour steps (1h) 
 
-   % TODO: Encapsular en función
     if(t==BidStep || t==BidStep+1 || t==BidStep+2 || t==BidStep+3)
         storage_energy_for_bid = StorageAllocation * BidAmount/4;
         previous_SoC_energy = MaximumStorageCapacity * StorageAllocation(n) * (SoC(t,n)/100);

@@ -1,19 +1,22 @@
 function [] = time_band_bill(CER)
 
+% This function calculates the annual consumption of the members broken
+% down into 12 months and into the 3 energy price time bands 
+
     load('..\..\_data\base_data_2023.mat') 
     delete('..\..\_data\bbce2_Factures_ficticies.xlsx')
     
-    %% Selección de columnas y llenado de vacíos con IL
+    % Column selection
     
     num_participantes = length(CER);
     data = base_data_2023(:,[[2:13] 17]);
     data = data(:,CER);
     
     
-    %% Promedio horario consumos
+    % Hourly average consumption
     data_agg = get_hourly_energy(data);
     
-    %% Completo información horaria correspondiente a cada fila
+    % Time information is filled
     
     dias_meses = [31,28,31,30,31,30,31,31,30,31,30,31];
     dia = 1;
@@ -46,14 +49,15 @@ function [] = time_band_bill(CER)
     data_agg_with_time = [data_agg time_table];
     
     
-    %% Inicialización de variables temporales y acumulados a 0
-    % Datos van de domingo 1/1/23 a 1/1/24
+    % Variable initialization
     
     suma_mes_valle=zeros(num_participantes,12);
     suma_mes_llano=zeros(num_participantes,12);
     suma_mes_pico=zeros(num_participantes,12);
     
-    %% Cálculos
+    % Consumption aggregate for each member is distributed between 12 months
+    % and 3 time bands.
+    % Bill is saved in a spreadsheet
     
     for n=1:num_participantes
         dia_setmana=7; % año 2023 empieza en domingo

@@ -477,7 +477,7 @@ for t=1:SimulationSteps
     TotalEnergyOriginIndividual(:,:)=TotalEnergyOriginIndividual(:,:) + StepEnergyOriginIndividual(:,:);
     
     % Advance to the next quarter
-    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
+    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,weekDay);
 
 
 end % Simulation loop
@@ -620,7 +620,7 @@ for t=1:SimulationSteps
     TotalEnergyOriginIndividualBasicRules(:,:)=TotalEnergyOriginIndividualBasicRules(:,:) + StepEnergyOriginIndividualBasicRules(:,:);
 
     % Advance to next quarter
-    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,hour,weekDay);
+    [quarter_h,hour,weekDay] = goToNextTimeStep(quarter_h,weekDay);
     
 end
 
