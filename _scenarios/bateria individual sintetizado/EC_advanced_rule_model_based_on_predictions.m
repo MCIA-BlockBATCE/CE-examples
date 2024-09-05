@@ -63,11 +63,7 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 %
 %   - Allocation based on instantly available power consumption
 %   measurements, CoR_type = 2.
-<<<<<<< HEAD
 CoR_type = 1;
-=======
-CoR_type = 2;
->>>>>>> fece45f819fb98413684bba18ea96b2bd1a2c33d
 [GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
 
 
@@ -618,6 +614,15 @@ for n = 1:members
     PercentualTotalEnergyDecisionIndividual(n,:) = (TotalEnergyDecisionIndividual(n,:)/sum(TotalEnergyDecisionIndividual(n,:)))*100;
 end
 
+final_bill_unoptimised = -sum(StepProfitBasicRules);
+
+Y = categorical({'Avanced rule model based on predictions','Basic rule model'});
+Y = reordercats(Y,{'Avanced rule model based on predictions','Basic rule model'});
+
+total_final_bill = sum(final_bill);
+total_final_bill_unoptimised = sum(final_bill_unoptimised);
+
+
 % info for annotation
 if (CommunitySelection == 0)
     scenario = "Surplus";
@@ -733,9 +738,12 @@ bar(-final_bill)
 title('Advanced model based on predictions')
 ylabel('Monetary units')
 xlabel('EC members')
-
 sgtitle('Economic balance for each member')
 
+figure(8)
+bar(Y,[total_final_bill total_final_bill_unoptimised])
+title('Aggregated economic balance')
+ylabel('Monetary units')
 
 %% LEGACY
 
@@ -856,23 +864,16 @@ sgtitle('Economic balance for each member')
 
 % Comparació balance optimitzant/sense optimitzar
 
-final_bill_unoptimised = -sum(StepProfitBasicRules);
-
-Y = categorical({'Optimización','Reglas estáticas'});
-Y = reordercats(Y,{'Optimización','Reglas estáticas'});
-
-total_final_bill = sum(final_bill);
-total_final_bill_unoptimised = sum(final_bill_unoptimised);
 
 % figure(7)
 % bar(total_energy_origin_individual,'stacked')
 % legend('Origen placas','Origen batería','Origen red eléctrica')
 % 
 % 
-figure(17)
-bar(Y,[total_final_bill total_final_bill_unoptimised])
-title("Facturación agregada de la comunidad (semanal)")
-ylabel('Euros (€)')
+% figure(17)
+% bar(Y,[total_final_bill total_final_bill_unoptimised])
+% title("Facturación agregada de la comunidad (semanal)")
+% ylabel('Euros (€)')
 % 
 % t1 = datetime(2023,5,1,0,0,0);
 % t2 = datetime(2023,5,31,0,0,0);
@@ -1015,13 +1016,11 @@ ylabel('Euros (€)')
 % ylabel('Potencia consumida (kW)')
 % xlabel('Tiempo')
 
-<<<<<<< HEAD
 sum(Pcons_agg)
 sum(Pgen_real_allocated_community)
 
 sum(final_bill)
 sum(final_billBasicRules)
-=======
+
 % sum(Pcons_agg)
 % sum(Pgen_real_allocated_community)
->>>>>>> fece45f819fb98413684bba18ea96b2bd1a2c33d
