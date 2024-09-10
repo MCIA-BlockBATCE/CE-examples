@@ -2,8 +2,8 @@ clear all
 close all
 
 %% Recurrent neural net prediction 
-% Load SISO input data for prediction
-[X,T] = simpleseries_dataset;
+% Load SISO data for prediction
+load SISO_dataset.mat
 
 % Create and train recurrent neural network
 % Two delay inputs and hidden layer size 10. 
