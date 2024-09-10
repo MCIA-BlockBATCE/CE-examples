@@ -45,6 +45,18 @@ Validation_Data=FeaturesHIOv3(:,Validation_index);% Separe data for Validation
 Validation_Targets=Targets(:,Validation_index);
 
 
+Targets_names=cell(1200,1);%10);
+Targets_names(1:120,1)={'Healthy'};  %Class healthy
+Targets_names(121:240,1)={'Inner Fault Severity 1'};%Class Inner Fault Severity 1
+Targets_names(241:360,1)={'Inner Fault Severity 2'};%Class Inner Fault Severity 2
+Targets_names(361:480,1)={'Inner Fault Severity 3'};%Class Inner Fault Severity 3
+Targets_names(481:600,1)={'Outher Fault Severity 1'};%Class Outher Fault Severity 1
+Targets_names(601:720,1)={'Outher Fault Severity 2'};%Class Outher Fault Severity 2
+Targets_names(721:840,1)={'Outher Fault Severity 3'};%Class Outher Fault Severity 3
+Targets_names(841:960,1)={'Ball Fault Severity 1'};%Class Ball Fault Severity 1
+Targets_names(961:1080,1)={'Ball Fault Severity 2'};%Class Ball Fault Severity 2
+Targets_names(1081:1200,1)={'Ball Fault Severity 3'};%Class Ball Fault Severity 3
+
 %% -------------- Parte 5 LDA Calculation ---------------------------------
 figure,
 
@@ -64,33 +76,9 @@ A=V(:,1:2);
 % Project the data set on the space spanned by the column vectors of A
 FeaturesHIO_LDA=A'*X;
 FeaturesHIO_LDA=FeaturesHIO_LDA';
-plot(FeaturesHIO_LDA(:,1),FeaturesHIO_LDA(:,2),'g*')
 
-for buc_2=1:length(FeaturesHIO_LDA)
-   if(Targets1C(1,buc_2)==1)
-   color='go';
-     elseif(Targets1C(1,buc_2)==2)
-       color='ro';
-        elseif(Targets1C(1,buc_2)==3)
-         color='yo';
-          elseif(Targets1C(1,buc_2)==4)
-           color='bo';
-            elseif(Targets1C(1,buc_2)==5)
-             color='mo';
-              elseif(Targets1C(1,buc_2)==6)
-               color='co';
-                elseif(Targets1C(1,buc_2)==7)
-                 color='ko';
-                  elseif(Targets1C(1,buc_2)==8)
-                   color='g.';
-                    elseif(Targets1C(1,buc_2)==9)
-                     color='r.';
-                      elseif(Targets1C(1,buc_2)==10)
-                       color='b*';
-   end
-    plot(FeaturesHIO_LDA(buc_2,1),FeaturesHIO_LDA(buc_2,2),color)
-    hold on
-    grid on
-    title('LDA data Representation');
-    
-end
+figure(2)
+gscatter(FeaturesHIO_LDA(:,1), FeaturesHIO_LDA(:,2), Targets_names, 'rgbcmyk', 'xo*+sd><^', 6)
+xlabel('Principal Component #1')
+ylabel('Principal Component #2')
+title('LDA Data Representation')
