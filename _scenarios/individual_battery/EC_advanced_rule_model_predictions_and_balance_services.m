@@ -185,7 +185,7 @@ for t=1:SimulationSteps
     end
     
     
-    for n=1:members %Loop for each CE member
+    for n=1:members %Loop for each CE memberIfBid
     
     % A specific cost function (CF1_Interoperability) is defined for
     % limiting the maximum allowed discharging power in the hours prior to 
@@ -311,7 +311,7 @@ for t=1:SimulationSteps
             % Surplus of PV generated power, which will be used to
             % charge the battery allocation for the participant or sold
             % if the battery allocation is full
-            PowerSurplus(t,n)=Pgen_pred_1h_allocated(t,n)-PconsMeasured(t,n);
+            PowerSurplus(t,n)=Pgen_real_allocated(t,n)-PconsMeasured(t,n);
             StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+PconsMeasured(t,n)*TimeStep;
             TotalEnergyDecisionIndividual(n,2)=TotalEnergyDecisionIndividual(n,2)+PconsMeasured(t,n)*TimeStep;
             StepEnergyDecisionIndividual(t,2)=StepEnergyDecisionIndividual(t,2)+PconsMeasured(t,n)*TimeStep;
@@ -352,7 +352,7 @@ for t=1:SimulationSteps
         % power or power purchased from the grid        
         else
             PowerShortage(t,n)=PconsMeasured(t,n)-Pgen_real_allocated(t,n);
-            StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+Pgen_real_allocated(t,n)*TimeStep;;
+            StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+Pgen_real_allocated(t,n)*TimeStep;
             TotalEnergyDecisionIndividual(n,2)=TotalEnergyDecisionIndividual(n,2)+Pgen_real_allocated(t,n)*TimeStep;
             StepEnergyDecisionIndividual(t,2)=StepEnergyDecisionIndividual(t,2)+Pgen_real_allocated(t,n)*TimeStep;
   

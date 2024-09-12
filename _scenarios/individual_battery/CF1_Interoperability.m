@@ -50,4 +50,8 @@ if Energy_price < Selling_price
         FCoste1 = 0;
 end
 
+if P_discharge_max_bid > P_discharge_max
+        P_discharge_max_bid = P_discharge_max;
+end
+
 end
