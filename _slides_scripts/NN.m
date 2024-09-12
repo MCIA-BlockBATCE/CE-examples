@@ -1,12 +1,14 @@
 clear
 clc
 close all
-load FeaturesHIOB_360samples_4classess_4operatingconditions_3severities.mat
+%load FeaturesHIOB_360samples_4classess_4operatingconditions_3severities.mat
+load FeaturesHIOB_LDA.mat
 
 %% -------------- Parte 1 Feature Normalization and classification --------
 rng(1989)
 
-FeaturesHIOv3=normal(FeaturesHIOB(241:end,:));
+%FeaturesHIOv3=normal(FeaturesHIOB(241:end,:));
+FeaturesHIOv3=normal(FeaturesHIOB_LDA(:,:));
 FeaturesHIOv3=FeaturesHIOv3';
 
 Targets=zeros(1200,10);
