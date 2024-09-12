@@ -234,7 +234,7 @@ for t=1:SimulationSteps
                     SoC(t+1,n)=SoC(t,n)-(((PconsMeasured(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
                     StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+PconsMeasured(t,n)*TimeStep;
                     TotalEnergyDecisionIndividual(n,3)=TotalEnergyDecisionIndividual(n,3)+(PconsMeasured(t,n)*TimeStep)/DischargeEfficiency;
-                    StepEnergyDecisionIndividual(t,3)=StepEnergyDecisionIndividual(t,3)+(PconsMeasured(t,n)*TimeStep)/DischargeEfficiency;
+                    StepEnergyDecisionIndividual(t,3)=StepEnergyDecisionIndividual(n,3)+(PconsMeasured(t,n)*TimeStep)/DischargeEfficiency;
 
                 % The participant purchases energy from the grid to
                 % supply its demand
@@ -314,7 +314,7 @@ for t=1:SimulationSteps
             PowerSurplus(t,n)=Pgen_pred_1h_allocated(t,n)-PconsMeasured(t,n);
             StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+PconsMeasured(t,n)*TimeStep;
             TotalEnergyDecisionIndividual(n,2)=TotalEnergyDecisionIndividual(n,2)+PconsMeasured(t,n)*TimeStep;
-            StepEnergyDecisionIndividual(t,2)=StepEnergyDecisionIndividual(t,2)+PconsMeasured(t,n)*TimeStep;
+            StepEnergyDecisionIndividual(n,2)=StepEnergyDecisionIndividual(n,2)+PconsMeasured(t,n)*TimeStep;
 
 
             % If the battery allocation of the particpant is not full
@@ -335,7 +335,7 @@ for t=1:SimulationSteps
                     SoC(t+1,n)=SoC(t,n)+((MaxChargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n))*100;
                     StepProfit(t,n)=StepProfit(t,n)+(PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep*ElectricitySellingPrice(t,1);
                     TotalEnergyDecisionIndividual(n,1)=TotalEnergyDecisionIndividual(n,1)+(PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
-                    StepEnergyDecisionIndividual(t,1)=StepEnergyDecisionIndividual(t,1)+(PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
+                    StepEnergyDecisionIndividual(n,1)=StepEnergyDecisionIndividual(n,1)+(PowerSurplus(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
                 end
             
             % If the battery allocation of the participant is full, then
@@ -344,7 +344,7 @@ for t=1:SimulationSteps
                 SoC(t+1,n)=SoC(t,n);
                 StepProfit(t,n)=StepProfit(t,n)+PowerSurplus(t,n)*TimeStep*ElectricitySellingPrice(t,1);
                 TotalEnergyDecisionIndividual(n,1)=TotalEnergyDecisionIndividual(n,1)+PowerSurplus(t,n)*TimeStep;
-                StepEnergyDecisionIndividual(t,1)=StepEnergyDecisionIndividual(t,1)+PowerSurplus(t,n)*TimeStep;
+                StepEnergyDecisionIndividual(n,1)=StepEnergyDecisionIndividual(n,1)+PowerSurplus(t,n)*TimeStep;
             end
         
         % If PV power allocated to the participant does not exceed
@@ -354,7 +354,7 @@ for t=1:SimulationSteps
             PowerShortage(t,n)=PconsMeasured(t,n)-Pgen_real_allocated(t,n);
             StepEnergyOriginIndividual(n,1)=StepEnergyOriginIndividual(n,1)+Pgen_real_allocated(t,n)*TimeStep;;
             TotalEnergyDecisionIndividual(n,2)=TotalEnergyDecisionIndividual(n,2)+Pgen_real_allocated(t,n)*TimeStep;
-            StepEnergyDecisionIndividual(t,2)=StepEnergyDecisionIndividual(t,2)+Pgen_real_allocated(t,n)*TimeStep;
+            StepEnergyDecisionIndividual(n,2)=StepEnergyDecisionIndividual(n,2)+Pgen_real_allocated(t,n)*TimeStep;
   
             
             % If there is energy in the participant's battery allocation
@@ -377,7 +377,7 @@ for t=1:SimulationSteps
                         SoC(t+1,n)=SoC(t,n)-(((PowerShortage(t,n)*TimeStep)/DischargeEfficiency)/EnergyStorageMaximumForParticipant(1,n))*100;
                         StepEnergyOriginIndividual(n,2)=StepEnergyOriginIndividual(n,2)+PowerShortage(t,n)*TimeStep;
                         TotalEnergyDecisionIndividual(n,3)=TotalEnergyDecisionIndividual(n,3)+(PowerShortage(t,n)*TimeStep)/DischargeEfficiency;
-                        StepEnergyDecisionIndividual(t,3)=StepEnergyDecisionIndividual(t,3)+(PowerShortage(t,n)*TimeStep)/DischargeEfficiency;
+                        StepEnergyDecisionIndividual(n,3)=StepEnergyDecisionIndividual(n,3)+(PowerShortage(t,n)*TimeStep)/DischargeEfficiency;
 
                     
                     % The grid is used to supply the remaining
@@ -404,7 +404,7 @@ for t=1:SimulationSteps
                         StepProfit(t,n)= StepProfit(t,n)-(PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep*price_next_1h(t,1);
                         StepEnergyOriginIndividual(n,3)=StepEnergyOriginIndividual(n,3)+(PowerShortage(t,n)-MaxDischargingPowerForParticipant(1,n))*TimeStep;
                         TotalEnergyDecisionIndividual(n,3)=TotalEnergyDecisionIndividual(n,3)+MaxDischargingPowerForParticipant(1,n)*TimeStep;
-                        StepEnergyDecisionIndividual(t,3)=StepEnergyDecisionIndividual(t,3)+MaxDischargingPowerForParticipant(1,n)*TimeStep;
+                        StepEnergyDecisionIndividual(n,3)=StepEnergyDecisionIndividual(n,3)+MaxDischargingPowerForParticipant(1,n)*TimeStep;
                     
                     
                     % Only the grid is used to supply the remaining
@@ -443,7 +443,7 @@ for t=1:SimulationSteps
             SoC(t+1,n)=SoC(t,n)+(MaxChargingPowerForParticipant(1,n)*TimeStep)/EnergyStorageMaximumForParticipant(1,n)*100;
             StepProfit(t,n)=StepProfit(t,n)+(Pgen_real_allocated(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep*ElectricitySellingPrice(t,1);
             TotalEnergyDecisionIndividual(n,1) = TotalEnergyDecisionIndividual(n,1) + (Pgen_real_allocated(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
-            StepEnergyDecisionIndividual(t,1)=StepEnergyDecisionIndividual(t,1)+(Pgen_real_allocated(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
+            StepEnergyDecisionIndividual(n,1)=StepEnergyDecisionIndividual(n,1)+(Pgen_real_allocated(t,n)-MaxChargingPowerForParticipant(1,n)/ChargeEfficiency)*TimeStep;
         end
         
         StepProfit(t,n)=StepProfit(t,n)-PconsMeasured(t,n)*TimeStep*price_next_1h(t,1);
@@ -954,44 +954,41 @@ ylabel('Monetary units')
 
 %% OUTPUT FOR SIMULATION
 
-filename = './csv_output/SoC_energy_CER.txt';
-csvwrite(filename,SoC_energy_CER);
-
-filename = './csv_output/pv_consumption.txt';
-csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,1));
-
-filename = './csv_output/bat_consumption.txt';
-csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,2));
-
-filename = './csv_output/grid_consumption.txt';
-csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,3));
-
-filename = './csv_output/total_bill_opt_and_servs.txt';
-csvwrite(filename, total_final_bill);
-
-filename = './csv_output/total_bill_unopt.txt';
-csvwrite(filename, total_final_bill_unoptimised);
-
-% col 1 = PV energy sold to grid
-% col 2 = PV energy directly consumed 
-% col 3 = PV energy consumed from battery
-% col 4 = PV energy sold as a service from battery
-
-filename = './csv_output/pv_energy_sold_to_grid.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,1));
-
-filename = './csv_output/pv_energy_directly_consumed.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,2));
-
-filename = './csv_output/pv_energy_consumed_from_battery.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,3));
-
-filename = './csv_output/pv_energy_sold_as_a_service.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,4));
-
-filename = './csv_output/pv_generation_measured.txt';
-csvwrite(filename, Pgen_real(1:SimulationSteps,1));
-
-filename = './csv_output/pv_generation_forecasted_1h.txt';
-csvwrite(filename, Pgen_pred_1h(1:SimulationSteps,1));
+% filename = './csv_output/SoC_energy_CER.txt';
+% csvwrite(filename,SoC_energy_CER);
+% 
+% filename = './csv_output/pv_consumption.txt';
+% csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,1));
+% 
+% filename = './csv_output/bat_consumption.txt';
+% csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,2));
+% 
+% filename = './csv_output/grid_consumption.txt';
+% csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,3));
+% 
+% filename = './csv_output/last_day_economic_balance.txt';
+% csvwrite(filename, StepProfit(:,1));
+% 
+% % col 1 = PV energy sold to grid
+% % col 2 = PV energy directly consumed 
+% % col 3 = PV energy consumed from battery
+% % col 4 = PV energy sold as a service from battery
+% 
+% filename = './csv_output/pv_energy_sold_to_grid.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,1));
+% 
+% filename = './csv_output/pv_energy_directly_consumed.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,2));
+% 
+% filename = './csv_output/pv_energy_consumed_from_battery.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,3));
+% 
+% filename = './csv_output/pv_energy_sold_as_a_service.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,4));
+%
+% filename = './csv_output/pv_generation_measured.txt';
+% csvwrite(filename, Pgen_real(1:SimulationSteps,1));
+%
+% filename = './csv_output/pv_generation_forecasted_1h.txt';
+% csvwrite(filename, Pgen_pred_1h(1:SimulationSteps,1));
 
