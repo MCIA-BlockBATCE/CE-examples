@@ -1,3 +1,10 @@
+Autors: M.Delgado-Prieto, A.Llufriu-López, J.Valls-Pérez
+Universitat Politècnica de Catalunya (UPC)
+MCIA Innovation Electronics Research Center
+https://mcia.upc.edu/en
+
+Please use citation ditails found in citation file (CITATION.cff) if you use this code.
+
 # `CE-examples`
 
 A MATLAB package designed for demostration of different CE operation and metrics.
