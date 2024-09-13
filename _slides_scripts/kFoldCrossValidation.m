@@ -99,10 +99,39 @@ for i = 1:k
     [Net, TR] = train(Net,Training_Data,Training_Targets);
 
     Testing_Data = FeaturesHIOv3_raw(test1,:)';
-    Testing_Targets = Targets(:,test1);
-    Simu_Net=Net(Testing_Data);
+    Testing_Targets = Targets1C(:,test1);
+    Predictions=Net(Testing_Data);
 
-    plotconfusion(Testing_Targets,Simu_Net,'All Features')
+    % Seleccionar la clase con la mayor probabilidad para cada instancia
+    [~, Predicted_Labels] = max(Predictions, [], 1);
+    
+    % Calcular la matriz de confusión
+    Conf_Mat = confusionmat(Testing_Targets, Predicted_Labels);
+    
+    % Calcular las métricas
+    Accuracy = sum(diag(Conf_Mat)) / sum(Conf_Mat(:));
+    
+    Precision = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 1)');
+    
+    Recall = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 2));
+    
+    Specificity = mean((sum(Conf_Mat(:)) - sum(Conf_Mat, 2) - sum(Conf_Mat, 1)' + diag(Conf_Mat)) ./ (sum(Conf_Mat(:)) - sum(Conf_Mat, 2)));
+    
+    % Mostrar los resultados
+    disp(['Accuracy: ', num2str(Accuracy)]);
+    disp(['Precision: ', num2str(Precision)]);
+    disp(['Recall: ', num2str(Recall)]);
+    disp(['Specificity: ', num2str(Specificity)]);
+
+
+
+    % [values,pred_ind]=max(Predictions,[],1);
+    % [~,actual_ind]=max(Testing_Targets,[],1);
+    % accuracy=sum(pred_ind==actual_ind)/size(Testing_Data,2)*100
+    % 
+    % 
+    % 
+    % plotconfusion(Testing_Targets,Predictions,'All Features')
 
 end
 cp.ErrorRate
