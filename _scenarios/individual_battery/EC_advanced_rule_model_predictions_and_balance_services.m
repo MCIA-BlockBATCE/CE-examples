@@ -954,44 +954,44 @@ ylabel('Monetary units')
 
 %% OUTPUT FOR SIMULATION
 
-filename = './csv_output/SoC_energy_CER.txt';
-csvwrite(filename,SoC_energy_CER);
-
-filename = './csv_output/pv_consumption.txt';
-csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,1));
-
-filename = './csv_output/bat_consumption.txt';
-csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,2));
-
-filename = './csv_output/grid_consumption.txt';
-csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,3));
-
-filename = './csv_output/total_bill_opt_and_servs.txt';
-csvwrite(filename, total_final_bill);
-
-filename = './csv_output/total_bill_unopt.txt';
-csvwrite(filename, total_final_bill_unoptimised);
-
-% col 1 = PV energy sold to grid
-% col 2 = PV energy directly consumed 
-% col 3 = PV energy consumed from battery
-% col 4 = PV energy sold as a service from battery
-
-filename = './csv_output/pv_energy_sold_to_grid.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,1));
-
-filename = './csv_output/pv_energy_directly_consumed.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,2));
-
-filename = './csv_output/pv_energy_consumed_from_battery.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,3));
-
-filename = './csv_output/pv_energy_sold_as_a_service.txt';
-csvwrite(filename, StepEnergyDecisionIndividual(:,4));
-
-filename = './csv_output/pv_generation_measured.txt';
-csvwrite(filename, Pgen_real(1:SimulationSteps,1));
-
-filename = './csv_output/pv_generation_forecasted_1h.txt';
+% filename = './csv_output/SoC_energy_CER.txt';
+% csvwrite(filename,SoC_energy_CER);
+% 
+% filename = './csv_output/pv_consumption.txt';
+% csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,1));
+% 
+% filename = './csv_output/bat_consumption.txt';
+% csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,2));
+% 
+% filename = './csv_output/grid_consumption.txt';
+% csvwrite(filename, EnergyOriginInstant(1:SimulationSteps,3));
+% 
+% filename = './csv_output/total_bill_opt_and_servs.txt';
+% csvwrite(filename, total_final_bill);
+% 
+% filename = './csv_output/total_bill_unopt.txt';
+% csvwrite(filename, total_final_bill_unoptimised);
+% 
+% % col 1 = PV energy sold to grid
+% % col 2 = PV energy directly consumed 
+% % col 3 = PV energy consumed from battery
+% % col 4 = PV energy sold as a service from battery
+% 
+% filename = './csv_output/pv_energy_sold_to_grid.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,1));
+% 
+% filename = './csv_output/pv_energy_directly_consumed.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,2));
+% 
+% filename = './csv_output/pv_energy_consumed_from_battery.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,3));
+% 
+% filename = './csv_output/pv_energy_sold_as_a_service.txt';
+% csvwrite(filename, StepEnergyDecisionIndividual(:,4));
+% 
+% filename = './csv_output/pv_generation_measured.txt';
+% csvwrite(filename, Pgen_real(1:SimulationSteps,1));
+% 
+% filename = './csv_output/pv_generation_forecasted_1h.txt';
 csvwrite(filename, Pgen_pred_1h(1:SimulationSteps,1));
 
