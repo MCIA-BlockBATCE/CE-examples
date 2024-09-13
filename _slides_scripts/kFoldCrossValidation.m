@@ -108,23 +108,4 @@ end
 cp.ErrorRate
 
 
-% % Start k number of nets
-% Net_1 = Net;
-% Net_2 = Net;
-% Net_3 = Net;
-% Net_4 = Net;
-% 
-% % Net 1
-% test2 = (indices == 1); 
-% train2 = ~test2;
-% Training_Data = FeaturesHIOv3_raw(train2,:)';
-% Training_Targets = Targets(:,train2);
-% [Net, TR] = train(Net,Training_Data,Training_Targets);
-% 
-% Testing_Data = FeaturesHIOv3_raw(test2,:)';
-% Testing_Targets = Targets(:,test2);
-
-% Apply the validation data to the network
-% Simu_Net=Net(Testing_Data);
-% Show the confusion matrix
 
