@@ -98,10 +98,11 @@ for i = 1:k
     Training_Targets = Targets(:,train1);
     [Net, TR] = train(Net,Training_Data,Training_Targets);
 
-    % Testing_Data = FeaturesHIOv3_raw(test2,:)';
-    % Testing_Targets = Targets(:,test2);
-    
-    plotperform(TR)
+    Testing_Data = FeaturesHIOv3_raw(test1,:)';
+    Testing_Targets = Targets(:,test1);
+    Simu_Net=Net(Testing_Data);
+
+    plotconfusion(Testing_Targets,Simu_Net,'All Features')
 
 end
 cp.ErrorRate
