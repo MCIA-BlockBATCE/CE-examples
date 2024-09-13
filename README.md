@@ -21,3 +21,5 @@ The project follows a simple tree structure...
 ├── _scenarios                  <- Scripts for CE opreration and metrics visualization.
 │ 
 ├── _slides_scripts             <- Scripts for running the codes seen in the slides and some extra.
+│ 
+├── _VM                         <- Files for the deployment of digital applications for Energy Monitoring Platform.
