@@ -25,7 +25,7 @@ instant_day = zeros(NumSamples,1);
 instant_week = zeros(NumSamples,1);
 
 qh=1;
-week_day=7; %2022 started on sunday
+week_day=6; %2022 started on saturday
 
 for t=1:NumSamples
     instant_day(t,1)=qh;
@@ -53,12 +53,12 @@ cons_mean = zeros(NumSamples,1);
 
 for t=1:NumSamples
 
-    % Consumo diferencial respecto a hace 4 horas
+    % Differential consumption from last 4 hours
     if t>=(4*4)+1
         cons_dif4(t,1)=(RES3_cons(t,1)-RES3_cons(t-4*4,1));
     end
 
-    % Media de consumo de las dos ultimas semanas
+    % Mean consumption from last 2 weeks for current week instant
     if t>=(4*24*7*2)+1
         cons_mean(t,1)=(RES3_cons(t-(4*24*7),1)+RES3_cons(t-(4*24*7*2),1))/2;
     end
