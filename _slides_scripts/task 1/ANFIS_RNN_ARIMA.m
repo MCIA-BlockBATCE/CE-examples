@@ -13,7 +13,6 @@ t_dates = t1:minutes(15):t2;
 t_dates = t_dates';
 
 
-
 %% ANFIS
 % 1h prediction (4 samples)
 
@@ -66,7 +65,7 @@ figure(1)
 plot(t_dates(2500:steps),predicted_data_ANFIS_1H , t_dates(2500:steps), data(2500:steps,1))
 title("ANFIS model with forecasting horizon: 1 hour (4 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time [15 min]")
+xlabel("Time")
 ylabel("Power consumption [kW]")
 legend("Predicted consumption data","Real consumption data")
 
@@ -115,11 +114,11 @@ ConsProfileExample = data;
 % XTest = ConsProfileExample(597:668,1);
 % TTest = ConsProfileExample(601:672,1);
 % 1 STEP
-XTrain = ConsProfileExample(1:2499,1);
-TTrain = ConsProfileExample(2:2500,1);
+XTrain = ConsProfileExample(1:2497,1);
+TTrain = ConsProfileExample(4:2500,1);
  
-XTest = ConsProfileExample(2501:steps-1,1);
-TTest = ConsProfileExample(2502:steps,1);
+XTest = ConsProfileExample(2498:steps-3,1);
+TTest = ConsProfileExample(2501:steps,1);
 
 layers = [
     sequenceInputLayer(1)
@@ -141,7 +140,7 @@ dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_1h_RNN};
 
 figure(3)
-plot(t_dates(2502:steps), Tpredict, t_dates(2502:steps), TTest)
+plot(t_dates(2501:steps), Tpredict, t_dates(2501:steps), TTest)
 title("RNN model with forecasting horizon: 1 hour (4 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
 xlabel("Time")
@@ -158,10 +157,10 @@ ConsProfileExample = data;
 % XTest = ConsProfileExample(589:660,1);
 % TTest = ConsProfileExample(601:672,1);
 % 3 STEPS
-XTrain = ConsProfileExample(1:2497,1);
-TTrain = ConsProfileExample(4:2500,1);
+XTrain = ConsProfileExample(1:2488,1);
+TTrain = ConsProfileExample(13:2500,1);
 
-XTest = ConsProfileExample(2498:steps-3,1);
+XTest = ConsProfileExample(2489:steps-12,1);
 TTest = ConsProfileExample(2501:steps,1);
 
 layers = [
@@ -174,9 +173,9 @@ options = trainingOptions("adam", ...
     SequencePaddingDirection="left", ...
     Verbose=false);
 
-net = trainnet(XTrain,TTrain,layers,"mse",options);
+net2 = trainnet(XTrain,TTrain,layers,"mse",options);
 
-Tpredict = predict(net,XTest);
+Tpredict = predict(net2,XTest);
 
 RMS_3h_RNN = rms(Tpredict-TTest);
 

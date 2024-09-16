@@ -9,8 +9,8 @@ t = (0:L-1)*T;            % Vector de tiempo
 
 % Frecuencias de los senos
 f1 = 50;                  % Frecuencia del primer seno (Hz)
-f2 = 120;                 % Frecuencia del segundo seno (Hz)
-f3 = 200;                 % Frecuencia del tercer seno (Hz)
+f2 = 65;                 % Frecuencia del segundo seno (Hz)
+f3 = 90;                 % Frecuencia del tercer seno (Hz)
 
 % Crear la señal como la suma de senos
 signal = 10 + sin(2*pi*f1*t) + sin(2*pi*f2*t) + sin(2*pi*f3*t);
