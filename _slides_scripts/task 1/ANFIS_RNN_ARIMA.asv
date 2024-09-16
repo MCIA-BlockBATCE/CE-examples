@@ -184,7 +184,7 @@ dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_3h_RNN};
 
 figure(4)
-plot(t_dates(2501:steps), Tpredict, t_dates(2501:steps), TTest)
+plot(t_dates, Tpredict, t_dates, TTest)
 title("RNN model with forecasting horizon: 3 hour (12 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
 xlabel("Time")
