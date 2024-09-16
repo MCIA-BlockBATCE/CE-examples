@@ -83,7 +83,7 @@ Net.trainParam.goal=min_err;  % select the minimum error defined prev.
 %% Cross val
 
 k = 4;
-indices = crossvalind('Kfold',Targets_names,k);
+indices = crossvalind('Kfold',1200,k);
 cp = classperf(Targets_names);
 
 for i = 1:k

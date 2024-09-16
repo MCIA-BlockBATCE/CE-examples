@@ -69,7 +69,8 @@ min_err=0.000001;% Minimum error for goal
 %Net=newff(Training_Data,Training_Targets,n,TRF,TRNF);
 
 % NEW FUNCTION FOR FFNET
-Net = feedforwardnet(n,trainFcn);
+%Net = feedforwardnet(n,trainFcn);
+Net = patternnet(n,trainFcn);
 
 % Specify the data origin.
 Net.divideParam.trainRatio = 1;
@@ -80,61 +81,65 @@ Net.divideParam.testRatio = 0;
 Net.trainParam.epochs=epochs; % select the eppoch defined previously
 Net.trainParam.goal=min_err;  % select the minimum error defined prev.
 
-%% Cross val
+y = Targets_names;
+x = FeaturesHIOv3_raw;
 
 k = 4;
-indices = crossvalind('Kfold',Targets_names,k);
-cp = classperf(Targets_names);
+c = cvpartition(y,'kFold', k, 'Stratify', true);
+%c = cvpartition(y,'kFold', k);
 
 for i = 1:k
-    test1 = (indices == i); 
-    train1 = ~test1;
-    class = classify(FeaturesHIOv3_raw(test1,:), ...
-        FeaturesHIOv3_raw(train1,:), ...
-        Targets_names(train1,:));
-    classperf(cp,class,test1);
-
-    Training_Data = FeaturesHIOv3_raw(train1,:)';
-    Training_Targets = Targets(:,train1);
-    [Net, TR] = train(Net,Training_Data,Training_Targets);
-
-    Testing_Data = FeaturesHIOv3_raw(test1,:)';
-    Testing_Targets = Targets(:,test1);
-    Predictions=Net(Testing_Data);
-
-% Seleccionar la clase con la mayor probabilidad para cada instancia
-[~, Predicted_Labels] = max(Predictions, [], 2);
-
-% Calcular la matriz de confusión
-Conf_Mat = confusionmat(Test_Targets, Predicted_Labels);
-
-% Calcular las métricas
-Accuracy = sum(diag(Conf_Mat)) / sum(Conf_Mat(:));
-
-Precision = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 1)');
-
-Recall = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 2));
-
-Specificity = mean((sum(Conf_Mat(:)) - sum(Conf_Mat, 2) - sum(Conf_Mat, 1)' + diag(Conf_Mat)) ./ (sum(Conf_Mat(:)) - sum(Conf_Mat, 2)));
-
-% Mostrar los resultados
-disp(['Accuracy: ', num2str(Accuracy)]);
-disp(['Precision: ', num2str(Precision)]);
-disp(['Recall: ', num2str(Recall)]);
-disp(['Specificity: ', num2str(Specificity)]);
-
-
-
-    [values,pred_ind]=max(Predictions,[],1);
-    [~,actual_ind]=max(Testing_Targets,[],1);
-    accuracy=sum(pred_ind==actual_ind)/size(Testing_Data,2)*100
-
-
-
-    plotconfusion(Testing_Targets,Predictions,'All Features')
-
+    
+    %get Train and Test data for this fold
+     trIdx = c.training(i);
+     teIdx = c.test(i);
+     xTrain = x(trIdx);
+     yTrain = y(trIdx);
+     xTest = x(teIdx);
+     yTest = y(teIdx);
+    
+     yTest2 = Targets1C(teIdx);
+     
+     %transform data to columns as expected by neural nets
+     xTrain = xTrain';
+     xTest = xTest';
+     yTrain = dummyvar(grp2idx(yTrain))';
+     yTest = dummyvar(grp2idx(yTest))';
+     
+     %create net and set Test and Validation to zero in the input data
+     % net = patternnet(10);
+     % net.divideParam.trainRatio = 1;
+     % net.divideParam.testRatio = 0;
+     % net.divideParam.valRatio = 0;
+     
+     %train network
+     Net = train(Net,xTrain,yTrain);
+     yPred = Net(xTest);
+    
+     [~, Predicted_Labels] = max(yPred, [], 1);
+    
+     Conf_Mat = confusionmat(yTest2, Predicted_Labels);
+     
+     % Calcular las métricas
+     Accuracy = sum(diag(Conf_Mat)) / sum(Conf_Mat(:));
+    
+     Precision = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 1)');
+    
+     Recall = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 2));
+    
+     Specificity = mean((sum(Conf_Mat(:)) - sum(Conf_Mat, 2) - sum(Conf_Mat, 1)' + diag(Conf_Mat)) ./ (sum(Conf_Mat(:)) - sum(Conf_Mat, 2)));
+    
+     % Mostrar los resultados
+     disp(['Accuracy: ', num2str(Accuracy)]);
+     disp(['Precision: ', num2str(Precision)]);
+     disp(['Recall: ', num2str(Recall)]);
+     disp(['Specificity: ', num2str(Specificity)]);
+     
+     % perf = perform(Net,yTest,yPred);
+     % disp(perf);
+     % 
+     % %store results     
+     % netAry{i} = Net;
+     % perfAry(i) = perf;
+     
 end
-cp.ErrorRate
-
-
-
