@@ -52,18 +52,23 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 
 % --- PV power allocation coefficients ---
 % Assign one of the following values: 
-%   - Fixed and constant allocation, CoR_type = 0
+%
+%   - Equal fixed and constant allocation, CoR_type = 0
+%
+%   - Fixed and constant allocation based on energy bill, CoR_type = 1
 %
 %   - Variable allocation only considering information that is available in customer
 %   electricity bill, which is aggregated power consumption in each of
 %   the 3 tariff period (low price, mid price, high price). For reference,
 %   weekends are all-day low price, and working days follow: 0h-8h (low),
 %   8h-10h (mid), 10h-14h (high), 14h-18h (mid), 18h-22h(high), 22h-0h (mid).
-%   CoR_type = 1.
+%   CoR_type = 2.
 %
 %   - Allocation based on instantly available power consumption
-%   measurements, CoR_type = 2.
-CoR_type = 1;
+%   measurements, CoR_type = 3.
+%
+
+CoR_type = 0;
 [GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
 
 

@@ -5,6 +5,12 @@ function [generation_allocation, storage_allocation] = allocation_coefficients(C
 %   capacity.
 
     if CoR_type == 0
+
+        members = length(CER);
+        generation_allocation = ones(1,members)*(1/members);
+        storage_allocation = generation_allocation;
+
+    elseif CoR_type == 1
        
         time_band_bill(CER)
         [generation_allocation] = time_band_coefficients();
@@ -12,7 +18,7 @@ function [generation_allocation, storage_allocation] = allocation_coefficients(C
         generation_allocation = generation_allocation/sum(generation_allocation);
         storage_allocation=generation_allocation;
     
-    elseif CoR_type == 1
+    elseif CoR_type == 2
     
         time_band_bill(CER)
         [generation_allocation] = time_band_coefficients();

@@ -5,7 +5,7 @@ function [Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated] =
 % with total forecasted generated power
 
 
-    if CoR_type == 0
+    if (CoR_type == 1) || (CoR_type == 0)
     
         for n=1:members     
             Pgen_pred_1h_allocated(:,n) = Pgen_pred_1h * generation_allocation(1,n).'*factor_gen;
@@ -15,7 +15,7 @@ function [Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated] =
     
         end
     
-    elseif CoR_type == 2
+    elseif CoR_type == 3
     
         for n=1:members     
             Pgen_pred_1h_allocated(:,n) = generation_allocation(:,n).*Pgen_pred_1h*factor_gen;
@@ -25,7 +25,7 @@ function [Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated] =
     
         end
 
-    elseif CoR_type == 1
+    elseif CoR_type == 2
 
         for t=1:steps % EMPIEZA EL AÑO
             [X] = time_band(week_day,hour);
