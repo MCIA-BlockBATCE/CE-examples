@@ -151,12 +151,7 @@ legend("Predicted consumption data","Real consumption data")
 % Load Consumption data
 ConsProfileExample = data;
 
-% XTrain = ConsProfileExample(1:588,1);
-% TTrain = ConsProfileExample(13:600,1);
-% 
-% XTest = ConsProfileExample(589:660,1);
-% TTest = ConsProfileExample(601:672,1);
-% 3 STEPS
+
 XTrain = ConsProfileExample(1:2488,1);
 TTrain = ConsProfileExample(13:2500,1);
 
@@ -201,7 +196,7 @@ Mdl = arima(1,1,1);
 
 % Fit model to data
 idxpre = 1:Mdl.P;
-idxest = (Mdl.P + 1):597;
+idxest = (Mdl.P + 1):(2501-4);
 EstMdl = estimate(Mdl,ConsProfileExample(idxest),...
     'Y0',ConsProfileExample(idxpre));
 
@@ -209,21 +204,21 @@ EstMdl = estimate(Mdl,ConsProfileExample(idxest),...
 % Forecast consumption into 4 sample horizon using estimated model
 % Last two observations in estimation data are specified as presample.
 yf0 = ConsProfileExample(idxest(end - 1:end));
-for t=1:72
+for t=1:381
     yf = forecast(EstMdl,4,yf0);
     ypred(t,1) = yf(4,1); % We keep 4th step prediction
-    idxest = (Mdl.P + 1):597+t;
+    idxest = (Mdl.P + 1):(2501-4)+t;
     yf0 = ConsProfileExample(idxest(end - 1:end));
 end
 
-RMS_1h_ARIMA = rms(ypred  - ConsProfileExample(601:672,1));
+RMS_1h_ARIMA = rms(ypred  - ConsProfileExample(2501:2881,1));
 
 dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_1h_ARIMA};
 
 % Plot of observations and forecast 
 figure(5)
-plot(t_dates(1:72),ypred,t_dates(1:72),ConsProfileExample(601:672));
+plot(t_dates(2501:2881),ypred,t_dates(2501:2881),ConsProfileExample(2501:2881));
 title("ARIMA model with forecasting horizon: 1 hour (4 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
 xlabel("Time")
@@ -240,7 +235,7 @@ Mdl = arima(1,1,1);
 
 % Fit model to data
 idxpre = 1:Mdl.P;
-idxest = (Mdl.P + 1):589;
+idxest = (Mdl.P + 1):(2501-12);
 EstMdl = estimate(Mdl,ConsProfileExample(idxest),...
     'Y0',ConsProfileExample(idxpre));
 
@@ -248,21 +243,21 @@ EstMdl = estimate(Mdl,ConsProfileExample(idxest),...
 % Forecast consumption into 12 sample horizon using estimated model
 % Last two observations in estimation data are specified as presample.
 yf0 = ConsProfileExample(idxest(end - 1:end));
-for t=1:72
+for t=1:381
     yf = forecast(EstMdl,12,yf0);
     ypred(t,1) = yf(12,1); % We keep 12th step prediction
-    idxest = (Mdl.P + 1):597+t;
+    idxest = (Mdl.P + 1):(2501-12)+t;
     yf0 = ConsProfileExample(idxest(end - 1:end));
 end
 
-RMS_3h_ARIMA = rms(ypred  - ConsProfileExample(601:672,1));
+RMS_3h_ARIMA = rms(ypred  - ConsProfileExample(2501:2881,1));
 
 dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_3h_ARIMA};
 
 % Plot of observations and forecast
 figure(6)
-plot(t_dates(1:72),ypred,t_dates(1:72),ConsProfileExample(601:672));
+plot(t_dates(2501:2881),ypred,t_dates(2501:2881),ConsProfileExample(2501:2881));
 title("ARIMA model with forecasting horizon: 3 hour (12 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
 xlabel("Time")
