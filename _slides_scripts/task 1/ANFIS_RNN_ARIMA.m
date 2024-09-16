@@ -1,17 +1,25 @@
 clear all
 close all
 
+load noise_signal.mat
+data = synthetic_signal';
+
+data = data(1:672,:);
+t1 = datetime(2023,5,1,0,0,0);
+t2 = datetime(2023,5,31,0,0,0);
+t_dates = t1:minutes(15):t2;
+t_dates = t_dates';
+
+
 %% ANFIS
 % 1h prediction (4 samples)
-load ConsProfileExample.mat
-data = ConsProfileExample;
 
 % inputs based on previous data
 consumption_dif4 = zeros(672,1);
 previous_day = zeros(672,1);
 previous_sample = zeros(672,1);
     
-    for t=1:672 
+    for t=1:length(data) 
         
         % Differential consumption from the last 4 hours
         if t>=(4*4)+1
@@ -52,7 +60,7 @@ dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_1h_ANFIS};
 
 figure(1)
-plot(1:72,predicted_data_ANFIS_1H ,1:72,data(601:672,1))
+plot(t_dates(1:72),predicted_data_ANFIS_1H , t_dates(1:72), data(601:672,1))
 title("ANFIS model with forecasting horizon: 1 hour (4 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
 xlabel("Time [15 min]")
@@ -86,22 +94,28 @@ RMS_3h_ANFIS = rms(predicted_data_ANFIS_3h - data(593:664,1));
 dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_3h_ANFIS};
 figure(2)
-plot(1:72,predicted_data_ANFIS_3h,1:72,data(593:664,1))
+plot(t_dates(1:72), predicted_data_ANFIS_3h, t_dates(1:72), data(593:664,1))
 title("ANFIS model with forecasting horizon: 3 hours (12 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time [15 min]")
+xlabel("Time")
 ylabel("Power consumption [kW]")
 legend("Predicted consumption data","Real consumption data")
 
 %% Recurrent neural net prediction 
 % 1h prediction (4 steps)
-% Load Consumption data
-load ConsProfileExample.mat
 
-XTrain = ConsProfileExample(1:596,1);
-TTrain = ConsProfileExample(5:600,1);
+ConsProfileExample = data;
 
-XTest = ConsProfileExample(597:668,1);
+% XTrain = ConsProfileExample(1:596,1);
+% TTrain = ConsProfileExample(5:600,1);
+% 
+% XTest = ConsProfileExample(597:668,1);
+% TTest = ConsProfileExample(601:672,1);
+% 1 STEP
+XTrain = ConsProfileExample(1:599,1);
+TTrain = ConsProfileExample(2:600,1);
+ 
+XTest = ConsProfileExample(600:671,1);
 TTest = ConsProfileExample(601:672,1);
 
 layers = [
@@ -110,10 +124,8 @@ layers = [
     fullyConnectedLayer(1)];
 
 options = trainingOptions("adam", ...
-    MaxEpochs=1000, ...
+    MaxEpochs=100, ...
     SequencePaddingDirection="left", ...
-    Shuffle="every-epoch", ...
-    Plots="training-progress", ...
     Verbose=false);
 
 net = trainnet(XTrain,TTrain,layers,"mse",options);
@@ -126,21 +138,27 @@ dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_1h_RNN};
 
 figure(3)
-plot(1:72,Tpredict,1:72,TTest)
+plot(t_dates(1:72), Tpredict, t_dates(1:72), TTest)
 title("RNN model with forecasting horizon: 1 hour (4 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time [15 min]")
+xlabel("Time")
 ylabel("Power consumption [kW]")
 legend("Predicted consumption data","Real consumption data")
 
 % 3h prediction (12 steps)
 % Load Consumption data
-load ConsProfileExample.mat
+ConsProfileExample = data;
 
-XTrain = ConsProfileExample(1:588,1);
-TTrain = ConsProfileExample(13:600,1);
+% XTrain = ConsProfileExample(1:588,1);
+% TTrain = ConsProfileExample(13:600,1);
+% 
+% XTest = ConsProfileExample(589:660,1);
+% TTest = ConsProfileExample(601:672,1);
+% 3 STEPS
+XTrain = ConsProfileExample(1:597,1);
+TTrain = ConsProfileExample(4:600,1);
 
-XTest = ConsProfileExample(589:660,1);
+XTest = ConsProfileExample(598:669,1);
 TTest = ConsProfileExample(601:672,1);
 
 layers = [
@@ -149,10 +167,8 @@ layers = [
     fullyConnectedLayer(1)];
 
 options = trainingOptions("adam", ...
-    MaxEpochs=1000, ...
+    MaxEpochs=100, ...
     SequencePaddingDirection="left", ...
-    Shuffle="every-epoch", ...
-    Plots="training-progress", ...
     Verbose=false);
 
 net = trainnet(XTrain,TTrain,layers,"mse",options);
@@ -165,16 +181,16 @@ dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_3h_RNN};
 
 figure(4)
-plot(1:72,Tpredict,1:72,TTest)
+plot(t_dates(1:72), Tpredict, t_dates(1:72), TTest)
 title("RNN model with forecasting horizon: 3 hour (12 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time [15 min]")
+xlabel("Time")
 ylabel("Power consumption [kW]")
 legend("Predicted consumption data","Real consumption data")
 
 %% Autoregressive integrated moving average prediction
 % 1h prediction (4 samples)
-load ConsProfileExample.mat
+ConsProfileExample = data;
 
 % Create model with 1 nonseasonal autoregressive polynomial degree, 1
 % nonseasonal integration degree and 1 nonseasonal moving average
@@ -205,15 +221,15 @@ str = {'RMS' RMS_1h_ARIMA};
 
 % Plot of observations and forecast 
 figure(5)
-plot(1:72,ypred,1:72,ConsProfileExample(601:672));
+plot(t_dates(1:72),ypred,t_dates(1:72),ConsProfileExample(601:672));
 title("ARIMA model with forecasting horizon: 1 hour (4 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time [15 min]")
+xlabel("Time")
 ylabel("Power consumption [kW]")
 legend("Predicted consumption data","Real consumption data")
 
 % 3h prediction (12 samples)
-load ConsProfileExample.mat
+ConsProfileExample = data;
 
 % Create model with 1 nonseasonal autoregressive polynomial degree, 1
 % nonseasonal integration degree and 1 nonseasonal moving average
@@ -244,10 +260,10 @@ str = {'RMS' RMS_3h_ARIMA};
 
 % Plot of observations and forecast
 figure(6)
-plot(1:72,ypred,1:72,ConsProfileExample(601:672));
+plot(t_dates(1:72),ypred,t_dates(1:72),ConsProfileExample(601:672));
 title("ARIMA model with forecasting horizon: 3 hour (12 steps)")
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time [15 min]")
+xlabel("Time")
 ylabel("Power consumption [kW]")
 legend("Predicted consumption data","Real consumption data")
 
