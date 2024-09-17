@@ -1,8 +1,9 @@
 clear all
 close all
 
-load noise_signal.mat
+load signal.mat
 data = synthetic_signal';
+signal_real = data;
 
 steps = 2881;
 
@@ -106,12 +107,12 @@ legend("Predicted consumption data","Real consumption data")
 %% Recurrent neural net prediction 
 
 % Step 1: Generate synthetic signal (sinusoidal with noise)
-load ConsProfileExample.mat
-signal_real = ConsProfileExample;
+% load ConsProfileExample.mat
+% signal_real = ConsProfileExample;
 
-N = length(ConsProfileExample); % Number of points
+N = steps; % Number of points
 t1 = datetime(2023,5,1,0,0,0);
-t2 = datetime(2023,5,8,0,0,0);
+t2 = datetime(2023,5,31,0,0,0);
 t_dates = t1:minutes(15):t2;
 t = t_dates';
 
@@ -249,8 +250,8 @@ str = {'RMS' RMS_3h_RNN};
 % Step 8: Plot the real signal against the predicted signal
 figure(4);
 subplot(2,1,1)
-plot(t(1:numTrain - nStepsAhead), signal_real(1:numTrain - nStepsAhead), 'b', 'LineWidth', 1.5); hold on;
-plot(t(1:numTrain - nStepsAhead), YPred, 'r--', 'LineWidth', 1.5);
+plot(t(1:numTrain - nStepsAhead,1), signal_real(1:numTrain - nStepsAhead,1), 'b', 'LineWidth', 1.5); hold on;
+plot(t(1:numTrain - nStepsAhead,1), YPred, 'r--', 'LineWidth', 1.5);
 legend('Measured signal', 'Predicted signal');
 xlabel('Time');
 ylabel('Power consumption [kW]');
