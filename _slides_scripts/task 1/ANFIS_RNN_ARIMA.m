@@ -104,88 +104,173 @@ ylabel("Power consumption [kW]")
 legend("Predicted consumption data","Real consumption data")
 
 %% Recurrent neural net prediction 
-% 1h prediction (4 steps)
 
-ConsProfileExample = data;
+% Step 1: Generate synthetic signal (sinusoidal with noise)
+load ConsProfileExample.mat
+signal_real = ConsProfileExample;
 
-% XTrain = ConsProfileExample(1:596,1);
-% TTrain = ConsProfileExample(5:600,1);
-% 
-% XTest = ConsProfileExample(597:668,1);
-% TTest = ConsProfileExample(601:672,1);
-% 1 STEP
-XTrain = ConsProfileExample(1:2497,1);
-TTrain = ConsProfileExample(4:2500,1);
- 
-XTest = ConsProfileExample(2498:steps-3,1);
-TTest = ConsProfileExample(2501:steps,1);
+N = length(ConsProfileExample); % Number of points
+t1 = datetime(2023,5,1,0,0,0);
+t2 = datetime(2023,5,8,0,0,0);
+t_dates = t1:minutes(15):t2;
+t = t_dates';
 
-layers = [
-    sequenceInputLayer(1)
-    lstmLayer(128)
-    fullyConnectedLayer(1)];
+% Step 2: Define the number of steps to predict
+nStepsAhead = 4;  % Number of future steps to predict
 
-options = trainingOptions("adam", ...
-    MaxEpochs=100, ...
-    SequencePaddingDirection="left", ...
-    Verbose=false);
+% Step 3: Create training data
+trainRatio = 0.8;
+numTrain = floor(trainRatio * N);
 
-net = trainnet(XTrain,TTrain,layers,"mse",options);
+% Training inputs (XTrain) and outputs shifted nStepsAhead (YTrain)
+XTrain = signal_real(1:numTrain - nStepsAhead);
+YTrain = signal_real((1+nStepsAhead):(numTrain)); % Values shifted nStepsAhead
 
-Tpredict = predict(net,XTest);
+% Convert to cell format for RNN (sequence)
+XTrain = num2cell(XTrain);
+YTrain = num2cell(YTrain);
 
-RMS_1h_RNN = rms(Tpredict-TTest);
+% Step 4: Define the RNN structure
+inputSize = 1;
+numHiddenUnits = 100;
+numResponses = 1;
+
+layers = [ ...
+    sequenceInputLayer(inputSize)
+    lstmLayer(numHiddenUnits,'OutputMode','sequence')
+    fullyConnectedLayer(numResponses)
+    regressionLayer];
+
+% Step 5: Configure training options
+options = trainingOptions('adam', ...
+    'MaxEpochs', 200, ...
+    'GradientThreshold', 1, ...
+    'InitialLearnRate', 0.01, ...
+    'LearnRateSchedule', 'piecewise', ...
+    'LearnRateDropFactor', 0.2, ...
+    'LearnRateDropPeriod', 50, ...
+    'Verbose', 0, ...
+    'Plots', 'training-progress');
+
+% Step 6: Train the network
+net = trainNetwork(XTrain, YTrain, layers, options);
+
+% Step 7: Predict multiple future steps
+YPred = predict(net, XTrain);
+
+% Convert to vector format for plotting
+YPred = cell2mat(YPred);
+Ypred = YPred';
+
+for i = 1:(numTrain-nStepsAhead)
+    err(i,1) = 100*(signal_real(i) - YPred(i))/signal_real(i);
+end
+
+RMS_1h_RNN = rms(err);
 
 dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_1h_RNN};
 
-figure(3)
-plot(t_dates(2501:steps), Tpredict, t_dates(2501:steps), TTest)
-title("RNN model with forecasting horizon: 1 hour (4 steps)")
+% Step 8: Plot the real signal against the predicted signal
+figure(3);
+subplot(2,1,1)
+plot(t(1:numTrain - nStepsAhead), signal_real(1:numTrain - nStepsAhead), 'b', 'LineWidth', 1.5); hold on;
+plot(t(1:numTrain - nStepsAhead), YPred, 'r--', 'LineWidth', 1.5);
+legend('Measured signal', 'Predicted signal');
+xlabel('Time');
+ylabel('Power consumption [kW]');
+title(['Comparison of Measured Signal vs Predicted Signal (', num2str(nStepsAhead), ' future steps)']);
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time")
-ylabel("Power consumption [kW]")
-legend("Predicted consumption data","Real consumption data")
+grid on;
+subplot(2,1,2)
+plot(t(1:numTrain - nStepsAhead),err)
+title('Error (Measured - Prediction)')
+xlabel('Time');
+ylabel('Error [%]');
 
-% 3h prediction (12 steps)
-% Load Consumption data
-ConsProfileExample = data;
+clear err
 
+% Step 2: Define the number of steps to predict
+nStepsAhead = 12;  % Number of future steps to predict
 
-XTrain = ConsProfileExample(1:2488,1);
-TTrain = ConsProfileExample(13:2500,1);
+% Step 3: Create training data
+trainRatio = 0.8;
+numTrain = floor(trainRatio * N);
 
-XTest = ConsProfileExample(2489:steps-12,1);
-TTest = ConsProfileExample(2501:steps,1);
+% Training inputs (XTrain) and outputs shifted nStepsAhead (YTrain)
+XTrain = signal_real(1:numTrain - nStepsAhead);
+YTrain = signal_real((1+nStepsAhead):(numTrain)); % Values shifted nStepsAhead
 
-layers = [
-    sequenceInputLayer(1)
-    lstmLayer(128)
-    fullyConnectedLayer(1)];
+% Convert to cell format for RNN (sequence)
+XTrain = num2cell(XTrain);
+YTrain = num2cell(YTrain);
 
-options = trainingOptions("adam", ...
-    MaxEpochs=100, ...
-    SequencePaddingDirection="left", ...
-    Verbose=false);
+% Step 4: Define the RNN structure
+inputSize = 1;
+numHiddenUnits = 100;
+numResponses = 1;
 
-net2 = trainnet(XTrain,TTrain,layers,"mse",options);
+layers = [ ...
+    sequenceInputLayer(inputSize)
+    lstmLayer(numHiddenUnits,'OutputMode','sequence')
+    fullyConnectedLayer(numResponses)
+    regressionLayer];
 
-Tpredict = predict(net2,XTest);
+% Step 5: Configure training options
+options = trainingOptions('adam', ...
+    'MaxEpochs', 200, ...
+    'GradientThreshold', 1, ...
+    'InitialLearnRate', 0.01, ...
+    'LearnRateSchedule', 'piecewise', ...
+    'LearnRateDropFactor', 0.2, ...
+    'LearnRateDropPeriod', 50, ...
+    'Verbose', 0, ...
+    'Plots', 'training-progress');
 
-RMS_3h_RNN = rms(Tpredict-TTest);
+% Step 6: Train the network
+net = trainNetwork(XTrain, YTrain, layers, options);
+
+% Step 7: Predict multiple future steps
+YPred = predict(net, XTrain);
+
+% Convert to vector format for plotting
+YPred = cell2mat(YPred);
+Ypred = YPred';
+
+for i = 1:(numTrain-nStepsAhead)
+    err(i,1) = 100*(signal_real(i) - YPred(i))/signal_real(i);
+end
+
+RMS_3h_RNN = rms(err);
 
 dim = [0.15 0.5 0.5 0.4];
 str = {'RMS' RMS_3h_RNN};
 
-figure(4)
-plot(t_dates(2501:steps), Tpredict, t_dates(2501:steps), TTest)
-title("RNN model with forecasting horizon: 3 hour (12 steps)")
+% Step 8: Plot the real signal against the predicted signal
+figure(4);
+subplot(2,1,1)
+plot(t(1:numTrain - nStepsAhead), signal_real(1:numTrain - nStepsAhead), 'b', 'LineWidth', 1.5); hold on;
+plot(t(1:numTrain - nStepsAhead), YPred, 'r--', 'LineWidth', 1.5);
+legend('Measured signal', 'Predicted signal');
+xlabel('Time');
+ylabel('Power consumption [kW]');
+title(['Comparison of Measured Signal vs Predicted Signal (', num2str(nStepsAhead), ' future steps)']);
 annotation('textbox',dim,'String',str,'FitBoxToText','on');
-xlabel("Time")
-ylabel("Power consumption [kW]")
-legend("Predicted consumption data","Real consumption data")
+grid on;
+subplot(2,1,2)
+plot(t(1:numTrain - nStepsAhead),err)
+title('Error (Measured - Prediction)')
+xlabel('Time');
+ylabel('Error [%]');
 
 %% Autoregressive integrated moving average prediction
+
+data = data(1:steps,:);
+t1 = datetime(2023,5,1,0,0,0);
+t2 = datetime(2023,5,31,0,0,0);
+t_dates = t1:minutes(15):t2;
+t_dates = t_dates';
+
 % 1h prediction (4 samples)
 ConsProfileExample = data;
 
