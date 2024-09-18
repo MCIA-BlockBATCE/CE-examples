@@ -67,8 +67,7 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 %   - Allocation based on instantly available power consumption
 %   measurements, CoR_type = 3.
 %
-
-CoR_type = 0;
+CoR_type = 3;
 [GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
 
 
@@ -746,7 +745,7 @@ xlabel('EC members')
 sgtitle('Economic balance for each member')
 
 figure(8)
-bar(Y,[total_final_bill total_final_bill_unoptimised])
+bar(Y,[-total_final_bill -total_final_bill_unoptimised])
 title('Aggregated economic balance')
 ylabel('Monetary units')
 
