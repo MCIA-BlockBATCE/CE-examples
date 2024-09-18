@@ -44,7 +44,7 @@ close all
 % 
 %   - Balanced (i.e. aggregated PV generation is similar to aggregated
 %   power consumption), CommunitySelection  = 2
-CommunitySelection = 0;
+CommunitySelection = 1;
 EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 
 
@@ -65,7 +65,7 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 %   - Allocation based on instantly available power consumption
 %   measurements, CoR_type = 3.
 %
-CoR_type = 1;
+CoR_type = 3;
 [GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
 
 

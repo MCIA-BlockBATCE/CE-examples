@@ -81,7 +81,9 @@ CoR_type = 3;
 ChargeEfficiency=0.97;
 DischargeEfficiency=0.97;
 MaximumStorageCapacity=200;
-PVPowerGenerationFactor = 1;
+% Default value for PVPowerGenerationFactor (0.8) is according to previously defined
+% EC consumption profiles (surplus, deficit, balanced)
+PVPowerGenerationFactor = 0.8;
 
 
 % --- Internal parameters ---
@@ -704,9 +706,9 @@ annotation('textbox',dim,'String',str,'FitBoxToText','on');
 
 % power consumption by origin
 figure(2)
-plot(t(1:SimulationSteps), StepEnergyOriginBasicRules(1:SimulationSteps,1)/TimeStep, ...
-    t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,2)/TimeStep, ...
-    t(1:SimulationSteps),StepEnergyOriginBasicRules(1:SimulationSteps,3)/TimeStep)
+plot(t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,1)/TimeStep, ...
+    t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,2)/TimeStep, ...
+    t(1:SimulationSteps),EnergyOriginInstant(1:SimulationSteps,3)/TimeStep)
 title('Power consumption by origin')
 legend('PV','Battery','Grid')
 ylabel('Power consumption [kW]')

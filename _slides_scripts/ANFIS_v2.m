@@ -2,17 +2,13 @@
 % Clear workspace
 clear all
 close all
-% 
-% load ConsProfileExample.mat
-% data = ConsProfileExample';
 
 load signal.mat
 data = synthetic_signal;
 
-%% 1h prediction ANFIS
-% synthetic data
 
-% inputs based on previous data
+% inputs based on previous data (previous samples or the mean of some
+% previous range of samples)
 start_i = 100;
 end_i = 500;
 for i=101:500
@@ -27,7 +23,6 @@ end
 
 %%
 % group inputs and outputs into I/O matrix
-% IO_matrix will be used from i=51 to i=200
 IO_matrix(:,1) = previous_sample;
 IO_matrix(:,2) = previous_5th_sample;
 IO_matrix(:,3) = previous_20th_sample;
@@ -37,7 +32,6 @@ IO_matrix(:,6) = mean_last_20_samples;
 IO_matrix(:,7) = mean_last_50_samples;
 IO_matrix(:,8) = data(101:500); % Output vector
 
-
 %%
 % train/test split
 start_testing_split = 300;
@@ -45,7 +39,8 @@ end_testing_split = 400;
 IO_matrix_training = IO_matrix(1:250,:);
 IO_matrix_testing = IO_matrix(start_testing_split:end_testing_split,:);
 
-% ANFIS
+%%
+% Training ANFIS
 opt=anfisOptions('EpochNumber',5);
 fis = anfis(IO_matrix_training,opt);
 predicted_data = evalfis(fis,IO_matrix_testing(:,1:7));
@@ -64,4 +59,3 @@ xlim([1 length(predicted_data)])
 xlabel("Time [q]")
 ylabel("Power consumption [kW]")
 legend("Predicted consumption data","Synthetic consumption data")
-
