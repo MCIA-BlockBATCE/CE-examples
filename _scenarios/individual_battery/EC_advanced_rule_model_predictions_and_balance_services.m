@@ -664,6 +664,15 @@ for i = 1:SimulationSteps
     Pcons_agg(i) = sum(PconsMeasured(i,:));
     Pgen_real_allocated_community(i) = sum(Pgen_real_allocated(i,:));
 end
+
+pv_consumed_from_pv = sum(TotalEnergyDecisionIndividual(:,2));
+pv_consumed_from_battery = sum(TotalEnergyDecisionIndividual(:,3));
+apr_pred = 100*(pv_consumed_from_pv+pv_consumed_from_battery)/sum(Pgen_real_allocated_community(:));
+
+pv_consumed_from_pv_br = sum(TotalEnergyDecisionIndividualBasicRules(:,2));
+pv_consumed_from_battery_br = sum(TotalEnergyDecisionIndividualBasicRules(:,3));
+apr_pred_br = 100*(pv_consumed_from_pv_br+pv_consumed_from_battery_br)/sum(Pgen_real_allocated_community(:));
+
 PercentualTotalEnergyDecisionIndividualBasicRules=zeros(members,3);
 
 for n = 1:members
@@ -757,7 +766,7 @@ sgtitle('Power consumption by origin for each member')
 figure(5)
 subplot(1,2,1)
 b = bar(PercentualTotalEnergyDecisionIndividualBasicRules,'stacked', 'FaceColor', 'flat');
-title('Basic rule model')
+title("Basic rule model")
 ylim([0 100])
 ylabel('Renewable power [%]')
 xlabel('EC members')
@@ -767,15 +776,14 @@ b(2).CData = [0, 0.4470, 0.7410];
 b(3).CData = [0.8500, 0.3250, 0.0980];
 subplot(1,2,2)
 b2 = bar(PercentualTotalEnergyDecisionIndividual, 'stacked', 'FaceColor', 'flat');
-title('Advanced rule model based on prediction with balance services')
+title("Advanced rule model based on prediction")
 ylim([0 100])
 ylabel('Renewable power [%]')
 xlabel('EC members')
-legend('Sold to grid','Consumed from PV','Consumed from Battery','PV energy sold as a service from battery')
+legend('Sold to grid','Consumed from PV','Consumed from Battery')
 b2(1).CData = [0.9290, 0.6940, 0.1250];
 b2(2).CData = [0, 0.4470, 0.7410];
 b2(3).CData = [0.8500, 0.3250, 0.0980];
-b2(4).CData = [0.4940, 0.1840, 0.5560];
 sgtitle('Renewable power usage for each member')
 
 figure(6)

@@ -67,7 +67,7 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 %   - Allocation based on instantly available power consumption
 %   measurements, CoR_type = 3.
 %
-CoR_type = 3;
+CoR_type = 0;
 [GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
 
 
@@ -595,7 +595,6 @@ t = t';
 [CBU, ADC, BCPD] = battery_metrics(SoC_energy_CER, MaximumStorageCapacity, SimulationDays, SimulationSteps);
 [CBU2, ADC2, BCPD2] = battery_metrics(SoC_energy_CER_unoptimised, MaximumStorageCapacity, SimulationDays, SimulationSteps);
 
-
 CE_SoC_signal = 100*SoC_energy_CER(1:SimulationSteps)/MaximumStorageCapacity;
 CE_Soc_signal_unoptimised = 100*SoC_energy_CER_unoptimised(1:SimulationSteps)/MaximumStorageCapacity;
 
@@ -605,6 +604,14 @@ for i = 1:SimulationSteps
     Pcons_agg(i) = sum(PconsMeasured(i,:));
     Pgen_real_allocated_community(i) = sum(Pgen_real_allocated(i,:));
 end
+
+pv_consumed_from_pv = sum(TotalEnergyDecisionIndividual(:,2));
+pv_consumed_from_battery = sum(TotalEnergyDecisionIndividual(:,3));
+apr_pred = 100*(pv_consumed_from_pv+pv_consumed_from_battery)/sum(Pgen_real(:)*PVPowerGenerationFactor);
+
+pv_consumed_from_pv_br = sum(TotalEnergyDecisionIndividualBasicRules(:,2));
+pv_consumed_from_battery_br = sum(TotalEnergyDecisionIndividualBasicRules(:,3));
+apr_pred_br = 100*(pv_consumed_from_pv_br+pv_consumed_from_battery_br)/sum(Pgen_real(:)*PVPowerGenerationFactor);
 
 PercentualTotalEnergyDecisionIndividualBasicRules=zeros(members,3);
 
@@ -700,7 +707,7 @@ sgtitle('Power consumption by origin for each member')
 figure(5)
 subplot(1,2,1)
 b = bar(PercentualTotalEnergyDecisionIndividualBasicRules,'stacked', 'FaceColor', 'flat');
-title('Basic rule model')
+title("Basic rule model")
 ylim([0 100])
 ylabel('Renewable power [%]')
 xlabel('EC members')
@@ -710,7 +717,7 @@ b(2).CData = [0, 0.4470, 0.7410];
 b(3).CData = [0.8500, 0.3250, 0.0980];
 subplot(1,2,2)
 b2 = bar(PercentualTotalEnergyDecisionIndividual, 'stacked', 'FaceColor', 'flat');
-title('Advanced rule model based on prediction')
+title("Advanced rule model based on prediction")
 ylim([0 100])
 ylabel('Renewable power [%]')
 xlabel('EC members')
