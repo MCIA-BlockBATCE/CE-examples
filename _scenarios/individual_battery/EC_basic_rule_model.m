@@ -301,6 +301,8 @@ for n = 1:members
     PercentualTotalEnergyDecisionIndividualBasicRules(n,:) = (TotalEnergyDecisionIndividualBasicRules(n,:)/sum(TotalEnergyDecisionIndividualBasicRules(n,:)))*100;
 end
 
+apr_pv_power_br = mean(PercentualTotalEnergyDecisionIndividualBasicRules(:,2))+mean(PercentualTotalEnergyDecisionIndividualBasicRules(:,3));
+
 % info for annotation
 if (CommunitySelection == 0)
     scenario = "Surplus";

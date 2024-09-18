@@ -53,7 +53,7 @@ close all
 % 
 %   - Balanced (i.e. aggregated PV generation is similar to aggregated
 %   power consumption), CommunitySelection  = 2
-CommunitySelection = 0;
+CommunitySelection = 1;
 EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 
 % --- PV power allocation coefficients ---
@@ -665,14 +665,6 @@ for i = 1:SimulationSteps
     Pgen_real_allocated_community(i) = sum(Pgen_real_allocated(i,:));
 end
 
-pv_consumed_from_pv = sum(TotalEnergyDecisionIndividual(:,2));
-pv_consumed_from_battery = sum(TotalEnergyDecisionIndividual(:,3));
-apr_pred = 100*(pv_consumed_from_pv+pv_consumed_from_battery)/sum(Pgen_real_allocated_community(:));
-
-pv_consumed_from_pv_br = sum(TotalEnergyDecisionIndividualBasicRules(:,2));
-pv_consumed_from_battery_br = sum(TotalEnergyDecisionIndividualBasicRules(:,3));
-apr_pred_br = 100*(pv_consumed_from_pv_br+pv_consumed_from_battery_br)/sum(Pgen_real_allocated_community(:));
-
 PercentualTotalEnergyDecisionIndividualBasicRules=zeros(members,3);
 
 for n = 1:members
@@ -692,6 +684,9 @@ Y = reordercats(Y,{'Avanced rule model based on predictions with balance service
 
 total_final_bill = sum(final_bill);
 total_final_bill_unoptimised = sum(final_bill_unoptimised);
+
+apr_pv_power = mean(PercentualTotalEnergyDecisionIndividual(:,2))+mean(PercentualTotalEnergyDecisionIndividual(:,3));
+apr_pv_power_br = mean(PercentualTotalEnergyDecisionIndividualBasicRules(:,2))+mean(PercentualTotalEnergyDecisionIndividualBasicRules(:,3));
 
 % info for annotation
 if (CommunitySelection == 0)
