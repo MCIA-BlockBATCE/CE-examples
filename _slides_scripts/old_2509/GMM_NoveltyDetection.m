@@ -7,8 +7,8 @@ clc
 %addpath(genpath('C:\Users\Lucia\Documents\Becas\GAIA\Congreso\Matlab'));
 
 % Load the data
-load Mat_Nomralizada_val.mat
-data_norm = Mat_Normalizada_val(:,6:7);
+load MatNorCompleta.mat
+data_norm = Mat_Normalizada_val;
 % H,B7,B14,B21,I7,I14,I21,O7,O14,O21 (8 features each)
 
 % For reproducibility
@@ -56,8 +56,7 @@ DataCov = cov(data_norm);
 [PC, variances, explained] = pcacov(DataCov); 
 z = 2; 
 PC = PC(:,1:z);
-%data_PC = data_norm*PC;
-data_PC = Mat_Normalizada_val(:,6:7);
+data_PC = data_norm*PC;
 
 % % Plot the PCA results
 % for cont = 1:length(data_PC')
@@ -79,17 +78,15 @@ data_PC = Mat_Normalizada_val(:,6:7);
 
 figure;
 gscatter(data_PC(:,1),data_PC(:,2), Targets_names, 'rgbcmyk', 'xo*+sd><^', 6)
-xlabel('Feature #1')
-ylabel('Feature #2')
-title('Data representation')
+xlabel('Principal Component #1')
+ylabel('Principal Component #2')
+title('PCA Data Representation')
 
 
 % Separate the data
 % set A
 Training_index_A=[1:40-10,41:80-10,81:120-10,121:160-10];
 Validation_index_A=[41-10:40,81-10:80,121-10:120,161-10:160];
-%Training_index_A=[1+10:40,41+10:80,81+10:120,121+10:160];
-%Validation_index_A=[1:10,41:50,81:90,121:130];
 TA = ta(Training_index_A,:);
 VDA = data_PC(Validation_index_A,:);
 VTA = ta(Validation_index_A,:);
@@ -165,13 +162,13 @@ ylabel('AIC');
 legend({'Diagonal-shared','Full-shared','Diagonal-unshared',...
     'Full-unshared'});
 
-% figure;
-% bar(reshape(bic,nK,nSigma*nSC));
-% title('BIC For Various $k$ and $\Sigma$ Choices','Interpreter','latex');
-% xlabel('$c$','Interpreter','Latex');
-% ylabel('BIC');
-% legend({'Diagonal-shared','Full-shared','Diagonal-unshared',...
-%     'Full-unshared'});
+figure;
+bar(reshape(bic,nK,nSigma*nSC));
+title('BIC For Various $k$ and $\Sigma$ Choices','Interpreter','latex');
+xlabel('$c$','Interpreter','Latex');
+ylabel('BIC');
+legend({'Diagonal-shared','Full-shared','Diagonal-unshared',...
+    'Full-unshared'});
 
 %% Generate the model
 % k ; 1:= diagonal and 2:=full; 1:=true and 2:=false (shared cov)
@@ -194,55 +191,54 @@ end
 
 % Plot boundary
 figure,
-
-title('{\bf GMM training}')
-xlabel('Feature #1')
-ylabel('Feature #2')
+title('{\bf GMM setA}')
+xlabel('PC1')
+ylabel('PC2')
 set(gca,'Color','w')
 hold on
 contour(X1,X2,reshape(resultaux,size(X1,1),size(X2,1)),[1,1],'Color','k');
-gscatter(X(:,1),X(:,2))
-axis=([-2,16,-10,70]);
-%ylim=([-2,16]);
-%xlim=([-10,70]);
-
-%gscatter(data_norm(:,1), data_norm(:,2))
 legend('off')
-hold off
-
+hold on
 
 % Validation
 mahalDistVal = mahal(gmBest,VDA);
 confusion = zeros(3,3);
 [p,m] = size(confusion);
-
-matrix_for_data_validation = zeros(length(VDA),2);
-labels=cell(length(VDA),1);%10);
-
 for cont = 1:length(VDA)
-   if min(mahalDistVal(cont,:))<= threshold && VTA(cont)==1 % True Positive
+   if min(mahalDistVal(cont,:))<= threshold && VTA(cont)==1
        confusion(1,1) = confusion(1,1)+1;
-       matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
-       labels(cont,1) = {'True Positive'};
-   elseif min(mahalDistVal(cont,:))<= threshold && VTA(cont)==0 % False Positive
+       color = [0 0 1];
+       plot(VDA(cont,1),VDA(cont,2),'Marker','.','LineStyle','none','Color',color,'MarkerSize',20);
+       hold on
+   elseif min(mahalDistVal(cont,:))<= threshold && VTA(cont)==0
        confusion(2,1) = confusion(2,1)+1;   
-       matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
-       labels(cont,1) = {'False Positive'};
-   elseif min(mahalDistVal(cont,:))>= threshold && VTA(cont)==1 % False Negative
+       color = [0 0 1];
+       plot(VDA(cont,1),VDA(cont,2),'Marker','.','LineStyle','none','Color',color,'MarkerSize',20);
+       hold on
+   elseif min(mahalDistVal(cont,:))>= threshold && VTA(cont)==1
        confusion(1,2) = confusion(1,2)+1;   
-       matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
-       labels(cont,1) = {'False Negative'};
-   elseif min(mahalDistVal(cont,:))>= threshold && VTA(cont)==0 % True Negative
+       color = [1 0 0];
+       plot(VDA(cont,1),VDA(cont,2),'Marker','.','LineStyle','none','Color',color,'MarkerSize',10);
+       hold on
+   elseif min(mahalDistVal(cont,:))>= threshold && VTA(cont)==0
        confusion(2,2) = confusion(2,2)+1;   
-       matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
-       labels(cont,1) = {'True Negative'};
+        color = [1 0 0];
+        plot(VDA(cont,1),VDA(cont,2),'Marker','*','LineStyle','none','Color',color,'MarkerSize',10);
+        hold on 
    end
 end
+xlabel('Principal Component #1')
+ylabel('Principal Component #2')
+ax = gca;
+ax.FontSize = 12;
+ax.XAxis.Label.FontSize = 14;
+ax.YAxis.Label.FontSize = 14;
 
 confusion(3,1) = confusion(1,1)+confusion(2,1);
 confusion(3,2) = confusion(1,2)+confusion(2,2);
 confusion(1,3) = confusion(1,1)+confusion(1,2);
 confusion(2,3) = confusion(2,1)+confusion(2,2);
+hold off
 
 confusion_per = zeros(2,2);
 for i = 1:p-1
@@ -269,16 +265,3 @@ confusion_per
 %(2,1):= UN classified as N
 %(2,2):= UN classified as UN
 
-figure;
-contour(X1,X2,reshape(resultaux,size(X1,1),size(X2,1)),[1,1],'Color','k');
-hold on
-gscatter(VDA(:,1), VDA(:,2), labels, 'rgbcmyk', 'xo*+sd><^', 8)
-title('Data Validation')
-xlabel('Feature #1')
-ylabel('Feature #2')
-ax = gca;
-ax.FontSize = 12;
-ax.XAxis.Label.FontSize = 14;
-ax.YAxis.Label.FontSize = 14;
-xlim([-10 70])
-ylim([-2 16])

@@ -7,8 +7,8 @@ clc
 %addpath(genpath('C:\Users\Lucia\Documents\Becas\GAIA\Congreso\Matlab'));
 
 % Load the data
-load Mat_Nomralizada_val.mat
-data_norm = Mat_Normalizada_val(:,6:7);
+load MatNorCompleta.mat
+data_norm = Mat_Normalizada_val;
 % H,B7,B14,B21,I7,I14,I21,O7,O14,O21 (8 features each)
 
 % For reproducibility
@@ -56,8 +56,7 @@ DataCov = cov(data_norm);
 [PC, variances, explained] = pcacov(DataCov); 
 z = 2; 
 PC = PC(:,1:z);
-%data_PC = data_norm*PC;
-data_PC = Mat_Normalizada_val(:,6:7);
+data_PC = data_norm*PC;
 
 % % Plot the PCA results
 % for cont = 1:length(data_PC')
@@ -79,17 +78,15 @@ data_PC = Mat_Normalizada_val(:,6:7);
 
 figure;
 gscatter(data_PC(:,1),data_PC(:,2), Targets_names, 'rgbcmyk', 'xo*+sd><^', 6)
-xlabel('Feature #1')
-ylabel('Feature #2')
-title('Data representation')
+xlabel('Principal Component #1')
+ylabel('Principal Component #2')
+title('PCA Data Representation')
 
 
 % Separate the data
 % set A
 Training_index_A=[1:40-10,41:80-10,81:120-10,121:160-10];
 Validation_index_A=[41-10:40,81-10:80,121-10:120,161-10:160];
-%Training_index_A=[1+10:40,41+10:80,81+10:120,121+10:160];
-%Validation_index_A=[1:10,41:50,81:90,121:130];
 TA = ta(Training_index_A,:);
 VDA = data_PC(Validation_index_A,:);
 VTA = ta(Validation_index_A,:);
@@ -121,128 +118,74 @@ O7T = TD(211:240,:);
 O14T = TD(241:270,:);
 O21T = TD(271:300,:);
 
-%% Configuration
-X = [HT;B14T];
-k = 1:5;
-nK = numel(k);
-Sigma = {'diagonal','full'};
-nSigma = numel(Sigma);
-SharedCovariance = {true,false};
-SCtext = {'true','false'};
-nSC = numel(SharedCovariance);
-RegularizationValue = 0.01;
-options = statset('MaxIter',10000);
-
-% Preallocation
-gm = cell(nK,nSigma,nSC);
-aic = zeros(nK,nSigma,nSC);
-bic = zeros(nK,nSigma,nSC);
-converged = false(nK,nSigma,nSC);
-%% Fit all models
-for m = 1:nSC
-    for j = 1:nSigma
-        for i = 1:nK
-            gm{i,j,m} = fitgmdist(X,k(i),...
-                'CovarianceType',Sigma{j},...
-                'SharedCovariance',SharedCovariance{m},...
-                'RegularizationValue',RegularizationValue,...
-                'Options',options);
-            aic(i,j,m) = gm{i,j,m}.AIC;
-            bic(i,j,m) = gm{i,j,m}.BIC;
-            converged(i,j,m) = gm{i,j,m}.Converged;
-        end
-    end
-end
-
-allConverge = (sum(converged(:)) == nK*nSigma*nSC)
-
-%% Plot the AIC and BIC
-figure;
-bar(reshape(aic,nK,nSigma*nSC));
-title('AIC For Various $k$ and $\Sigma$ Choices','Interpreter','latex');
-xlabel('$k$','Interpreter','Latex');
-ylabel('AIC');
-legend({'Diagonal-shared','Full-shared','Diagonal-unshared',...
-    'Full-unshared'});
-
-% figure;
-% bar(reshape(bic,nK,nSigma*nSC));
-% title('BIC For Various $k$ and $\Sigma$ Choices','Interpreter','latex');
-% xlabel('$c$','Interpreter','Latex');
-% ylabel('BIC');
-% legend({'Diagonal-shared','Full-shared','Diagonal-unshared',...
-%     'Full-unshared'});
-
-%% Generate the model
-% k ; 1:= diagonal and 2:=full; 1:=true and 2:=false (shared cov)
-gmBest = gm{5,2,2};
-kGMM = gmBest.NumComponents;
+% SVM model creation
+D = [HT;B14T];
+Y = ones(length(D),1);
+model = fitcsvm(D,Y,'KernelFunction','RBF','KernelScale','auto','ClassNames',{'1','0'},'OutlierFraction',0.05);
 n = 1500;
 x1 = linspace(2*min(VDA(:,1))-30, max(VDA(:,1))+30,n);
-x2 = linspace(2*min(VDA(:,2))-10, max(VDA(:,2))+30,n);
+x2 = linspace(2*min(VDA(:,2))-10, max(VDA(:,2))+10,n);
 [X1,X2] = meshgrid(x1,x2);
 XG = [X1(:),X2(:)];
-mahalDist = mahal(gmBest,XG);
-threshold = sqrt(chi2inv(0.99,6));
+[labels,scores] = predict(model,XG);
 
-resultaux = zeros(length(XG),1);
-for cont = 1:length(XG)
-    if min(mahalDist(cont,:))<= threshold
-        resultaux(cont,1) = 1;
+class = zeros(size(labels));
+for cont = 1:length(labels)
+    if labels{cont}==('1')
+        class(cont,1) = 1;
     end
 end
 
-% Plot boundary
+% Plot and boundary
 figure,
-
-title('{\bf GMM training}')
-xlabel('Feature #1')
-ylabel('Feature #2')
-set(gca,'Color','w')
-hold on
-contour(X1,X2,reshape(resultaux,size(X1,1),size(X2,1)),[1,1],'Color','k');
-gscatter(X(:,1),X(:,2))
-axis=([-2,16,-10,70]);
-%ylim=([-2,16]);
-%xlim=([-10,70]);
-
-%gscatter(data_norm(:,1), data_norm(:,2))
+title('{\bf SVM setA}')
+xlabel('Principal Component #1')
+ylabel('Principal Component #2')
+set(gca,'Color','w')%Background colour
+hold on 
+contour(X1,X2,reshape(class,size(X1,1),size(X2,1)),[1,1],'Color','k');
 legend('off')
-hold off
-
+hold on
 
 % Validation
-mahalDistVal = mahal(gmBest,VDA);
+[labels_val,scores_val] = predict(model,VDA);
+cont = 1;
 confusion = zeros(3,3);
 [p,m] = size(confusion);
-
-matrix_for_data_validation = zeros(length(VDA),2);
-labels=cell(length(VDA),1);%10);
-
 for cont = 1:length(VDA)
-   if min(mahalDistVal(cont,:))<= threshold && VTA(cont)==1 % True Positive
-       confusion(1,1) = confusion(1,1)+1;
-       matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
-       labels(cont,1) = {'True Positive'};
-   elseif min(mahalDistVal(cont,:))<= threshold && VTA(cont)==0 % False Positive
-       confusion(2,1) = confusion(2,1)+1;   
-       matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
-       labels(cont,1) = {'False Positive'};
-   elseif min(mahalDistVal(cont,:))>= threshold && VTA(cont)==1 % False Negative
-       confusion(1,2) = confusion(1,2)+1;   
-       matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
-       labels(cont,1) = {'False Negative'};
-   elseif min(mahalDistVal(cont,:))>= threshold && VTA(cont)==0 % True Negative
-       confusion(2,2) = confusion(2,2)+1;   
-       matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
-       labels(cont,1) = {'True Negative'};
+   if labels_val{cont} == ('1') && VTA(cont)== 1
+    confusion(1,1) = confusion(1,1)+1;
+    color = [0 0 1] ;
+    plot(VDA(cont,1),VDA(cont,2),'Marker','.','LineStyle','none','Color',color,'MarkerSize',20);
+    hold on
+   elseif labels_val{cont} == ('1') && VTA(cont)== 0
+    confusion(2,1) = confusion(2,1)+1;   
+    color = [0 0 1];
+    plot(VDA(cont,1),VDA(cont,2),'Marker','.','LineStyle','none','Color',color,'MarkerSize',20);
+    hold on
+   elseif labels_val{cont} == ('0') && VTA(cont) == 1
+    confusion(1,2) = confusion(1,2)+1;   
+    color = [1 0 0];
+    plot(VDA(cont,1),VDA(cont,2),'Marker','*','LineStyle','none','Color',color,'MarkerSize',10);
+    hold on
+   elseif labels_val{cont} == ('0') && VTA(cont) == 0
+    confusion(2,2) = confusion(2,2)+1;   
+    color = [1 0 0];
+    plot(VDA(cont,1),VDA(cont,2),'Marker','*','LineStyle','none','Color',color,'MarkerSize',10);
+    hold on
    end
 end
+ax = gca;
+ax.FontSize = 12;
+ax.XAxis.Label.FontSize = 14;
+ax.YAxis.Label.FontSize = 14;
+
 
 confusion(3,1) = confusion(1,1)+confusion(2,1);
 confusion(3,2) = confusion(1,2)+confusion(2,2);
 confusion(1,3) = confusion(1,1)+confusion(1,2);
 confusion(2,3) = confusion(2,1)+confusion(2,2);
+hold off
 
 confusion_per = zeros(2,2);
 for i = 1:p-1
@@ -253,32 +196,18 @@ end
 known = zeros(confusion(3,1),3);
 a = 1;
 for cont = 1:length(VDA)
-   if min(mahalDistVal(cont,:))<= threshold
+   if labels_val{cont} == ('1')
     known(a,1) = TAr(cont);
     known(a,2) = VDA(cont,1);
     known(a,3) = VDA(cont,2);
     a=a+1; 
    end
 end
-
 total_acc = (confusion_per(1,1)+confusion_per(2,2))/2
-GMM_A = known;
+SVM_A = known;
 confusion_per
 %(1,1):= N classified as N
 %(1,2):= N classified as UN
 %(2,1):= UN classified as N
 %(2,2):= UN classified as UN
 
-figure;
-contour(X1,X2,reshape(resultaux,size(X1,1),size(X2,1)),[1,1],'Color','k');
-hold on
-gscatter(VDA(:,1), VDA(:,2), labels, 'rgbcmyk', 'xo*+sd><^', 8)
-title('Data Validation')
-xlabel('Feature #1')
-ylabel('Feature #2')
-ax = gca;
-ax.FontSize = 12;
-ax.XAxis.Label.FontSize = 14;
-ax.YAxis.Label.FontSize = 14;
-xlim([-10 70])
-ylim([-2 16])

@@ -46,7 +46,7 @@ close all
 % 
 %   - Balanced (i.e. aggregated PV generation is similar to aggregated
 %   power consumption), CommunitySelection  = 2
-CommunitySelection = 1;
+CommunitySelection = 0;
 EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 
 

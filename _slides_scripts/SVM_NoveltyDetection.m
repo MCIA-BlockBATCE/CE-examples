@@ -8,7 +8,9 @@ clc
 
 % Load the data
 load MatNorCompleta.mat
-data_norm = Mat_Normalizada_val;
+%data_norm = Mat_Normalizada_val;
+data_norm = Mat_Normalizada_val(:,6:7);
+
 % H,B7,B14,B21,I7,I14,I21,O7,O14,O21 (8 features each)
 
 % For reproducibility
@@ -56,7 +58,9 @@ DataCov = cov(data_norm);
 [PC, variances, explained] = pcacov(DataCov); 
 z = 2; 
 PC = PC(:,1:z);
-data_PC = data_norm*PC;
+%data_PC = data_norm*PC;
+data_PC = Mat_Normalizada_val(:,6:7);
+
 
 % % Plot the PCA results
 % for cont = 1:length(data_PC')
@@ -78,9 +82,9 @@ data_PC = data_norm*PC;
 
 figure;
 gscatter(data_PC(:,1),data_PC(:,2), Targets_names, 'rgbcmyk', 'xo*+sd><^', 6)
-xlabel('Principal Component #1')
-ylabel('Principal Component #2')
-title('PCA Data Representation')
+xlabel('Feature #1')
+ylabel('Feature #2')
+title('Data Representation')
 
 
 % Separate the data
@@ -138,47 +142,47 @@ end
 
 % Plot and boundary
 figure,
-title('{\bf SVM setA}')
-xlabel('Principal Component #1')
-ylabel('Principal Component #2')
+title('{\bf SVM training}')
+xlabel('Feature #1')
+ylabel('Feature #2')
 set(gca,'Color','w')%Background colour
 hold on 
 contour(X1,X2,reshape(class,size(X1,1),size(X2,1)),[1,1],'Color','k');
+gscatter(D(:,1),D(:,2))
 legend('off')
-hold on
+hold off
+
 
 % Validation
+
 [labels_val,scores_val] = predict(model,VDA);
 cont = 1;
 confusion = zeros(3,3);
 [p,m] = size(confusion);
+
+matrix_for_data_validation = zeros(length(VDA),2);
+labels=cell(length(VDA),1);%10);
+
 for cont = 1:length(VDA)
    if labels_val{cont} == ('1') && VTA(cont)== 1
     confusion(1,1) = confusion(1,1)+1;
-    color = [0 0 1] ;
-    plot(VDA(cont,1),VDA(cont,2),'Marker','.','LineStyle','none','Color',color,'MarkerSize',20);
-    hold on
+    matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
+    labels(cont,1) = {'True Positive'};
    elseif labels_val{cont} == ('1') && VTA(cont)== 0
     confusion(2,1) = confusion(2,1)+1;   
-    color = [0 0 1];
-    plot(VDA(cont,1),VDA(cont,2),'Marker','.','LineStyle','none','Color',color,'MarkerSize',20);
-    hold on
+    matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
+    labels(cont,1) = {'False Positive'};
    elseif labels_val{cont} == ('0') && VTA(cont) == 1
     confusion(1,2) = confusion(1,2)+1;   
-    color = [1 0 0];
-    plot(VDA(cont,1),VDA(cont,2),'Marker','*','LineStyle','none','Color',color,'MarkerSize',10);
-    hold on
+    matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
+    labels(cont,1) = {'False Negative'};
    elseif labels_val{cont} == ('0') && VTA(cont) == 0
     confusion(2,2) = confusion(2,2)+1;   
-    color = [1 0 0];
-    plot(VDA(cont,1),VDA(cont,2),'Marker','*','LineStyle','none','Color',color,'MarkerSize',10);
-    hold on
+    matrix_for_data_validation(cont,:) = [VDA(cont,1) VDA(cont,2)];
+    labels(cont,1) = {'True Negative'};
    end
 end
-ax = gca;
-ax.FontSize = 12;
-ax.XAxis.Label.FontSize = 14;
-ax.YAxis.Label.FontSize = 14;
+
 
 
 confusion(3,1) = confusion(1,1)+confusion(2,1);
@@ -203,6 +207,7 @@ for cont = 1:length(VDA)
     a=a+1; 
    end
 end
+
 total_acc = (confusion_per(1,1)+confusion_per(2,2))/2
 SVM_A = known;
 confusion_per
@@ -211,3 +216,15 @@ confusion_per
 %(2,1):= UN classified as N
 %(2,2):= UN classified as UN
 
+figure,
+contour(X1,X2,reshape(class,size(X1,1),size(X2,1)),[1,1],'Color','k');
+hold on
+gscatter(VDA(:,1), VDA(:,2), labels, 'rgbcmyk', 'xo*+sd><^', 8)
+title('{\bf SVM validation}')
+xlabel('Feature #1')
+ylabel('Feature #2')
+ax = gca;
+ax.FontSize = 12;
+ax.XAxis.Label.FontSize = 14;
+ax.YAxis.Label.FontSize = 14;
+set(gca,'Color','w')

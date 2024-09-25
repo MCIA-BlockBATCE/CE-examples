@@ -36,8 +36,5 @@ figure(1)
 h1 = plot(t_dates(1:length(ConsProfileExample)), ConsProfileExample(1:end));
 hold on
 h2 = plot(t_dates(end_training_split:end_training_split+horizon-1), yf,'r');
-xlabel ('Date')
-ylabel ('Energy [kWh]')
-title ('ARIMA forecasting')
 
 err = rms(yf - ConsProfileExample(end_training_split:end_training_split+length(yf)-1));
