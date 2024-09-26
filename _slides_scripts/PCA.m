@@ -3,7 +3,25 @@ clc
 close all
 load FeaturesHIOBv3.mat
 
-%% -------------- Part 1 Feature Normalization and classification --------
+% This script presents on the application of Principal Component Analysis (PCA)
+% for a dataset related to fault severity analysis.
+%
+% The script is organized into two main parts:
+%
+%   Part 1. FEATURE CLASSIFICATION
+%       This section loads the dataset features and prepares target labels
+%       for various fault severity classes, including healthy and 
+%       multiple inner and outer fault severities. 
+%
+%   Part 2. PCA CALCULATION
+%       This section computes PCA to reduce the dimensionality of the 
+%       normalized features. It generates plots representing the 
+%       explained variance by the different principal components and 
+%       visualizes the data in a two-dimensional space using the 
+%       first two principal component for a clearer analysis 
+%       of the fault severity classes.
+%
+%% -------------- Part 1 Feature classification --------
 rng(1989)
 
 FeaturesHIOBv3=FeaturesHIOBv3';
@@ -34,14 +52,6 @@ Targets1C(961:1080,1)=4;%9;%Class Ball Fault Severity 2
 Targets1C(1081:1200,1)=4;%10;%Class Ball Fault Severity 3
 Targets1C=Targets1C';
 
-Training_index=[1:120-40,121:240-40,241:360-40,361:480-40,481:600-40,601:720-40,721:840-40,841:960-40,961:1080-40,1081:1200-40];
-Validation_index=[121-40:120,241-40:240,361-40:360,481-40:480,601-40:600,721-40:720,841-40:840,961-40:960,1081-40:1080,1201-40:1200];
-
-Training_Data=FeaturesHIOBv3(:,Training_index);% Separe data for Trainning
-Training_Targets=Targets(:,Training_index);
-
-Validation_Data=FeaturesHIOBv3(:,Validation_index);% Separe data for Validation
-Validation_Targets=Targets(:,Validation_index);
 
 Targets_names=cell(1200,1);%10);
 Targets_names(1:120,1)={'Healthy'};  %Class healthy
@@ -55,8 +65,8 @@ Targets_names(841:960,1)={'Ball Fault Severity 1'};%Class Ball Fault Severity 1
 Targets_names(961:1080,1)={'Ball Fault Severity 2'};%Class Ball Fault Severity 2
 Targets_names(1081:1200,1)={'Ball Fault Severity 3'};%Class Ball Fault Severity 3
 
-%% -------------- Part 3 PCA Calculation----------------------------------
-DataCov = cov(FeaturesHIOBv3'); %covariance matrix needed to eprform the PCA
+%% -------------- Part 2 PCA Calculation----------------------------------
+DataCov = cov(FeaturesHIOBv3'); %covariance matrix needed to perform the PCA
 [PC, variances, explained] = pcacov(DataCov); %PCA decoomposition
 acum_var = zeros(length(explained), 1);
 acum_var(1) = explained(1);
