@@ -47,7 +47,7 @@ Training_Targets=Targets(:,Training_index);
 Validation_Data=FeaturesHIOv3(:,Validation_index);% Separe data for Validation
 Validation_Targets=Targets(:,Validation_index);
 
-%% -------------- Part 2 Neural Network with   Data------------------------
+%% -------------- Part 2 Neural Network with Data------------------------
 
 % Part_2 Apply the neural network to the data prepared in the part 1
 

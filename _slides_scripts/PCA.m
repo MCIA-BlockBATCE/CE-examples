@@ -1,10 +1,12 @@
 clear
 clc
 close all
-load FeaturesHIOBv3.mat
+
 
 % This script presents on the application of Principal Component Analysis (PCA)
-% for a dataset related to fault severity analysis.
+% for a dataset related to fault severity analysis. The aim of PCA is to
+% reduce feature dimensionality of a dataset in order to simplify it
+% without too losing much information.
 %
 % The script is organized into two main parts:
 %
@@ -21,58 +23,42 @@ load FeaturesHIOBv3.mat
 %       first two principal component for a clearer analysis 
 %       of the fault severity classes.
 %
-%% -------------- Part 1 Feature classification --------
+%% -------------- Part 1 Feature classification --------------------
+% Load data
+load FeaturesHIOBv3.mat
+
+% Random seed initialisation
 rng(1989)
 
-FeaturesHIOBv3=FeaturesHIOBv3';
-
-Targets=zeros(1200,4);%10);
-Targets(1:120,1)=1;  %Class healthy
-Targets(121:240,2)=1;%Class Inner Fault Severity 1
-Targets(241:360,3)=1;%Class Inner Fault Severity 2
-Targets(361:480,4)=1;%Class Inner Fault Severity 3
-Targets(481:600,5)=1;%Class Outher Fault Severity 1
-Targets(601:720,6)=1;%Class Outher Fault Severity 2
-Targets(721:840,7)=1;%Class Outher Fault Severity 3
-Targets(841:960,8)=1;%Class Ball Fault Severity 1
-Targets(961:1080,9)=1;%Class Ball Fault Severity 2
-Targets(1081:1200,10)=1;%Class Ball Fault Severity 3
-
-Targets=Targets';
-
-Targets1C(1:120,1)=1;
-Targets1C(121:240,1)=2;%Class Inner Fault Severity 1
-Targets1C(241:360,1)=2;%3;%Class Inner Fault Severity 2
-Targets1C(361:480,1)=2;%4;%Class Inner Fault Severity 3
-Targets1C(481:600,1)=3;%5;%Class Outher Fault Severity 1
-Targets1C(601:720,1)=3;%6;%Class Outher Fault Severity 2
-Targets1C(721:840,1)=3;%7;%Class Outher Fault Severity 3
-Targets1C(841:960,1)=4;%8;%Class Ball Fault Severity 1
-Targets1C(961:1080,1)=4;%9;%Class Ball Fault Severity 2
-Targets1C(1081:1200,1)=4;%10;%Class Ball Fault Severity 3
-Targets1C=Targets1C';
-
-
-Targets_names=cell(1200,1);%10);
-Targets_names(1:120,1)={'Healthy'};  %Class healthy
-Targets_names(121:240,1)={'Inner Fault Severity 1'};%Class Inner Fault Severity 1
-Targets_names(241:360,1)={'Inner Fault Severity 2'};%Class Inner Fault Severity 2
-Targets_names(361:480,1)={'Inner Fault Severity 3'};%Class Inner Fault Severity 3
-Targets_names(481:600,1)={'Outher Fault Severity 1'};%Class Outher Fault Severity 1
-Targets_names(601:720,1)={'Outher Fault Severity 2'};%Class Outher Fault Severity 2
-Targets_names(721:840,1)={'Outher Fault Severity 3'};%Class Outher Fault Severity 3
-Targets_names(841:960,1)={'Ball Fault Severity 1'};%Class Ball Fault Severity 1
-Targets_names(961:1080,1)={'Ball Fault Severity 2'};%Class Ball Fault Severity 2
-Targets_names(1081:1200,1)={'Ball Fault Severity 3'};%Class Ball Fault Severity 3
+% Target labels are created
+Targets_names=cell(1200,1);% 10 classes);
+Targets_names(1:120,1)={'Healthy'};  % Class healthy
+Targets_names(121:240,1)={'Inner Fault Severity 1'};% Class Inner Fault Severity 1
+Targets_names(241:360,1)={'Inner Fault Severity 2'};% Class Inner Fault Severity 2
+Targets_names(361:480,1)={'Inner Fault Severity 3'};% Class Inner Fault Severity 3
+Targets_names(481:600,1)={'Outher Fault Severity 1'};% Class Outher Fault Severity 1
+Targets_names(601:720,1)={'Outher Fault Severity 2'};% Class Outher Fault Severity 2
+Targets_names(721:840,1)={'Outher Fault Severity 3'};% Class Outher Fault Severity 3
+Targets_names(841:960,1)={'Ball Fault Severity 1'};% Class Ball Fault Severity 1
+Targets_names(961:1080,1)={'Ball Fault Severity 2'};% Class Ball Fault Severity 2
+Targets_names(1081:1200,1)={'Ball Fault Severity 3'};% Class Ball Fault Severity 3
 
 %% -------------- Part 2 PCA Calculation----------------------------------
-DataCov = cov(FeaturesHIOBv3'); %covariance matrix needed to perform the PCA
-[PC, variances, explained] = pcacov(DataCov); %PCA decoomposition
+DataCov = cov(FeaturesHIOBv3); % Covariance matrix needed to perform the PCA
+[PC, variances, explained] = pcacov(DataCov); %PCA decomposition
+
+% From PCA decomposition we've obtained the principal components ordered by
+% descending explained variance and their respective variances and explained
+% variance percentages. 
+
+% Create accumulated explained variance vector
 acum_var = zeros(length(explained), 1);
 acum_var(1) = explained(1);
 for i=2:length(explained)
     acum_var(i) = acum_var(i-1) + explained(i);
 end
+
+% --- Accumulated explained variance plot ---
 
 a1 = round(acum_var,1);
 b1 = num2str(a1);
@@ -102,44 +88,11 @@ title('Explained Variance by Different Principal Components')
 set(gca, 'XTick',1:1:length(explained), 'FontSize',9)
 hold off
 
-%hold on
-%plot();
-z=2; %number of dimensions fot the PCA.
-PC=PC(:,1:z);% From the PCA, select the z first components
-FeaturesHIOBPC=FeaturesHIOBv3'*PC;%Create a latent space with the new projections
-% plot(FeaturesHIOPC(:,1),FeaturesHIOPC(:,2),'r*')
+% --- Two-dimensional space label visualisation ---
 
-% for buc_1=1:length(FeaturesHIOPC)
-%    if(Targets1C(1,buc_1)==1)
-%    color='go';
-%      elseif(Targets1C(1,buc_1)==2)
-%        color='ro';
-%         elseif(Targets1C(1,buc_1)==3)
-%          color='yo';
-%           elseif(Targets1C(1,buc_1)==4)
-%            color='bo';
-%             elseif(Targets1C(1,buc_1)==5)
-%              color='mo';
-%               elseif(Targets1C(1,buc_1)==6)
-%                color='co';
-%                 elseif(Targets1C(1,buc_1)==7)
-%                  color='ko';
-%                   elseif(Targets1C(1,buc_1)==8)
-%                    color='g.';
-%                     elseif(Targets1C(1,buc_1)==9)
-%                      color='r.';
-%                       elseif(Targets1C(1,buc_1)==10)
-%                        color='b*';
-%    end
-%     figure(2)
-%     plot(FeaturesHIOPC(buc_1,1),FeaturesHIOPC(buc_1,2),color)
-%     hold on
-%     grid on
-%     title('PCA data Representation');
-% 
-% end
-% hold off
-%%
+z=2; % Number of dimensions fot the PCA.
+PC=PC(:,1:z);% From the PCA, select the z first components
+FeaturesHIOBPC=FeaturesHIOBv3*PC;% Create a latent space with the new projections
 
 figure(2)
 gscatter(FeaturesHIOBPC(:,1), FeaturesHIOBPC(:,2), Targets_names, 'rgbcmyk', 'xo*+sd><^', 6)
