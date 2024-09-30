@@ -22,9 +22,6 @@ close all
 % Load data
 load FeaturesHIOBv3.mat
 
-% Initialise random seed
-rng(1989)
-
 % Transpose feature matrix
 FeaturesHIOBv3 = FeaturesHIOBv3';
 

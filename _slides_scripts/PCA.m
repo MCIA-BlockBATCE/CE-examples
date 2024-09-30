@@ -27,9 +27,6 @@ close all
 % Load data
 load FeaturesHIOBv3.mat
 
-% Random seed initialisation
-rng(1989)
-
 % Target labels are created
 Targets_names=cell(1200,1);% 10 classes);
 Targets_names(1:120,1)={'Healthy'};  % Class healthy

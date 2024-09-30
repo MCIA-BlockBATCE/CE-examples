@@ -1,23 +1,41 @@
-clear all
+clear
+clc
 close all
 
 %% k-nearest neighbor classifier for Fisher's iris data 
-load fisheriris % Load Fisher's iris data.
-X = meas; Y = species;
 
-% obtain knn classiication model for k=7 (# of nearest neighbors).
-knn_mdl = fitcknn(X,Y,'NumNeighbors',7,'Standardize',1);
+% Load the Fisher's iris dataset, which contains measurements of iris flowers.
+load fisheriris 
 
-% knn_mdl is a ClassificationKNN classifier. 
-knn_mdl.ClassNames %To access the properties of the model
+% Assign features (measurements) to X and labels (species) to Y.
+X = meas; % Feature matrix containing sepal and petal dimensions.
+Y = species; % Class labels corresponding to the species of iris.
 
-%	Prediction for new data points
-xnew = [5.55 4 3 1; 5.25 2.5 3.75 1.2]; % predict for two new data points 
-label = predict(knn_mdl,xnew);
+% Create a k-NN classification model using k=7 neighbors.
+% Standardizing the features ensures they contribute equally to distance calculations.
+knn_mdl = fitcknn(X, Y, 'NumNeighbors', 7, 'Standardize', 1);
 
-% plot
+% Display the class names from the trained model.
+knn_mdl.ClassNames 
+
+% Define new data points for prediction, represented by their measurements.
+xnew = [5.55 4 3 1; 5.25 2.5 3.75 1.2]; 
+
+% Use the k-NN model to predict the species for the new data points.
+label = predict(knn_mdl, xnew); 
+
+% --- Plotting the classification results ---
+
+% Two first features are represented
 figure(1)
-gscatter(X(:,1), X(:,2), Y);
+gscatter(X(:, 1), X(:, 2), Y);
 xlabel('Sepal Length')
-ylabel('Sepal Witdth')
-title('k-NN Classification Resuls for Iris dataset')
+ylabel('Sepal Width')
+title('k-NN Classification Results for Iris Dataset, sepal features')
+
+% Two last features are represented
+figure(2)
+gscatter(X(:, 3), X(:, 4), Y);
+xlabel('Petal Length')
+ylabel('Petal Width')
+title('k-NN Classification Results for Iris Dataset, petal features')
