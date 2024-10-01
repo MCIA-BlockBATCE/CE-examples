@@ -1,16 +1,5 @@
 % TODO
-% - Modificar primera secció perqué només carregui les dades. La part 1
-% actual hauria d'estar ja feta, i per tant l'objecte ".mat" que es
-% carregui ja tindra "Target_names" construit a dins. En aquest sentit,
-% quan es carregui aquest ".mat", calen un parell de línies dient que conté dins
-% les dades de diferents condicions d'operació de coixinets.
-% - Separar en 4 seccions, (i) lectura de dades (ii) entrenament
-% (iii) càlculd de mètriques (iv) visualització
-% - Eliminar línies comentades si no es fan servir.
-% - Evitar variables amb noms "a", "b", "c". Calen noms que diguin alguna
-% cosa de la informació que conté la variable, de la manera més sintética
-% posible, i complementat amb un petit comentari pel bloc d'instruccions o
-% línia a línea.
+% - Modificar primera secció perqué només carregui les dades. 
 
 clear
 clc

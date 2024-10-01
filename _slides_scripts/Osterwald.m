@@ -1,3 +1,8 @@
+% TODO
+% - Enllaç a referencia article científic Osterwald
+% - Separar en 3 seccions, (i) lectura de dades (ii) càlcul de prediccions
+% (iii) visualització
+
 clear
 clc
 close all

@@ -1,3 +1,7 @@
+% TODO
+% - Capçalera al script
+% - Separar en 3 seccions, (i) lectura de dades (iii) entrenament (iii) visualització
+
 clear
 clc
 close all
@@ -13,7 +17,8 @@ Y = species; % Class labels corresponding to the species of iris.
 
 % Create a k-NN classification model using k=7 neighbors.
 % Standardizing the features ensures they contribute equally to distance calculations.
-knn_mdl = fitcknn(X, Y, 'NumNeighbors', 7, 'Standardize', 1);
+k = 7;
+knn_mdl = fitcknn(X, Y, 'NumNeighbors', k, 'Standardize', 1);
 
 % Display the class names from the trained model.
 knn_mdl.ClassNames 

@@ -1,3 +1,12 @@
+% TODO
+% - Modificar primera secció perqué només carregui les dades. La part 1
+% actual hauria d'estar ja feta, i per tant l'objecte ".mat" que es
+% carregui ja tindra l'objecte Targets configurat. En aquest sentit,
+% quan es carregui aquest ".mat", calen un parell de línies dient que conté dins
+% les dades de diferents condicions d'operació de coixinets.
+% - Separar en 4 seccions, (i) lectura de dades (ii) entrenament
+% (iii) càlculd de mètriques (iv) visualització
+
 clear
 clc
 clear all

@@ -6,8 +6,7 @@
 % les dades de diferents condicions d'operació de coixinets.
 % - Separar en 4 seccions, (i) lectura de dades (ii) entrenament
 % (iii) càlculd de mètriques (iv) visualització
-% Si Targets1C no es fa servir, eliminar. El mateix amb altres variables si
-% aplica.
+% Si Targets1C no es fa servir, eliminar. El mateix amb altres variables 
 
 clear
 clc
