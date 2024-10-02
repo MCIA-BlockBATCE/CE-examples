@@ -1,21 +1,6 @@
-% TODO
-% - Modificar primera secció perqué només carregui les dades. La part 1
-% actual hauria d'estar ja feta, i per tant l'objecte ".mat" que es
-% carregui ja tindra "Target_names" construit a dins. En aquest sentit,
-% quan es carregui aquest ".mat", calen un parell de línies dient que conté dins
-% les dades de diferents condicions d'operació de coixinets.
-% - Separar en 4 seccions, (i) lectura de dades (ii) entrenament
-% (iii) càlculd de mètriques (iv) visualització
-% - Eliminar línies comentades si no es fan servir.
-% - Evitar variables amb noms "a", "b", "c". Calen noms que diguin alguna
-% cosa de la informació que conté la variable, de la manera més sintética
-% posible, i complementat amb un petit comentari pel bloc d'instruccions o
-% línia a línea.
-
 clear
 clc
 close all
-
 
 % This script presents on the application of Principal Component Analysis (PCA)
 % for a dataset related to fault severity analysis. The aim of PCA is to
@@ -24,43 +9,41 @@ close all
 %
 % The script is organized into two main parts:
 %
-%   Part 1. FEATURE CLASSIFICATION
-%       This section loads the dataset features and prepares target labels
+%   Part 1. DATA LOADING
+%       This section loads the dataset features and target labels
 %       for various fault severity classes, including healthy and 
 %       multiple inner and outer fault severities. 
 %
 %   Part 2. PCA CALCULATION
 %       This section computes PCA to reduce the dimensionality of the 
-%       normalized features. It generates plots representing the 
-%       explained variance by the different principal components and 
-%       visualizes the data in a two-dimensional space using the 
-%       first two principal component for a clearer analysis 
-%       of the fault severity classes.
+%       normalized features.
+% 
+%   Part 3. PERFORMANCE METRICS
+%       In this part we obtain the accumulated explained variance vector
+%       from the PCA decomposition. This is useful to know how many
+%       principal components are needed depending on the required explained
+%       variance.
 %
-%% -------------- Part 1 Feature classification --------------------
-% Load data
-load FeaturesHIOBv3.mat
+%   Part 4. VISUALIZATION
+%       In this final section two plots are generated. The first one
+%       represents the explained variance by the different principal
+%       components. The second one is used to visualize the data in a
+%       two-dimensional space using the first two principal components.
 
-% Target labels are created
-Targets_names=cell(1200,1);% 10 classes);
-Targets_names(1:120,1)={'Healthy'};  % Class healthy
-Targets_names(121:240,1)={'Inner Fault Severity 1'};% Class Inner Fault Severity 1
-Targets_names(241:360,1)={'Inner Fault Severity 2'};% Class Inner Fault Severity 2
-Targets_names(361:480,1)={'Inner Fault Severity 3'};% Class Inner Fault Severity 3
-Targets_names(481:600,1)={'Outher Fault Severity 1'};% Class Outher Fault Severity 1
-Targets_names(601:720,1)={'Outher Fault Severity 2'};% Class Outher Fault Severity 2
-Targets_names(721:840,1)={'Outher Fault Severity 3'};% Class Outher Fault Severity 3
-Targets_names(841:960,1)={'Ball Fault Severity 1'};% Class Ball Fault Severity 1
-Targets_names(961:1080,1)={'Ball Fault Severity 2'};% Class Ball Fault Severity 2
-Targets_names(1081:1200,1)={'Ball Fault Severity 3'};% Class Ball Fault Severity 3
+%% -------------- Part 1 Data loading --------------------
+% Load data, containing features for fault type and severity, as well as
+% target names for fault types. Severity is not taken into account.
+load data_PCA.mat
 
-%% -------------- Part 2 PCA Calculation----------------------------------
+%% -------------- Part 2 PCA Calculation ----------------------------------
 DataCov = cov(FeaturesHIOBv3); % Covariance matrix needed to perform the PCA
 [PC, variances, explained] = pcacov(DataCov); %PCA decomposition
 
 % From PCA decomposition we've obtained the principal components ordered by
 % descending explained variance and their respective variances and explained
 % variance percentages. 
+
+%% -------------- Part 3 Performance metrics ------------------------------
 
 % Create accumulated explained variance vector
 acum_var = zeros(length(explained), 1);
@@ -69,28 +52,33 @@ for i=2:length(explained)
     acum_var(i) = acum_var(i-1) + explained(i);
 end
 
+%% -------------- Part 4 Visualization ------------------------------
+
 % --- Accumulated explained variance plot ---
 
-a1 = round(acum_var,1);
-b1 = num2str(a1);
-b1 = b1 + " %";
-c1 = cellstr(b1);
+% Accumulated explained variance is rounded, converted into strings and
+% stored in a cell array
+rounded_acum_var = round(acum_var,1);
+acum_var_str = num2str(rounded_acum_var);
+acum_var_str = acum_var_str + " %";
+acum_var_str_cell = cellstr(acum_var_str);
 dy = 1;
 
-explained_short = explained(2:end);
-a2 = round(explained_short,1);
-b2 = num2str(a2);
-b2 = b2 + " %";
-c2 = cellstr(b2);
+% Individual explained variance is rounded, converted into strings and
+% stored in a cell array
+individual_var = explained(2:end);
+rounded_individual_var = round(individual_var,1);
+individual_var_str = num2str(rounded_individual_var);
+individual_var_str = individual_var_str + " %";
+individual_var_str_cell = cellstr(individual_var_str);
 dy2 = 5;
 
 figure (1);
 hold on
 plot(acum_var,'-o','MarkerIndices',1:1:length(acum_var))
-%plot(acum_var)
 bar(explained)
-text(1:1:length(explained),acum_var-dy,c1)
-text(2:1:length(explained),explained_short+dy2,c2)
+text(1:1:length(explained),acum_var-dy,acum_var_str_cell)
+text(2:1:length(explained),individual_var+dy2,individual_var_str_cell)
 xlim([0 length(explained)])
 ylim([0 100])
 ylabel('Explained Variance [%]')
@@ -101,8 +89,8 @@ hold off
 
 % --- Two-dimensional space label visualisation ---
 
-z=2; % Number of dimensions fot the PCA.
-PC=PC(:,1:z);% From the PCA, select the z first components
+num_PC=2; % Number of dimensions for the PCA.
+PC=PC(:,1:num_PC);% From the PCA, select the 2 first components
 FeaturesHIOBPC=FeaturesHIOBv3*PC;% Create a latent space with the new projections
 
 figure(2)

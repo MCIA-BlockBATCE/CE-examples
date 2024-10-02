@@ -6,7 +6,13 @@ clear
 clc
 close all
 
-%% k-nearest neighbor classifier for Fisher's iris data 
+% This script applies the k-nearest neighbor (k-NN) algorithm to Fisher's 
+% iris dataset for classification. The dataset consists of sepal and petal 
+% measurements for three different species of iris flowers. The model is 
+% trained using k=7 nearest neighbors, and predictions are made for new data points. 
+% The results are visualized with a scatter plot of the sepal and petal measurements.
+
+%% -------------- Part 1 Data loading --------
 
 % Load the Fisher's iris dataset, which contains measurements of iris flowers.
 load fisheriris 
