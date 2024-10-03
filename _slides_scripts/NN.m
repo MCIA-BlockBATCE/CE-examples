@@ -16,8 +16,8 @@ clear all
 % The script is organized into two parts:
 %
 %   Part 1. FEATURE CLASSIFICATION
-%       This section prepares the data and assigning class labels for various fault types.
-%       It then separates the data into training and validation sets.
+%       This section prepares the data and assigning class labels for various
+%       fault types. It then separates the data into training and validation sets.
 %
 %   Part 2. NEURAL NETWORK TRAINING AND CLASSIFICATION
 %       This section trains a neural network with the training data. After training, 
@@ -38,16 +38,11 @@ Targets = zeros(1200, 4);  % 1200 samples, 4 classes
 
 % Assign binary class labels to each fault category
 % Severity will not be taken into account in this case
-Targets(1:120, 1) = 1;    % Class 1: Healthy
-Targets(121:240, 2) = 1;  % Class 2: Inner Fault Severity 1
-Targets(241:360, 2) = 1;  % Class 3: Inner Fault Severity 2
-Targets(361:480, 2) = 1;  % Class 4: Inner Fault Severity 3
-Targets(481:600, 3) = 1;  % Class 5: Outer Fault Severity 1
-Targets(601:720, 3) = 1;  % Class 6: Outer Fault Severity 2
-Targets(721:840, 3) = 1;  % Class 7: Outer Fault Severity 3
-Targets(841:960, 4) = 1;  % Class 8: Ball Fault Severity 1
-Targets(961:1080, 4) = 1; % Class 9: Ball Fault Severity 2
-Targets(1081:1200, 4) = 1;% Class 10: Ball Fault Severity 3
+Targets=zeros(1200,4);
+Targets(1:120,1)=1;  %Class healthy
+Targets(121:480,2)=1;%Class Inner Fault
+Targets(481:840,3)=1;%Class Outer Fault
+Targets(841:1200,4)=1;%Class Ball Fault
 
 % Transpose the target matrix to match the format for neural network input
 Targets = Targets';

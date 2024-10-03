@@ -16,18 +16,9 @@ FeaturesHIOv3_raw=FeaturesHIOB_LDA;
 
 Targets=zeros(1200,10);
 Targets(1:120,1)=1;  %Class healthy
-Targets(121:480,2)=1;%Class Inner Fault Severity 1
-%Targets(121:240,2)=1;%Class Inner Fault Severity 1
-%Targets(241:360,3)=1;%Class Inner Fault Severity 2
-%Targets(361:480,4)=1;%Class Inner Fault Severity 3
-Targets(481:840,3)=1;%Class Outher Fault Severity 1
-%Targets(481:600,5)=1;%Class Outher Fault Severity 1
-%Targets(601:720,6)=1;%Class Outher Fault Severity 2
-%Targets(721:840,7)=1;%Class Outher Fault Severity 3
-Targets(841:1200,4)=1;%Class Ball Fault Severity 1
-%Targets(841:960,8)=1;%Class Ball Fault Severity 1
-%Targets(961:1080,9)=1;%Class Ball Fault Severity 2
-%Targets(1081:1200,10)=1;%Class Ball Fault Severity 3
+Targets(121:480,2)=1;%Class Inner Fault
+Targets(481:840,3)=1;%Class Outer Fault
+Targets(841:1200,4)=1;%Class Ball Fault
 
 Targets=Targets';
 
@@ -35,9 +26,9 @@ Targets1C(1:120,1)=1;
 Targets1C(121:240,1)=2;%Class Inner Fault Severity 1
 Targets1C(241:360,1)=2;%Class Inner Fault Severity 2
 Targets1C(361:480,1)=2;%Class Inner Fault Severity 3
-Targets1C(481:600,1)=3;%Class Outher Fault Severity 1
-Targets1C(601:720,1)=3;%Class Outher Fault Severity 2
-Targets1C(721:840,1)=3;%Class Outher Fault Severity 3
+Targets1C(481:600,1)=3;%Class Outer Fault Severity 1
+Targets1C(601:720,1)=3;%Class Outer Fault Severity 2
+Targets1C(721:840,1)=3;%Class Outer Fault Severity 3
 Targets1C(841:960,1)=4;%Class Ball Fault Severity 1
 Targets1C(961:1080,1)=4;%Class Ball Fault Severity 2
 Targets1C(1081:1200,1)=4;%Class Ball Fault Severity 3
@@ -46,18 +37,10 @@ Targets1C=Targets1C';
 
 Targets_names=cell(1200,1);%10);
 Targets_names(1:120,1)={'Healthy'};  %Class healthy
-Targets_names(121:480,1)={'Inner Fault'};%Class Inner Fault Severity 1
-%Targets_names(121:240,1)={'Inner Fault Severity 1'};%Class Inner Fault Severity 1
-%Targets_names(241:360,1)={'Inner Fault Severity 2'};%Class Inner Fault Severity 2
-%Targets_names(361:480,1)={'Inner Fault Severity 3'};%Class Inner Fault Severity 3
-Targets_names(481:840,1)={'Outher Fault'};%Class Outher Fault Severity 1
-%Targets_names(481:600,1)={'Outher Fault Severity 1'};%Class Outher Fault Severity 1
-%Targets_names(601:720,1)={'Outher Fault Severity 2'};%Class Outher Fault Severity 2
-%Targets_names(721:840,1)={'Outher Fault Severity 3'};%Class Outher Fault Severity 3
-Targets_names(841:1200,1)={'Ball Fault'};%Class Ball Fault Severity 1
-%Targets_names(841:960,1)={'Ball Fault Severity 1'};%Class Ball Fault Severity 1
-%Targets_names(961:1080,1)={'Ball Fault Severity 2'};%Class Ball Fault Severity 2
-%Targets_names(1081:1200,1)={'Ball Fault Severity 3'};%Class Ball Fault Severity
+Targets_names(121:480,1)={'Inner Fault'};%Class Inner Fault
+Targets_names(481:840,1)={'Outer Fault'};%Class Outher Fault
+Targets_names(841:1200,1)={'Ball Fault'};%Class Ball Fault
+
 
 
 %% Part_2 Apply the neural network to the data prepared in the part 1

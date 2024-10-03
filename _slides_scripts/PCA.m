@@ -11,14 +11,13 @@ close all
 %
 %   Part 1. DATA LOADING
 %       This section loads the dataset features and target labels
-%       for various fault severity classes, including healthy and 
-%       multiple inner and outer fault severities. 
+%       for various fault classes.
 %
 %   Part 2. PCA CALCULATION
 %       This section computes PCA to reduce the dimensionality of the 
 %       normalized features.
 % 
-%   Part 3. PERFORMANCE METRICS
+%   Part 3. PERFORMANCE METRICS (?¿?¿)
 %       In this part we obtain the accumulated explained variance vector
 %       from the PCA decomposition. This is useful to know how many
 %       principal components are needed depending on the required explained
@@ -32,7 +31,8 @@ close all
 
 %% -------------- Part 1 Data loading --------------------
 % Load data, containing features for fault type and severity, as well as
-% target names for fault types. Severity is not taken into account.
+% target names for fault types. Severity is not taken into account in the
+% target labels.
 load data_PCA.mat
 
 %% -------------- Part 2 PCA Calculation ----------------------------------
@@ -43,7 +43,7 @@ DataCov = cov(FeaturesHIOBv3); % Covariance matrix needed to perform the PCA
 % descending explained variance and their respective variances and explained
 % variance percentages. 
 
-%% -------------- Part 3 Performance metrics ------------------------------
+%% -------------- Part 3 Performance metrics (?¿?¿¿?) ------------------------------
 
 % Create accumulated explained variance vector
 acum_var = zeros(length(explained), 1);

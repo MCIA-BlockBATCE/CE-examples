@@ -1,6 +1,7 @@
 % TODO
 % - Capçalera al script
 % - Separar en 3 seccions, (i) lectura de dades (iii) entrenament (iii) visualització
+% calcul de metriques??? emprar part del dataset per validar?
 
 clear
 clc
