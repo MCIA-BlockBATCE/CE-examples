@@ -7,7 +7,7 @@ close all
 % reduce feature dimensionality of a dataset in order to simplify it
 % without too losing much information.
 %
-% The script is organized into two main parts:
+% The script is organized into four parts:
 %
 %   Part 1. DATA LOADING
 %       This section loads the dataset features and target labels
@@ -17,7 +17,7 @@ close all
 %       This section computes PCA to reduce the dimensionality of the 
 %       normalized features.
 % 
-%   Part 3. PERFORMANCE METRICS (?¿?¿)
+%   Part 3. METRICS
 %       In this part we obtain the accumulated explained variance vector
 %       from the PCA decomposition. This is useful to know how many
 %       principal components are needed depending on the required explained
@@ -43,7 +43,7 @@ DataCov = cov(FeaturesHIOBv3); % Covariance matrix needed to perform the PCA
 % descending explained variance and their respective variances and explained
 % variance percentages. 
 
-%% -------------- Part 3 Performance metrics (?¿?¿¿?) ------------------------------
+%% -------------- Part 3 Metrics ------------------------------
 
 % Create accumulated explained variance vector
 acum_var = zeros(length(explained), 1);

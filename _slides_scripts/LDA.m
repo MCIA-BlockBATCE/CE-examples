@@ -1,9 +1,3 @@
-% TODO
-
-% - Separar en 4 seccions, (i) lectura de dades (ii) entrenament
-% (iii) càlcul de mètriques(?¿) (iv) visualització
-
-
 clear
 clc
 close all
@@ -13,9 +7,9 @@ close all
 % linear combinations of features that best separate the classes, 
 % which include various fault conditions.
 %
-% The script is organized into two parts:
+% The script is organized into three parts:
 %
-%   Part 1. DATA INITIALISATION
+%   Part 1. DATA LOADING
 %       This section loads the feature dataset and prepares the target labels 
 %       for different fault classes.
 %
@@ -24,7 +18,10 @@ close all
 %       scatter matrices, performs eigendecomposition, and projects the data 
 %       onto a lower-dimensional space for visualization of class separability.
 %
-%% ------------------ Part 1 Data Initialization -------------------------
+%   Part 3. VISUALIZATION
+%       Scatter plot of the projected data on the lower-dimensional space.
+%
+%% ------------------ Part 1 Data Loading -------------------------
 % Load data, containing features for fault type and severity, as well as a target
 % label array and target names for fault types. Severity is not taken into account
 % in the target labels.
@@ -52,7 +49,8 @@ A = eig_vectors(:, 1:2);
 FeaturesHIOB_LDA = A' * X;
 FeaturesHIOB_LDA = FeaturesHIOB_LDA'; % Transpose for visualization purposes
 
-% --- LDA projection ---
+%% ------------------ Part 3 Visualization -----------------------------
+
 gscatter(FeaturesHIOB_LDA(:,1), FeaturesHIOB_LDA(:,2), Targets_names, 'rgbcmyk', 'xo*+sd><^', 6)
 xlabel('Principal Component #1')
 ylabel('Principal Component #2')

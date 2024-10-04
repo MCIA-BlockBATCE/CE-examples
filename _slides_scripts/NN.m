@@ -1,60 +1,43 @@
-% TODO
-% - Modificar primera secció perqué només carregui les dades. La part 1
-% actual hauria d'estar ja feta, i per tant l'objecte ".mat" que es
-% carregui ja tindra l'objecte Targets configurat. En aquest sentit,
-% quan es carregui aquest ".mat", calen un parell de línies dient que conté dins
-% les dades de diferents condicions d'operació de coixinets.
-% - Separar en 4 seccions, (i) lectura de dades (ii) entrenament
-% (iii) càlculd de mètriques (iv) visualització
-
 clear
 clc
 clear all
 
-% This script uses a neural network to classify different types of faults
-% (healthy, inner fault, outer fault, ball fault) based on extracted features.
-% The script is organized into two parts:
+% This script trains and evaluates a neural network model to classify fault 
+% types based on a feature dataset. The neural network is trained using a 
+% subset of the training data and validated using validation data.
 %
-%   Part 1. FEATURE CLASSIFICATION
-%       This section prepares the data and assigning class labels for various
-%       fault types. It then separates the data into training and validation sets.
+% The script is organized into four parts:
 %
-%   Part 2. NEURAL NETWORK TRAINING AND CLASSIFICATION
-%       This section trains a neural network with the training data. After training, 
-%       the network's performance is evaluated using the validation data. 
-%       A decision boundary plot is generated to visualize classification regions.
+%   Part 1. DATA LOADING
+%       This section loads the feature dataset and target labels, as well
+%       as training and validation indexes.
+%
+%   Part 2. NEURAL NETWORK TRAINING
+%       This section configures a neural network model, trains it using the 
+%       training data, and evaluates its performance.
+%
+%   Part 3. METRICS
+%       This section validates the performance of the neural network model
+%       using validation data.
+%
+%   Part 4. VISUALIZATION
+%       This section visualizes the results using a confusion matrix. 
+%       It also plots decision boundaries to depict the classification regions
+%       for different fault types alongside with some training data points.
 
-
-%% -------------- Part 1 Feature Classification --------
-
-% Load feature data
-load FeaturesHIOB_LDA.mat
-
-% Transpose feature matrix
-FeaturesHIOv3 = FeaturesHIOB_LDA';
-
-% Initialize target matrix for 4 fault categories: Healthy, Inner, Outer, and Ball faults
-Targets = zeros(1200, 4);  % 1200 samples, 4 classes
-
-% Assign binary class labels to each fault category
-% Severity will not be taken into account in this case
-Targets=zeros(1200,4);
-Targets(1:120,1)=1;  %Class healthy
-Targets(121:480,2)=1;%Class Inner Fault
-Targets(481:840,3)=1;%Class Outer Fault
-Targets(841:1200,4)=1;%Class Ball Fault
+%% -------------- Part 1 Data Loading --------
+% Load data, containing features for fault type and severity, as well as a target
+% label array fault types. Severity is not taken into account in the target labels.
+% Training and validation indexes are loaded in order to later split the dataset.
+load data_NN.mat
 
 % Transpose the target matrix to match the format for neural network input
 Targets = Targets';
 
-% Define indices for training and validation sets
-Training_index = [1:120-40, 121:240-40, 241:360-40, 361:480-40, ...
-                  481:600-40, 601:720-40, 721:840-40, 841:960-40, ...
-                  961:1080-40, 1081:1200-40];
+% Transpose feature matrix
+FeaturesHIOv3 = FeaturesHIOB_LDA';
 
-Validation_index = [121-40:120, 241-40:240, 361-40:360, 481-40:480, ...
-                    601-40:600, 721-40:720, 841-40:840, 961-40:960, ...
-                    1081-40:1080, 1201-40:1200];
+%% -------------- Part 2 Neural Network training -----------------------
 
 % Separate data into training and validation sets
 Training_Data = FeaturesHIOv3(:, Training_index);   % Training features
@@ -62,8 +45,6 @@ Training_Targets = Targets(:, Training_index);      % Training labels
 
 Validation_Data = FeaturesHIOv3(:, Validation_index); % Validation features
 Validation_Targets = Targets(:, Validation_index);   % Validation labels
-
-%% -------------- Part 2 Neural Network with Data------------------------
 
 % Set up neural network configuration
 n = 10;               % Number of neurons in the hidden layer
@@ -83,13 +64,18 @@ Net.trainParam.goal = min_err;  % Training goal (minimum error)
 % Train the neural network using training data
 [Net, TR] = train(Net, Training_Data, Training_Targets);
 
+%% -------------- Part 3 Metrics ------------------------
+
 % Validate the network using the validation data
 Simu_Net = Net(Validation_Data);
 
-% Plot confusion matrix to evaluate classification performance
+%% -------------- Part 4 Visualization ------------------------
+
+% ---- Confusion Matrix ----
+
 plotconfusion(Validation_Targets, Simu_Net, 'All Features')
 
-% ---- Decision Boundary Visualization ----
+% ---- Decision Boundary with training data points ----
 
 % Create a grid for plotting decision boundaries
 x = min(FeaturesHIOv3(1,:))*2:0.001:max(FeaturesHIOv3(1,:))*2;
@@ -114,7 +100,6 @@ for i = 1:4
     hold on
 end
 
-% ---- Plot training data points with different markers for each class ----
 num_samples = 80; % Number of samples per class for plotting
 Training_Data = Training_Data';
 
@@ -136,6 +121,3 @@ xlim([min(X) max(X)])
 xlabel('Dimension 1')
 ylabel('Dimension 2') 
 title('Decision regions for each class')
-
-
-
