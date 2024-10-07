@@ -27,12 +27,9 @@ close all
 % in the target labels.
 load data_LDA.mat
 
-% Transpose feature matrix for further use
-FeaturesHIOBv3 = FeaturesHIOBv3';
-
 %% ------------------ Part 2 LDA Calculation -----------------------------
 
-X = FeaturesHIOBv3;
+X = FeaturesHIOBv3';
 y = Targets1C;
 
 % Compute scatter matrices
