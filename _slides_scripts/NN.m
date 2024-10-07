@@ -31,12 +31,6 @@ clear all
 % Training and validation indexes are loaded in order to later split the dataset.
 load data_NN.mat
 
-% Transpose the target matrix to match the format for neural network input
-Targets = Targets';
-
-% Transpose feature matrix
-FeaturesHIOv3 = FeaturesHIOB_LDA';
-
 %% -------------- Part 2 Neural Network training -----------------------
 
 % Separate data into training and validation sets
