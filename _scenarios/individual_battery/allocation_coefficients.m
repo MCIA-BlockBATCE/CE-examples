@@ -28,7 +28,7 @@ function [generation_allocation, storage_allocation] = allocation_coefficients(C
         storage_allocation = sum(storage_allocation.'); %operacions per obtenir un CoR_bateria que no canvii durant el mes
         storage_allocation = storage_allocation/sum(storage_allocation); %operacions per obtenir un CoR_bateria estàtic que no canvii durant el mes
     
-    else 
+    elseif CoR_type == 3
     
         [generation_allocation] = previous_sample_coefficients(CER); 
     
@@ -38,7 +38,15 @@ function [generation_allocation, storage_allocation] = allocation_coefficients(C
         storage_allocation = sum(storage_allocation.'); 
         storage_allocation = storage_allocation/sum(storage_allocation); 
     
-    end
+    else
+
+        [generation_allocation] = hybrid_coefficients(CER);
+        
+        % Fixed allocation rules are used to allocate storage capacity
+        time_band_bill(CER)
+        [storage_allocation] = time_band_coefficients();
+        storage_allocation = sum(storage_allocation.'); 
+        storage_allocation = storage_allocation/sum(storage_allocation); 
 
 end
 

@@ -15,7 +15,7 @@ function [Pgen_pred_1h_allocated, Pgen_pred_3h_allocated, Pgen_real_allocated] =
     
         end
     
-    elseif CoR_type == 3
+    elseif (CoR_type == 3) || (CoR_type == 4)
     
         for n=1:members     
             Pgen_pred_1h_allocated(:,n) = generation_allocation(:,n).*Pgen_pred_1h*factor_gen;

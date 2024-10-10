@@ -73,7 +73,12 @@ EnergyCommunityConsumptionProfiles = getCommunityProfiles(CommunitySelection);
 %   - Allocation based on instantly available power consumption
 %   measurements, CoR_type = 3.
 %
-CoR_type = 3;
+%   - Two-step hybrid coefficients.
+%       · 1st Step: Equal fixed allocation.
+%       · 2nd Step: Allocation based on power consumption of the surplus
+%         power after applying first step.
+
+CoR_type = 4;
 [GenerationPowerAllocation, StorageAllocation] = allocation_coefficients(CoR_type, EnergyCommunityConsumptionProfiles);
 
 

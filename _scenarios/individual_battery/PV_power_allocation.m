@@ -8,7 +8,7 @@ function [Pgen_real_allocated] = PV_power_allocation(Pgen_real, generation_alloc
             Pgen_real_allocated(:,n) = Pgen_real * generation_allocation(1,n).'*factor_gen;
         end
     
-    elseif CoR_type == 3
+    elseif (CoR_type == 3) || (CoR_type == 4)
         for n=1:members     
             Pgen_real_allocated(:,n) = generation_allocation(:,n).*Pgen_real*factor_gen;
         end
