@@ -3,15 +3,15 @@ clc
 close all
 
 % This script presents on the application of Principal Component Analysis (PCA)
-% for a dataset related to fault severity analysis. The aim of PCA is to
-% reduce feature dimensionality of a dataset in order to simplify it
-% without too losing much information.
+% for a dataset containing multiple features and class labels. The aim of PCA
+% is to reduce feature dimensionality of a dataset in order to simplify it
+% without losing too much information.
 %
 % The script is organized into four parts:
 %
 %   Part 1. DATA LOADING
 %       This section loads the dataset features and target labels
-%       for various fault classes.
+%       for various classes.
 %
 %   Part 2. PCA CALCULATION
 %       This section computes PCA to reduce the dimensionality of the 

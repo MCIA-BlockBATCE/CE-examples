@@ -2,9 +2,10 @@ clear
 clc
 clear all
 
-% This script trains and evaluates a neural network model to classify fault 
-% types based on a feature dataset. The neural network is trained using a 
-% subset of the training data and validated using validation data.
+% This script trains and evaluates a neural network model for classification
+% on a dataset containing multiple features and class labels. The neural 
+% network is trained using a subset of the training data and validated using
+% validation data.
 %
 % The script is organized into four parts:
 %
@@ -23,7 +24,7 @@ clear all
 %   Part 4. VISUALIZATION
 %       This section visualizes the results using a confusion matrix. 
 %       It also plots decision boundaries to depict the classification regions
-%       for different fault types alongside with some training data points.
+%       for different classes alongside with some training data points.
 
 %% -------------- Part 1 Data Loading --------
 % Load data, containing features for fault type and severity, as well as a target

@@ -2,16 +2,15 @@ clear
 clc
 close all
 
-% This script performs Linear Discriminant Analysis (LDA) on a dataset 
-% to analyze fault severity classifications. LDA is used to find the 
-% linear combinations of features that best separate the classes, 
-% which include various fault conditions.
+% This script performs Linear Discriminant Analysis (LDA) on a dataset containing
+% multiple features and class labels. LDA is used to find the linear combinations
+% of features that best separate the classes.
 %
 % The script is organized into three parts:
 %
 %   Part 1. DATA LOADING
-%       This section loads the feature dataset and prepares the target labels 
-%       for different fault classes.
+%       This section loads the feature dataset, containing features, labels
+%       and label names for each class.
 %
 %   Part 2. LDA CALCULATION
 %       This section computes LDA by calculating the within-class and between-class 
@@ -29,10 +28,12 @@ load data_LDA.mat
 
 %% ------------------ Part 2 LDA Calculation -----------------------------
 
-X = FeaturesHIOBv3';
-y = Targets1C;
+X = FeaturesHIOBv3'; % Feature matrix
+y = Targets1C; % Target vector
 
 % Compute scatter matrices
+% Outputs the within-class scatter matrix, the between-class scatter matrix
+% and the mixture scatter matrix
 [Sw, Sb, Sm] = scatter_mat(X, y);
 
 % Eigendecomposition and sorting of eigenvalues

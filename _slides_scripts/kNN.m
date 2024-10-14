@@ -2,29 +2,28 @@ clear
 clc
 close all
 
-% This script applies the k-nearest neighbor (k-NN) algorithm to Fisher's 
-% iris dataset for classification. The dataset consists of sepal and petal 
-% measurements for three different species of iris flowers.
+% This script applies the k-nearest neighbor (k-NN) algorithm to a dataset 
+% prepared for classification.
 %
 % The script is organized into three parts:
 %
 %   Part 1. DATA INITIALISATION
-%       Fisher's iris dataset for classification is loaded, containing
-%       sepal and petal measurements as well as labels for each flower
-%       species.
+%       Dataset for classification is loaded, containing several features
+%       as well as labels for each class.
 %
 %   Part 2. KNN CLASSIFICATION
 %       The model kNN model is trained using k=7 nearest neighbors. Two
 %       new data points are created and the model is used to label them.
 %
 %   Part 3. VISUALIZATION
-%       The results are visualized with two scatter plots of the sepal and
-%       petal measurements.
+%       The results are visualized using several scatter plots, as only two
+%       features can be represented in the same figure.
 %
 
 %% ------------------------ Part 1 Data loading ----------------------
 
-% Load the Fisher's iris dataset, which contains measurements of iris flowers.
+% Load the Fisher's iris dataset, which contains sepal and petal measurements
+% as well as labels for each flower species.
 load fisheriris 
 
 % Assign features (measurements) to X and labels (species) to Y.
@@ -36,7 +35,7 @@ Y = species; % Class labels corresponding to the species of iris.
 % Create a k-NN classification model using k=7 neighbors.
 % Standardizing the features ensures they contribute equally to distance calculations.
 k = 7;
-knn_mdl = fitcknn(X, Y, 'NumNeighbors', k, 'Standardize', 1);
+knn_mdl = fitcknn(X, Y, 'NumNeighbors', k, 'Standardize', 1); % kNN object
 
 % Display the class names from the trained model.
 knn_mdl.ClassNames 
