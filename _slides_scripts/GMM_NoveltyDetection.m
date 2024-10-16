@@ -3,16 +3,11 @@ close all
 clear 
 clc
 
-% Set path
-%addpath(genpath('C:\Users\Lucia\Documents\Becas\GAIA\Congreso\Matlab'));
-
 % Load the data
 load Mat_Nomralizada_val.mat
 data_norm = Mat_Normalizada_val(:,6:7);
 % H,B7,B14,B21,I7,I14,I21,O7,O14,O21 (8 features each)
 
-% For reproducibility
-rng ('default');
 
 % Targets
 target = zeros(400,1);
@@ -51,33 +46,15 @@ tar = target(1:160);
 tbr = target(1:280);
 tcr = target(1:400);
 
-% Dimensionality reduction: PCA
 DataCov = cov(data_norm);
 [PC, variances, explained] = pcacov(DataCov); 
 z = 2; 
 PC = PC(:,1:z);
-%data_PC = data_norm*PC;
+
 data_PC = Mat_Normalizada_val(:,6:7);
 
-% % Plot the PCA results
-% for cont = 1:length(data_PC')
-%  if(target(cont)==1)
-%      color = [.4 0 .4];%purple
-%      elseif(target(cont)==2)
-%      color = [0 .4 1];%dark blue
-%      elseif(target(cont)==3)
-%      color = [1 0 0];%red
-%      elseif(target(cont)==4)
-%      color = [0 .4 0];%dark green
-%   end
-%     plot(data_PC(cont,1),data_PC(cont,2),'Marker','.','LineStyle','none','Color',color,'MarkerSize',10)
-%     set(gca,'color',[0 0 0])
-%     hold on
-%     grid on
-%     title('PCA data Representation');
-% end
 
-figure;
+figure(1)
 gscatter(data_PC(:,1),data_PC(:,2), Targets_names, 'rgbcmyk', 'xo*+sd><^', 6)
 xlabel('Feature #1')
 ylabel('Feature #2')
@@ -88,8 +65,6 @@ title('Data representation')
 % set A
 Training_index_A=[1:40-10,41:80-10,81:120-10,121:160-10];
 Validation_index_A=[41-10:40,81-10:80,121-10:120,161-10:160];
-%Training_index_A=[1+10:40,41+10:80,81+10:120,121+10:160];
-%Validation_index_A=[1:10,41:50,81:90,121:130];
 TA = ta(Training_index_A,:);
 VDA = data_PC(Validation_index_A,:);
 VTA = ta(Validation_index_A,:);
@@ -157,7 +132,7 @@ end
 allConverge = (sum(converged(:)) == nK*nSigma*nSC)
 
 %% Plot the AIC and BIC
-figure;
+figure(2)
 bar(reshape(aic,nK,nSigma*nSC));
 title('AIC For Various $k$ and $\Sigma$ Choices','Interpreter','latex');
 xlabel('$k$','Interpreter','Latex');
@@ -165,13 +140,7 @@ ylabel('AIC');
 legend({'Diagonal-shared','Full-shared','Diagonal-unshared',...
     'Full-unshared'});
 
-% figure;
-% bar(reshape(bic,nK,nSigma*nSC));
-% title('BIC For Various $k$ and $\Sigma$ Choices','Interpreter','latex');
-% xlabel('$c$','Interpreter','Latex');
-% ylabel('BIC');
-% legend({'Diagonal-shared','Full-shared','Diagonal-unshared',...
-%     'Full-unshared'});
+
 
 %% Generate the model
 % k ; 1:= diagonal and 2:=full; 1:=true and 2:=false (shared cov)
@@ -193,7 +162,7 @@ for cont = 1:length(XG)
 end
 
 % Plot boundary
-figure,
+figure(3)
 
 title('{\bf GMM training}')
 xlabel('Feature #1')
@@ -261,15 +230,15 @@ for cont = 1:length(VDA)
    end
 end
 
-total_acc = (confusion_per(1,1)+confusion_per(2,2))/2
+total_acc = (confusion_per(1,1)+confusion_per(2,2))/2;
 GMM_A = known;
-confusion_per
+confusion_per;
 %(1,1):= N classified as N
 %(1,2):= N classified as UN
 %(2,1):= UN classified as N
 %(2,2):= UN classified as UN
 
-figure;
+figure(4)
 contour(X1,X2,reshape(resultaux,size(X1,1),size(X2,1)),[1,1],'Color','k');
 hold on
 gscatter(VDA(:,1), VDA(:,2), labels, 'rgbcmyk', 'xo*+sd><^', 8)
