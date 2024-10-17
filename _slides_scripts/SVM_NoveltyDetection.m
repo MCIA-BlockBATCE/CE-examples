@@ -3,12 +3,8 @@ close all
 clear 
 clc
 
-% Set path
-%addpath(genpath('C:\Users\Lucia\Documents\Becas\GAIA\Congreso\Matlab'));
-
 % Load the data
 load MatNorCompleta.mat
-%data_norm = Mat_Normalizada_val;
 data_norm = Mat_Normalizada_val(:,6:7);
 
 % H,B7,B14,B21,I7,I14,I21,O7,O14,O21 (8 features each)
