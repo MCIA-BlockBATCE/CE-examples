@@ -1,173 +1,138 @@
 clear
 clc
 close all
-%load FeaturesHIOB_360samples_4classess_4operatingconditions_3severities.mat
-load FeaturesHIOB_LDA.mat
 
-%% -------------- Parte 1 Feature Normalization and classification --------
-rng(1989)
+% This script configures, trains, and evaluates a neural network for 
+% multi-class classification using k-fold cross-validation. The dataset 
+% includes features and corresponding target labels. Each k-fold iteration
+% splits data into training and testing sets, with performance metrics
+% calculated after each fold.
+%
+% The script is organized into four parts:
+%
+%   Part 1. DATA LOADING AND PREPERATION
+%       Load the feature dataset and labels for each class
+%
+%   Part 2. Neural Network Configuration
+%       Configure the neural network architecture and training parameters.
+%
+%   Part 3. k-Fold Cross-Validation and Training
+%       Split the data into k folds, train the network on each fold, and 
+%       compute performance metrics (accuracy, precision, recall, and specificity).
+%
+%   Part 4. Visualization
+%       Plot performance metrics for each fold and the average across folds.
+%
 
-%FeaturesHIOv3=normal(FeaturesHIOB(241:end,:));
-%FeaturesHIOv3_raw=normal(FeaturesHIOB_LDA(:,:));
-%FeaturesHIOv3=FeaturesHIOv3_raw';
+%% -------------- Part 1: Data Loading and Preparation ---------------
+% Load data, containing features for fault type classes (healthy, inner fault, 
+% outer fault and ball fault), as well as a target label array and target
+% names for each class.
 
-FeaturesHIOv3=FeaturesHIOB_LDA;
-FeaturesHIOv3_raw=FeaturesHIOB_LDA;
+load data_KFold.mat 
 
-Targets=zeros(1200,10);
-Targets(1:120,1)=1;  %Class healthy
-Targets(121:480,2)=1;%Class Inner Fault
-Targets(481:840,3)=1;%Class Outer Fault
-Targets(841:1200,4)=1;%Class Ball Fault
+%% -------------- Part 2: Neural Network Configuration ---------------
 
-Targets=Targets';
+% Neural network parameters
+n = 10;                   % Number of neurons in the hidden layer
+trainFcn = 'trainrp';     % Training function: Resilient Backpropagation
+epochs = 25;              % Maximum number of epochs
+min_err = 1e-6;           % Minimum training error
 
-Targets1C(1:120,1)=1;
-Targets1C(121:240,1)=2;%Class Inner Fault Severity 1
-Targets1C(241:360,1)=2;%Class Inner Fault Severity 2
-Targets1C(361:480,1)=2;%Class Inner Fault Severity 3
-Targets1C(481:600,1)=3;%Class Outer Fault Severity 1
-Targets1C(601:720,1)=3;%Class Outer Fault Severity 2
-Targets1C(721:840,1)=3;%Class Outer Fault Severity 3
-Targets1C(841:960,1)=4;%Class Ball Fault Severity 1
-Targets1C(961:1080,1)=4;%Class Ball Fault Severity 2
-Targets1C(1081:1200,1)=4;%Class Ball Fault Severity 3
-Targets1C=Targets1C';
+% Define the neural network and its training configuration
+Net = patternnet(n, trainFcn);
+Net.divideParam.trainRatio = 1;  % Full training set (no validation/test split)
+Net.divideParam.valRatio = 0;    
+Net.divideParam.testRatio = 0;   
+Net.trainParam.epochs = epochs;  % Set number of epochs
+Net.trainParam.goal = min_err;   % Set training goal (minimum error)
 
+%% -------------- Part 3: k-Fold Cross-Validation and Training ------------
 
-Targets_names=cell(1200,1);%10);
-Targets_names(1:120,1)={'Healthy'};  %Class healthy
-Targets_names(121:480,1)={'Inner Fault'};%Class Inner Fault
-Targets_names(481:840,1)={'Outer Fault'};%Class Outher Fault
-Targets_names(841:1200,1)={'Ball Fault'};%Class Ball Fault
+% Set up cross-validation
+x = FeaturesHIOB_LDA;               % Input features
+y = Targets_names;                  % Target labels
+k = 3;                              % Number of folds for cross-validation
+c = cvpartition(y, 'kFold', k, 'Stratify', true);
 
+% Initialize storage for metrics
+AccuracyALL = zeros(1, k);
+PrecisionALL = zeros(1, k);
+RecallALL = zeros(1, k);
+SpecificityALL = zeros(1, k);
 
-
-%% Part_2 Apply the neural network to the data prepared in the part 1
-
-% Neural Network Architecture Configuration
-n=10; % Number of neurons in hidden layer
-trainFcn='trainrp';
-% {'tansig','purelin'};% Activation functions
-
-% Training function
-%TRNF='trainrp';%  Backpropagation training functions
- 
-% Training goals of the network
-epochs=25;% Numbe of epochs in train mode
-min_err=0.000001;% Minimum error for goal
-
-% Creating a new neural network with the specific data
-%Net=newff(Training_Data,Training_Targets,n,TRF,TRNF);
-
-% NEW FUNCTION FOR FFNET
-%Net = feedforwardnet(n,trainFcn);
-Net = patternnet(n,trainFcn);
-
-% Specify the data origin.
-Net.divideParam.trainRatio = 1;
-Net.divideParam.valRatio = 0;
-Net.divideParam.testRatio = 0;
-
-% Configuration of the training parameters
-Net.trainParam.epochs=epochs; % select the eppoch defined previously
-Net.trainParam.goal=min_err;  % select the minimum error defined prev.
-
-y = Targets_names;
-x = FeaturesHIOv3_raw;
-
-k = 3;
-c = cvpartition(y,'kFold', k, 'Stratify', true);
-%c = cvpartition(y,'kFold', k);
-
+% Loop over each fold
 for i = 1:k
+    % Split data into training and test sets for the current fold
+    trIdx = c.training(i);
+    teIdx = c.test(i);
+    xTrain = x(trIdx, :)';
+    yTrain = dummyvar(grp2idx(y(trIdx)))';
+    xTest = x(teIdx, :)';
+    yTest = dummyvar(grp2idx(y(teIdx)))';
+    yTest2 = Targets1C(teIdx); % True labels for calculating metrics
+
+    % Train the neural network
+    Net = train(Net, xTrain, yTrain);
+    yPred = Net(xTest);  % Network prediction on test data
     
-    %get Train and Test data for this fold
-     trIdx = c.training(i);
-     teIdx = c.test(i);
-     xTrain = x(trIdx);
-     yTrain = y(trIdx);
-     xTest = x(teIdx);
-     yTest = y(teIdx);
+    % Plot confusion matrix for the current fold
+    figure
+    plotconfusion(yTest, yPred, 'All Features')
+    hold off
     
-     yTest2 = Targets1C(teIdx);
-     
-     %transform data to columns as expected by neural nets
-     xTrain = xTrain';
-     xTest = xTest';
-     yTrain = dummyvar(grp2idx(yTrain))';
-     yTest = dummyvar(grp2idx(yTest))';
-     
-     %create net and set Test and Validation to zero in the input data
-     % net = patternnet(10);
-     % net.divideParam.trainRatio = 1;
-     % net.divideParam.testRatio = 0;
-     % net.divideParam.valRatio = 0;
-     
-     %train network
-     Net = train(Net,xTrain,yTrain);
-     yPred = Net(xTest);
-     figure
-     plotconfusion(yTest,yPred,'All Features')
-     hold off
-     [~, Predicted_Labels] = max(yPred, [], 1);
+    % Calculate metrics for current fold
+    [~, Predicted_Labels] = max(yPred, [], 1);
+    Conf_Mat = confusionmat(yTest2, Predicted_Labels);
+
+    Accuracy = sum(diag(Conf_Mat)) / sum(Conf_Mat(:));
+    Precision = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 1)');
+    Recall = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 2));
+    Specificity = mean((sum(Conf_Mat(:)) - sum(Conf_Mat, 2) - sum(Conf_Mat, 1)' + diag(Conf_Mat)) ./ (sum(Conf_Mat(:)) - sum(Conf_Mat, 2)));
+
+    % Display metrics for the current fold
+    disp(['Accuracy: ', num2str(Accuracy)]);
+    disp(['Precision: ', num2str(Precision)]);
+    disp(['Recall: ', num2str(Recall)]);
+    disp(['Specificity: ', num2str(Specificity)]);
     
-     Conf_Mat = confusionmat(yTest2, Predicted_Labels);
-     
-     % Calcular las métricas
-     Accuracy = sum(diag(Conf_Mat)) / sum(Conf_Mat(:));
-    
-     Precision = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 1)');
-    
-     Recall = mean(diag(Conf_Mat) ./ sum(Conf_Mat, 2));
-    
-     Specificity = mean((sum(Conf_Mat(:)) - sum(Conf_Mat, 2) - sum(Conf_Mat, 1)' + diag(Conf_Mat)) ./ (sum(Conf_Mat(:)) - sum(Conf_Mat, 2)));
-    
-     % Mostrar los resultados
-     disp(['Accuracy: ', num2str(Accuracy)]);
-     disp(['Precision: ', num2str(Precision)]);
-     disp(['Recall: ', num2str(Recall)]);
-     disp(['Specificity: ', num2str(Specificity)]);
-     
-     AccuracyALL(i)=Accuracy;
-     PrecisionALL(i)=Precision;
-     RecallALL(i)=Recall;
-     SpecificityALL(i)=Specificity;
- 
-     % perf = perform(Net,yTest,yPred);
-     % disp(perf);
-     % 
-     % %store results     
-     % netAry{i} = Net;
-     % perfAry(i) = perf;
-     
+    % Store metrics
+    AccuracyALL(i) = Accuracy;
+    PrecisionALL(i) = Precision;
+    RecallALL(i) = Recall;
+    SpecificityALL(i) = Specificity;
 end
 
-    AccuracyAVG=mean(AccuracyALL);
-    PrecisionAVG=mean(PrecisionALL);
-    RecallAVG=mean(RecallALL);
-    SpecificityAVG=mean(SpecificityALL);
-    figure
-    bar (AccuracyALL)
-    xlabel('k-th iteration')
-    ylabel('Accuracy')
-    title(['Avg Accuracy, K-fold crossvalidation =' num2str(AccuracyAVG)])
-    
-    figure
-    bar (PrecisionALL)
-    xlabel('k-th iteration')
-    ylabel('Precision')
-    title(['Avg Precision, K-fold crossvalidation =' num2str(PrecisionAVG)])
-    
-    figure
-    bar (RecallALL)
-    xlabel('k-th iteration')
-    ylabel('Recall')
-    title(['Avg Recall, K-fold crossvalidation =' num2str(RecallAVG)])
-    
-    figure
-    bar (SpecificityALL)
-    xlabel('k-th iteration')
-    ylabel('Specificity')
-    title(['Avg Specificity, K-fold crossvalidation =' num2str(SpecificityAVG)])
-    
+% Average metrics across all folds
+AccuracyAVG = mean(AccuracyALL);
+PrecisionAVG = mean(PrecisionALL);
+RecallAVG = mean(RecallALL);
+SpecificityAVG = mean(SpecificityALL);
+
+%% -------------- Part 4: Visualization ------------------------
+
+% Plot performance metrics for each fold and average values
+
+figure
+bar(AccuracyALL)
+xlabel('k-th iteration')
+ylabel('Accuracy')
+title(['Avg Accuracy, K-fold crossvalidation = ', num2str(AccuracyAVG)])
+
+figure
+bar(PrecisionALL)
+xlabel('k-th iteration')
+ylabel('Precision')
+title(['Avg Precision, K-fold crossvalidation = ', num2str(PrecisionAVG)])
+
+figure
+bar(RecallALL)
+xlabel('k-th iteration')
+ylabel('Recall')
+title(['Avg Recall, K-fold crossvalidation = ', num2str(RecallAVG)])
+
+figure
+bar(SpecificityALL)
+xlabel('k-th iteration')
+ylabel('Specificity')
+title(['Avg Specificity, K-fold crossvalidation = ', num2str(SpecificityAVG)])
