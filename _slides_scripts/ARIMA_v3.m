@@ -26,7 +26,7 @@
 
 %% -------------- Part 1. Data Loading -------------------
 % Load the time series data for energy consumption from the specified file.
-load ConsProfileExample.mat
+load data_ARIMA.mat
 
 % Define the time vector for the data range from May 1 to May 31, 2023,
 % with 15-minute intervals.
