@@ -32,7 +32,7 @@ clc
 load data_kNN_NoveltyDetection.mat
 
 %% -------------- Part 2. Data Preprocessing -------------
-data_norm = Mat_Normalizada_val(:,6:7); % Using 2 features
+data_norm = Mat_Normalizada_val(:,1:8); % Use all available features
 
 % Perform PCA to reduce data dimensions for visualization purposes
 DataCov = cov(data_norm);               % Calculate covariance matrix
