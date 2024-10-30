@@ -14,6 +14,8 @@ clc
 %
 %   PART 2. DATA PREPROCESSING
 %       Reduces data dimensions using Principal Component Analysis (PCA) for easier visualization.
+%       Unlike "SVM_NoveltyDetection.mat", all features are taken into
+%       account when performing PCA (8 features --> 2 features)
 %
 %   PART 3. MODEL TRAINING
 %       Sets up the SVM model, defining known data points and setting the model parameters.
@@ -32,7 +34,7 @@ clc
 load data_SVM_NoveltyDetection.mat; 
 
 %% -------------- Part 2. Data Preprocessing -------------
-data_norm = Mat_Normalizada_val(:, 6:7); % Using all features
+data_norm = Mat_Normalizada_val(:, 1:8); % Using all features
 
 % Perform PCA to reduce data dimensions for visualization
 DataCov = cov(data_norm);                 % Calculate covariance matrix

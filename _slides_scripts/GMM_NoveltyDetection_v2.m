@@ -10,10 +10,14 @@ clc
 %
 %   PART 1. DATA LOADING
 %       This section loads the feature dataset, containing features and
-%       target labels for each class.
+%       target labels for each class and for different subdatasets.
 %
 %   PART 2. DATA PREPROCESSING
-%       Organizes data into training sets for different classes and normalizes data.
+%       Performs Principal Component Analysis for easier visualization.
+%       Unlike "kNN_NoveltyDetection.mat", all features are taken into
+%       account when performing PCA (8 features --> 2 features)
+%       Additionally, organizes dimensionally reduced data into training
+%       sets for different subdatasets.
 %
 %   PART 3. MODEL TRAINING
 %       Fits GMM models to the training data using various configurations 
@@ -36,7 +40,7 @@ load data_GMM_NoveltyDetection.mat
 
 %% -------------- Part 2. Data Preprocessing ------------- 
 % Normalize and separate data into training sets for different classes
-data_norm = Mat_Normalizada_val(:,6:7); % Using only 2 features
+data_norm = Mat_Normalizada_val(:,1:8); % Using all features
 
 DataCov = cov(data_norm);
 [PC, variances, explained] = pcacov(DataCov); 

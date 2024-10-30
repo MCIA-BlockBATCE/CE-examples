@@ -36,7 +36,7 @@ load data_GMM_NoveltyDetection.mat
 
 %% -------------- Part 2. Data Preprocessing ------------- 
 % Normalize and separate data into training sets for different classes
-data_norm = Mat_Normalizada_val(:,6:7); % Using only 2 features
+data_norm = Mat_Normalizada_val(:,6:7); % Using the first two features
 
 DataCov = cov(data_norm);
 [PC, variances, explained] = pcacov(DataCov); 

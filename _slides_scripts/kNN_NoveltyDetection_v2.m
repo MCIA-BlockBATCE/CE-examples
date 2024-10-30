@@ -14,6 +14,8 @@ clc
 %
 %   PART 2. DATA PREPROCESSING
 %       Reduces data dimensions using Principal Component Analysis (PCA) for easier visualization.
+%       Unlike "kNN_NoveltyDetection.mat", all features are taken into
+%       account when performing PCA (8 features --> 2 features)
 %
 %   PART 3. MODEL TRAINING
 %       Sets up the kNN model, defining known data points and setting a distance threshold.
